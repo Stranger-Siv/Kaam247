@@ -6,14 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "node test-all-apis.js",
-    "test:all": "node test-all-apis.js",
-    "test:auth": "node test-auth-apis.js",
-    "test:integration": "node test-full-integration.js",
-    "test:accept": "node test-accept-api.js",
-    "test:self-accept": "node test-self-accept.js",
-    "test:tasks": "node test-fetch-tasks.js && node test-get-task.js",
-    "test:socket": "node test-socket-worker-tracking.js"
+    "test": "node test-all-apis-comprehensive.js",
+    "test:all": "node test-all-apis-comprehensive.js",
+    "test:comprehensive": "node test-all-apis-comprehensive.js"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +25,7 @@
   },
   "devDependencies": {
     "axios": "^1.13.2",
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "socket.io-client": "^4.8.3"
   }
 }

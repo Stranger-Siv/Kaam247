@@ -190,8 +190,15 @@ const initializeSocket = (server) => {
                 socket.userId = workerId.toString()
                 socket.roleMode = 'worker'
                 socket.location = workerLocation
+                
+                console.log(`[worker_online] Worker ${workerId} registered as online`, {
+                    socketId: socket.id,
+                    location: workerLocation,
+                    radius: workerRadius
+                })
             } catch (error) {
-                console.error('Error handling worker_online:', error.message)
+                console.error('[worker_online] Error handling worker_online:', error.message)
+                console.error('[worker_online] Stack:', error.stack)
             }
         })
 
@@ -258,26 +265,32 @@ const getIO = () => {
 const broadcastNewTask = (taskData, postedByUserId) => {
     try {
         if (!io) {
+            console.log('[broadcastNewTask] Socket.IO not initialized')
             return
         }
 
         // Get total count of online workers
         const totalWorkers = socketManager.getOnlineWorkerCount()
+        console.log(`[broadcastNewTask] Online workers: ${totalWorkers}`)
 
         if (totalWorkers === 0) {
+            console.log('[broadcastNewTask] No online workers - skipping broadcast')
             return
         }
 
         // Get task location
         const taskLocation = taskData.location?.coordinates
         if (!taskLocation || taskLocation.length !== 2) {
+            console.log('[broadcastNewTask] Task missing valid location coordinates')
             return
         }
 
         const [taskLng, taskLat] = taskLocation
+        console.log(`[broadcastNewTask] Task location: [${taskLng}, ${taskLat}]`)
 
         // Get all workers with their locations
         const workers = socketManager.getAllWorkersWithLocations()
+        console.log(`[broadcastNewTask] Total workers with locations: ${workers.length}`)
         
         // Filter workers: exclude task creator and check distance
         const eligibleWorkers = workers.filter(worker => {
@@ -334,8 +347,11 @@ const broadcastNewTask = (taskData, postedByUserId) => {
         })
 
         if (eligibleWorkers.length === 0) {
+            console.log('[broadcastNewTask] No eligible workers after filtering')
             return
         }
+
+        console.log(`[broadcastNewTask] Eligible workers: ${eligibleWorkers.length}`)
 
         // Emit to eligible worker sockets with distance included
         let emittedCount = 0
@@ -372,12 +388,17 @@ const broadcastNewTask = (taskData, postedByUserId) => {
                 }
                 
                 emittedCount++
+                console.log(`[broadcastNewTask] Alert sent to worker ${worker.userId} (socket: ${worker.socketId})`)
             } catch (emitError) {
+                console.error(`[broadcastNewTask] Error emitting to worker ${worker.userId}:`, emitError.message)
                 // Silent fail - don't block task broadcast
             }
         })
+        
+        console.log(`[broadcastNewTask] Successfully sent alerts to ${emittedCount} workers`)
     } catch (error) {
-        console.error('Error broadcasting new task:', error.message)
+        console.error('[broadcastNewTask] Error broadcasting new task:', error.message)
+        console.error('[broadcastNewTask] Stack:', error.stack)
         // Don't throw - task creation should succeed even if broadcast fails
     }
 }
