@@ -67,6 +67,45 @@ export function AuthProvider({ children }) {
       })
       setIsAuthenticated(true)
 
+      // Capture location and update profile after successful login
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          })
+        })
+
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        }
+
+        // Update user profile with location
+        const updateResponse = await fetch(`${API_BASE_URL}/api/users/me`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${data.token}`
+          },
+          body: JSON.stringify({
+            location: location
+          })
+        })
+
+        if (updateResponse.ok) {
+          // Location updated successfully
+          // Store location in localStorage for AvailabilityContext
+          localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
+          // Trigger location update event for AvailabilityContext
+          window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
+        }
+      } catch (locationError) {
+        // Location capture failed - non-fatal, continue with login
+        // User can still use the app, but location features won't work until they grant permission
+      }
+
       return { success: true }
     } catch (error) {
       // console.error('Login error:', error)
@@ -114,6 +153,45 @@ export function AuthProvider({ children }) {
         role: data.user.role || data.user.roleMode
       })
       setIsAuthenticated(true)
+
+      // Capture location and update profile after successful registration
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          })
+        })
+
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        }
+
+        // Update user profile with location
+        const updateResponse = await fetch(`${API_BASE_URL}/api/users/me`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${data.token}`
+          },
+          body: JSON.stringify({
+            location: location
+          })
+        })
+
+        if (updateResponse.ok) {
+          // Location updated successfully
+          // Store location in localStorage for AvailabilityContext
+          localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
+          // Trigger location update event for AvailabilityContext
+          window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
+        }
+      } catch (locationError) {
+        // Location capture failed - non-fatal, continue with registration
+        // User can still use the app, but location features won't work until they grant permission
+      }
 
       return { success: true }
     } catch (error) {

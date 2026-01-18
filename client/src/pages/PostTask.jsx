@@ -309,6 +309,43 @@ function PostTask() {
 
       const userId = user.id
 
+      // CAPTURE CURRENT LOCATION FOR PRECISION: Get fresh location right before task creation
+      let finalLocation = {
+        coordinates: locationData.coordinates || [77.5946, 12.9716], // Fallback to default
+        area: locationData.area || formData.location?.split(',')[0]?.trim() || 'Unknown Area',
+        city: locationData.city || formData.location?.split(',')[1]?.trim() || 'Unknown City'
+      }
+
+      // Try to get current location for more precision
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000, // Shorter timeout for faster task creation
+            maximumAge: 0 // Always get fresh location
+          })
+        })
+
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+
+        // Reverse geocode to get area and city
+        try {
+          const { area, city } = await reverseGeocode(lat, lng)
+          finalLocation = {
+            coordinates: [lng, lat], // GeoJSON format: [longitude, latitude]
+            area: area || finalLocation.area,
+            city: city || finalLocation.city
+          }
+        } catch (geocodeError) {
+          // If reverse geocoding fails, use coordinates but keep existing area/city if available
+          finalLocation.coordinates = [lng, lat]
+        }
+      } catch (locationError) {
+        // Location capture failed - use existing location data
+        // This is non-fatal, continue with task creation using map-selected location
+      }
+
       // Combine date and time into scheduledAt
       let scheduledAt = null
       if (formData.date && formData.time) {
@@ -316,7 +353,7 @@ function PostTask() {
         scheduledAt = new Date(dateTimeString).toISOString()
       }
 
-      // Prepare task data
+      // Prepare task data with fresh location
       const taskData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -324,11 +361,7 @@ function PostTask() {
         budget: budgetAmount,
         scheduledAt: scheduledAt,
         expectedDuration: formData.hours ? parseInt(formData.hours) : null, // Store hours as number
-        location: {
-          coordinates: locationData.coordinates || [77.5946, 12.9716], // Use captured coordinates or fallback
-          area: locationData.area || formData.location?.split(',')[0]?.trim() || 'Unknown Area',
-          city: locationData.city || formData.location?.split(',')[1]?.trim() || 'Unknown City'
-        },
+        location: finalLocation,
         postedBy: userId
       }
 

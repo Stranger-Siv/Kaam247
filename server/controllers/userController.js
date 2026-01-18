@@ -115,7 +115,7 @@ const createUser = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.userId // From auth middleware
-    const { name, phone, profilePhoto } = req.body
+    const { name, phone, profilePhoto, location } = req.body
 
     // Validate userId
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -166,6 +166,45 @@ const updateProfile = async (req, res) => {
 
     if (profilePhoto !== undefined) {
       updateData.profilePhoto = profilePhoto || null
+    }
+
+    // Handle location update
+    if (location !== undefined) {
+      if (location === null) {
+        // Clear location
+        updateData.location = null
+      } else if (location.lat !== undefined && location.lng !== undefined) {
+        // Validate coordinates
+        const lat = Number(location.lat)
+        const lng = Number(location.lng)
+
+        if (isNaN(lat) || isNaN(lng)) {
+          return res.status(400).json({
+            error: 'Invalid coordinates',
+            message: 'Latitude and longitude must be numbers'
+          })
+        }
+
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          return res.status(400).json({
+            error: 'Invalid coordinates',
+            message: 'Latitude must be between -90 and 90, longitude between -180 and 180'
+          })
+        }
+
+        // Update location (MongoDB GeoJSON format: [longitude, latitude])
+        updateData.location = {
+          type: 'Point',
+          coordinates: [lng, lat], // MongoDB uses [longitude, latitude]
+          area: location.area || user.location?.area || null,
+          city: location.city || user.location?.city || null
+        }
+      } else {
+        return res.status(400).json({
+          error: 'Invalid location',
+          message: 'Location must have lat and lng properties'
+        })
+      }
     }
 
     // Update user
