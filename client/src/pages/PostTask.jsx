@@ -409,9 +409,9 @@ function PostTask() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto w-full overflow-x-hidden">
       {/* Progress Indicator - Sticky on Mobile */}
-      <div className="mb-6 sm:mb-8 sticky top-16 sm:top-0 z-40 bg-white py-4 sm:py-0 border-b border-gray-200 sm:border-0 -mx-4 sm:mx-0 px-4 sm:px-0">
+      <div className="mb-4 sm:mb-6 sticky top-16 sm:top-0 z-40 bg-white py-3 sm:py-0 border-b border-gray-200 sm:border-0 px-3 sm:px-0">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-gray-700">Step {step} of 3</span>
           <span className="text-sm text-gray-500">{Math.round((step / 3) * 100)}%</span>
@@ -427,14 +427,14 @@ function PostTask() {
       <form onSubmit={handleSubmit}>
         {/* Error Display */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-4 sm:mb-6 p-4 bg-red-50 border border-red-200 rounded-lg mx-3 sm:mx-0">
             <p className="text-sm text-red-700 font-medium">{error}</p>
           </div>
         )}
 
         {/* Step 1: Basic Details */}
         {step === 1 && (
-          <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border border-gray-100 mx-3 sm:mx-0">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">What task do you need help with?</h2>
             
             <div className="space-y-6">
@@ -526,7 +526,7 @@ function PostTask() {
 
         {/* Step 2: Location & Time */}
         {step === 2 && (
-          <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border border-gray-100 mx-3 sm:mx-0">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">Where and when?</h2>
             
             <div className="space-y-6">
@@ -699,7 +699,7 @@ function PostTask() {
 
         {/* Step 3: Budget */}
         {step === 3 && (
-          <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border border-gray-100 mx-3 sm:mx-0">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">Set your budget</h2>
             
             <div className="space-y-6">

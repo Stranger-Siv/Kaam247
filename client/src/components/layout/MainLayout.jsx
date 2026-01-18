@@ -23,7 +23,7 @@ function MainLayout() {
         <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* Header */}
             <header className="bg-white shadow-sm sticky top-0 z-[1000]">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo + Brand Name */}
                         <Link to="/dashboard" className="flex items-center h-full gap-2 sm:gap-2.5">
@@ -118,8 +118,8 @@ function MainLayout() {
                 </div>
             </header>
 
-            {/* Main Content */}
-            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-20 md:pb-6 overflow-x-hidden">
+            {/* Main Content - No padding on mobile, padding on larger screens */}
+            <main className="flex-1 max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-4 sm:py-6 w-full pb-20 md:pb-6 overflow-x-hidden">
                 <div className="w-full max-w-full overflow-x-hidden">
                     <Outlet />
                 </div>

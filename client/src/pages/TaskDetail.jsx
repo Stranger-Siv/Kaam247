@@ -933,7 +933,7 @@ function TaskDetail() {
   // Show loading state
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto w-full px-3 sm:px-6 overflow-x-hidden">
         <button
           onClick={handleBack}
           className="mb-6 sm:mb-8 flex items-center text-gray-600 hover:text-gray-900 transition-colors py-2"
@@ -964,7 +964,7 @@ function TaskDetail() {
   // Show error state
   if (error || !task) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto w-full px-3 sm:px-6 overflow-x-hidden">
         <button
           onClick={handleBack}
           className="mb-6 sm:mb-8 flex items-center text-gray-600 hover:text-gray-900 transition-colors py-2"
