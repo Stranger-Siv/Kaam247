@@ -144,10 +144,10 @@ function AdminReports() {
   }
 
   return (
-    <div>
+    <div className="w-full overflow-x-hidden">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">Reports</h1>
-        <p className="text-gray-600">Review and manage user reports</p>
+        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2 break-words">Reports</h1>
+        <p className="text-gray-600 break-words">Review and manage user reports</p>
       </div>
 
       {/* Filters */}
@@ -203,67 +203,67 @@ function AdminReports() {
         </div>
       ) : (
         <>
-          <div className="space-y-4">
+          <div className="space-y-4 w-full">
             {reports.map((report) => (
               <div
                 key={report._id}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow active:bg-gray-50"
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow active:bg-gray-50 w-full overflow-hidden"
               >
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  <div className="flex-1 space-y-4">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 w-full">
+                  <div className="flex-1 space-y-4 min-w-0 w-full">
                     {/* Header */}
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(report.status)}`}>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border flex-shrink-0 ${getStatusBadge(report.status)}`}>
                         {report.status === 'open' ? 'Open' : 'Resolved'}
                       </span>
-                      <span className="text-xs text-gray-500">{formatDate(report.createdAt)}</span>
+                      <span className="text-xs text-gray-500 whitespace-nowrap">{formatDate(report.createdAt)}</span>
                       {report.reporter && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 break-words">
                           Reported by: {report.reporter.name || report.reporter.email}
                         </span>
                       )}
                     </div>
 
                     {/* Content */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                       {report.reportedUser && (
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Reported User</p>
                           <Link
                             to={`/admin/users/${report.reportedUser._id}`}
-                            className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                            className="text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors break-words block"
                           >
                             {report.reportedUser.name || 'N/A'}
                           </Link>
-                          <p className="text-xs text-gray-500 mt-0.5">{report.reportedUser.email}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 break-words">{report.reportedUser.email}</p>
                         </div>
                       )}
                       
                       {report.reportedTask && (
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Reported Task</p>
                           <Link
                             to={`/admin/tasks/${report.reportedTask._id}`}
-                            className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                            className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors break-words block"
                           >
                             {report.reportedTask.title}
                           </Link>
-                          <p className="text-xs text-gray-500 mt-0.5">Status: {report.reportedTask.status}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 break-words">Status: {report.reportedTask.status}</p>
                         </div>
                       )}
                     </div>
 
                     {/* Reason */}
-                    <div>
+                    <div className="w-full min-w-0">
                       <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Reason</p>
-                      <p className="text-sm font-semibold text-gray-900">{report.reason}</p>
+                      <p className="text-sm font-semibold text-gray-900 break-words">{report.reason}</p>
                     </div>
 
                     {/* Description */}
                     {report.description && (
-                      <div>
+                      <div className="w-full min-w-0">
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Description</p>
-                        <p className="text-sm text-gray-700">{report.description}</p>
+                        <p className="text-sm text-gray-700 break-words">{report.description}</p>
                       </div>
                     )}
 

@@ -126,10 +126,10 @@ function AdminOverview() {
   ]
 
   return (
-    <div>
+    <div className="w-full overflow-x-hidden">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">Admin Overview</h1>
-        <p className="text-gray-600">Marketplace statistics and health metrics</p>
+        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2 break-words">Admin Overview</h1>
+        <p className="text-gray-600 break-words">Marketplace statistics and health metrics</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">

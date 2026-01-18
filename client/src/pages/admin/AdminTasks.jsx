@@ -119,10 +119,10 @@ function AdminTasks() {
   }
 
   return (
-    <div>
+    <div className="w-full overflow-x-hidden">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">Tasks</h1>
-        <p className="text-gray-600">Monitor and manage all tasks</p>
+        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2 break-words">Tasks</h1>
+        <p className="text-gray-600 break-words">Monitor and manage all tasks</p>
       </div>
 
       {/* Filters */}
@@ -188,40 +188,40 @@ function AdminTasks() {
       ) : (
         <>
           {/* Mobile: Card Layout */}
-          <div className="md:hidden space-y-3">
+          <div className="md:hidden space-y-3 w-full">
             {tasks.map((task) => (
               <Link
                 key={task._id}
                 to={`/admin/tasks/${task._id}`}
-                className="block bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow active:bg-gray-50"
+                className="block bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow active:bg-gray-50 w-full overflow-hidden"
               >
-                <div className="flex items-start justify-between mb-3">
+                <div className="flex items-start justify-between mb-3 gap-2 w-full min-w-0">
                   <div className="flex-1 min-w-0 pr-2">
-                    <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-2">
+                    <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-2 break-words">
                       {task.title}
                     </h3>
-                    <p className="text-sm text-gray-600">{task.category}</p>
+                    <p className="text-sm text-gray-600 break-words">{task.category}</p>
                   </div>
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border flex-shrink-0 ${getStatusBadge(task.status)}`}>
                     {task.status}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
-                  <div>
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100 w-full">
+                  <div className="min-w-0">
                     <p className="text-xs text-gray-500 mb-0.5">Budget</p>
-                    <p className="text-sm font-semibold text-gray-900">₹{task.budget}</p>
+                    <p className="text-sm font-semibold text-gray-900 break-words">₹{task.budget}</p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-gray-500 mb-0.5">City</p>
-                    <p className="text-sm font-medium text-gray-900">{task.location?.city || 'N/A'}</p>
+                    <p className="text-sm font-medium text-gray-900 break-words">{task.location?.city || 'N/A'}</p>
                   </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <div>
+                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between gap-2 w-full">
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs text-gray-500 mb-0.5">Posted by</p>
-                    <p className="text-sm font-medium text-gray-900">{task.postedBy?.name || 'N/A'}</p>
+                    <p className="text-sm font-medium text-gray-900 break-words">{task.postedBy?.name || 'N/A'}</p>
                   </div>
-                  <p className="text-xs text-gray-500">{formatDate(task.createdAt)}</p>
+                  <p className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">{formatDate(task.createdAt)}</p>
                 </div>
               </Link>
             ))}
