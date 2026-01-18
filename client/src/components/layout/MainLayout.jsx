@@ -14,6 +14,11 @@ function MainLayout() {
     const { logout } = useAuth()
     const { userMode } = useUserMode()
 
+    const handleLogout = () => {
+        logout()
+        navigate('/')
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* Header */}
