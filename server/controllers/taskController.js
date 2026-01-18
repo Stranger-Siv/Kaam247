@@ -521,9 +521,10 @@ const getAvailableTasks = async (req, res) => {
     const workerLng = req.query.lng ? parseFloat(req.query.lng) : null
     const radiusKm = req.query.radius ? parseFloat(req.query.radius) : 5
 
-    // Fetch tasks with status "SEARCHING" and not hidden
+    // Fetch tasks with status "OPEN" or "SEARCHING" and not hidden
+    // Both statuses indicate tasks available for workers
     let tasks = await Task.find({ 
-      status: 'SEARCHING',
+      status: { $in: ['OPEN', 'SEARCHING'] }, // Include both OPEN and SEARCHING tasks
       isHidden: { $ne: true } // Exclude hidden tasks
     })
       .lean()
