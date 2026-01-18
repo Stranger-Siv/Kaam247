@@ -5,6 +5,7 @@ import { AvailabilityProvider } from './context/AvailabilityContext'
 import { SocketProvider } from './context/SocketContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { CancellationProvider } from './context/CancellationContext'
+import ColdStartChecker from './components/ColdStartChecker'
 import PublicLayout from './components/layout/PublicLayout'
 import MainLayout from './components/layout/MainLayout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -30,7 +31,8 @@ import AdminReports from './pages/admin/AdminReports'
 
 function App() {
   return (
-    <AuthProvider>
+    <ColdStartChecker>
+      <AuthProvider>
       <UserModeProvider>
         <AvailabilityProvider>
           <NotificationProvider>
@@ -125,6 +127,7 @@ function App() {
         </AvailabilityProvider>
       </UserModeProvider>
     </AuthProvider>
+    </ColdStartChecker>
   )
 }
 

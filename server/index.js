@@ -18,7 +18,23 @@ const PORT = process.env.PORT || 3001
 initializeSocket(server)
 
 // Middleware
-app.use(cors())
+// CORS configuration - allow Render frontend and local development
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true)
+
+    // Allow Render frontend
+    if (origin.includes('kaam247.onrender.com') || origin.includes('localhost')) {
+      return callback(null, true)
+    }
+
+    // In production, you can add more specific origins here
+    callback(null, true) // For now, allow all origins (you can restrict this later)
+  },
+  credentials: true
+}
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // Request logging middleware (only log in development)

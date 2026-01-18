@@ -1,6 +1,6 @@
 const axios = require('axios')
 
-const BASE_URL = 'http://localhost:3001'
+const BASE_URL = 'https://kaam247.onrender.com'
 
 const testAcceptAPI = async () => {
   console.log('=== Testing Kaam247 Task Acceptance API ===\n')

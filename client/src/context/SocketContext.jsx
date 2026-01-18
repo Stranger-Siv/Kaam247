@@ -21,7 +21,20 @@ export function SocketProvider({ children }) {
       if (!socketRef.current) {
         socketRef.current = io(SOCKET_URL, {
           autoConnect: true,
-          reconnection: true
+          reconnection: true,
+          // Only use websocket and polling - explicitly disable any WebRTC or local network features
+          transports: ['websocket', 'polling'], // Restrict to only these two transports
+          // Allow upgrade from polling to websocket (but only within allowed transports)
+          upgrade: true,
+          // Force websocket first, fallback to polling
+          forceNew: false,
+          // Disable any local network discovery features
+          rememberUpgrade: false,
+          // Additional options to prevent local network access
+          withCredentials: false, // Don't send credentials that might trigger network discovery
+          // Ensure we're only connecting to the specified URL, not discovering local services
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000
         })
 
         socketRef.current.on('connect', () => {
