@@ -1,15 +1,23 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useUserMode } from '../context/UserModeContext'
 import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../config/env'
+import ModeToggle from '../components/ModeToggle'
 
 function Profile() {
     const [isEditing, setIsEditing] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
     const [saveError, setSaveError] = useState(null)
     const { userMode } = useUserMode()
-    const { user } = useAuth()
+    const { user, logout } = useAuth()
+    const navigate = useNavigate()
+
+    const handleLogout = () => {
+        logout()
+        navigate('/')
+    }
     const [profile, setProfile] = useState(null)
     const [stats, setStats] = useState({
         tasksCompleted: 0,
@@ -426,6 +434,19 @@ function Profile() {
                             <p className="text-sm text-red-700">{saveError}</p>
                         </div>
                     )}
+                </div>
+
+                {/* Mobile Only: Mode Toggle & Logout */}
+                <div className="md:hidden mt-8 pt-8 border-t border-gray-200 space-y-4">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                        <ModeToggle isMobile={true} />
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="w-full px-4 py-3 bg-red-50 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-100 active:bg-red-200 transition-colors border border-red-200 touch-manipulation"
+                    >
+                        Logout
+                    </button>
                 </div>
             </div>
         </div>

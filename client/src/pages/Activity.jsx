@@ -159,25 +159,26 @@ function Activity() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">Activity History</h1>
-        <p className="text-gray-600">View all your tasks and activities</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 mb-1 sm:mb-2">Activity History</h1>
+        <p className="text-sm sm:text-base text-gray-600">View all your tasks and activities</p>
       </div>
 
-      {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-6">
-        <div className="flex overflow-x-auto">
+      {/* Tabs - Mobile Scrollable */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-4 sm:mb-6 overflow-hidden">
+        <div className="flex overflow-x-auto scrollbar-hide -mx-1 px-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-4 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              className={`px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-colors min-w-fit touch-manipulation ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              {tab.label} ({tab.count})
+              <span className="block sm:inline">{tab.label}</span>
+              <span className="ml-1 sm:ml-2 text-xs">({tab.count})</span>
             </button>
           ))}
         </div>
@@ -193,31 +194,31 @@ function Activity() {
           <p className="text-sm text-gray-500">Your {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} will appear here</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 sm:space-y-4">
           {currentTasks.map((task) => (
             <Link
               key={task.id}
               to={`/tasks/${task.id}`}
-              className="group block bg-white rounded-xl shadow-sm border-2 border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 p-6"
+              className="group block bg-white rounded-xl shadow-sm border-2 border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 p-4 sm:p-6 active:bg-gray-50"
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-3 sm:gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
                       {task.title}
                     </h3>
                     <StatusBadge status={task.status} />
-                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md bg-blue-50 text-blue-700">
+                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md bg-blue-50 text-blue-700 flex-shrink-0">
                       {task.role}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-sm mb-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm mb-2 sm:mb-3">
                     <span className="inline-flex items-center px-2.5 py-1 bg-gray-50 text-gray-700 rounded-md text-xs font-medium">
                       {task.category}
                     </span>
                     <span className="font-semibold text-gray-900">₹{task.budget}</span>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-500">
                     <span>{formatDate(task.date)}</span>
                     {task.role === 'Worker' && task.rating && (
                       <span className="flex items-center gap-1">

@@ -395,15 +395,15 @@ function Tasks() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6 sm:mb-8 border border-gray-100">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-100">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           {/* Category Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[44px] touch-manipulation"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -417,7 +417,7 @@ function Tasks() {
             <select
               value={selectedDistance}
               onChange={(e) => setSelectedDistance(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[44px] touch-manipulation"
             >
               {distances.map((dist) => (
                 <option key={dist} value={dist}>{dist}</option>
@@ -431,7 +431,7 @@ function Tasks() {
             <select
               value={selectedBudget}
               onChange={(e) => setSelectedBudget(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[44px] touch-manipulation"
             >
               {budgets.map((budget) => (
                 <option key={budget} value={budget}>{budget}</option>
@@ -443,39 +443,42 @@ function Tasks() {
 
       {/* Tasks List */}
       {filteredTasks.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-5">
           {filteredTasks.map((task) => (
             <Link
               key={task.id}
               to={`/tasks/${task.id}`}
-              className={`group bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 border-2 ${
+              className={`group bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 border-2 active:bg-gray-50 ${
                 task.isNew || newTaskHighlightRef.current.has(task.id)
                   ? 'border-blue-300 bg-blue-50/50'
                   : 'border-gray-100 hover:border-gray-200'
               }`}
             >
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex-1 pr-3 group-hover:text-blue-600 transition-colors">
+              <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex-1 pr-2 group-hover:text-blue-600 transition-colors line-clamp-2">
                   {task.title}
                 </h3>
-                <span className="inline-flex items-center px-2.5 py-1 bg-gray-50 text-gray-700 text-xs font-medium rounded-md whitespace-nowrap">
+                <span className="inline-flex items-center px-2 py-1 bg-gray-50 text-gray-700 text-xs font-medium rounded-md whitespace-nowrap flex-shrink-0">
                   {task.category}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+              <p className="text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 leading-relaxed">
                 {task.description}
               </p>
-              <div className="space-y-2.5 mb-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="space-y-2 sm:space-y-2.5 mb-3 sm:mb-4">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
                   <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="truncate">{task.distance}</span>
-                  <span className="text-gray-300">•</span>
+                  {task.distance && task.distance !== 'Distance unavailable' && (
+                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                      {task.distance}
+                    </span>
+                  )}
                   <span className="truncate">{task.location}</span>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                   <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
                     <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -490,9 +493,9 @@ function Tasks() {
                   </div>
                 </div>
               </div>
-              <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+              <div className="pt-3 sm:pt-4 border-t border-gray-100 flex items-center justify-between">
                 <StatusBadge status={task.status} />
-                <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
