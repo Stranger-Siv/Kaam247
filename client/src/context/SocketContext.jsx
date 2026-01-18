@@ -4,10 +4,18 @@ import { useAuth } from './AuthContext'
 import { useUserMode } from './UserModeContext'
 import { useAvailability } from './AvailabilityContext'
 import { useNotification } from './NotificationContext'
-import { SOCKET_URL } from '../config/env'
+import { SOCKET_URL, SOCKET_ENABLED } from '../config/env'
 
 const SocketContext = createContext()
 
+/**
+ * SocketProvider - Provides Socket.IO connection (currently DISABLED)
+ * 
+ * TODO: Enable Socket.IO when backend supports it
+ * TODO: Consider using Push Notifications API for PWA instead of Socket.IO
+ * 
+ * The app works fully with REST APIs only. Socket.IO is optional and disabled by default.
+ */
 export function SocketProvider({ children }) {
   const { isAuthenticated, user } = useAuth()
   const { userMode } = useUserMode()
@@ -16,6 +24,12 @@ export function SocketProvider({ children }) {
   const socketRef = useRef(null)
 
   useEffect(() => {
+    // Socket.IO is DISABLED - skip all socket initialization
+    // App works fully with REST APIs only
+    if (!SOCKET_ENABLED) {
+      return
+    }
+
     // Connect socket when: logged in AND (worker mode OR poster mode)
     // Socket is OPTIONAL - app works without it using REST APIs
     if (isAuthenticated && (userMode === 'worker' || userMode === 'poster')) {
@@ -96,23 +110,15 @@ export function SocketProvider({ children }) {
 
         socketRef.current.on('connect_error', (error) => {
           // Connection error handled silently - app continues without socket
-          // Don't spam console with connection errors
-          if (socketRef.current?.reconnecting) {
-            // Only log first connection error, not every reconnection attempt
-            return
-          }
+          // Suppress all connection errors to prevent console spam
+          // Socket is optional - app works without it
         })
         
-        // Prevent infinite reconnection spam
-        let reconnectCount = 0
+        // Prevent infinite reconnection spam - disable after first failure
         socketRef.current.on('reconnect_attempt', () => {
-          reconnectCount++
-          if (reconnectCount > 3) {
-            // Stop reconnecting after 3 attempts
-            socketRef.current?.disconnect()
-            socketRef.current = null
-            console.warn('Socket.IO: Stopped reconnecting after multiple failures. App continues with REST APIs.')
-          }
+          // Stop reconnecting immediately - socket is optional
+          socketRef.current?.disconnect()
+          socketRef.current = null
         })
       } else if (!socketRef.current.connected) {
         // Reconnect if disconnected (but don't crash if it fails)

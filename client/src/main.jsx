@@ -21,31 +21,56 @@ L.Marker.prototype.options.icon = DefaultIcon
 
 // Global error handler to suppress third-party errors (like browser extensions)
 window.addEventListener('error', (event) => {
-  // Suppress checkout popup errors from browser extensions
   const errorMessage = event.message || event.error?.message || ''
-  if (errorMessage.includes('checkout popup config') || 
-      errorMessage.includes('checkout') && errorMessage.includes('popup')) {
-    event.preventDefault()
-    event.stopPropagation()
-    return false
-  }
-  return true
-}, true) // Use capture phase to catch errors early
-
-// Suppress unhandled promise rejections from third-party scripts
-window.addEventListener('unhandledrejection', (event) => {
+  
   // Suppress checkout popup errors from browser extensions
-  const errorMessage = event.reason?.message || event.reason?.toString() || ''
   if (errorMessage.includes('checkout popup config') || 
       (errorMessage.includes('checkout') && errorMessage.includes('popup'))) {
     event.preventDefault()
     event.stopPropagation()
     return false
   }
+  
+  // Suppress WebSocket/Socket.IO connection errors (socket is disabled)
+  if (errorMessage.includes('WebSocket') || 
+      errorMessage.includes('socket.io') || 
+      errorMessage.includes('wss://') ||
+      errorMessage.includes('ws://')) {
+    event.preventDefault()
+    event.stopPropagation()
+    return false
+  }
+  
   return true
 }, true) // Use capture phase to catch errors early
 
-// Additional console error suppression for checkout-related errors and Workbox
+// Suppress unhandled promise rejections from third-party scripts
+window.addEventListener('unhandledrejection', (event) => {
+  const errorMessage = event.reason?.message || event.reason?.toString() || ''
+  
+  // Suppress checkout popup errors from browser extensions
+  if (errorMessage.includes('checkout popup config') || 
+      (errorMessage.includes('checkout') && errorMessage.includes('popup'))) {
+    event.preventDefault()
+    event.stopPropagation()
+    return false
+  }
+  
+  // Suppress WebSocket/Socket.IO connection errors (socket is disabled)
+  if (errorMessage.includes('WebSocket') || 
+      errorMessage.includes('socket.io') || 
+      errorMessage.includes('wss://') ||
+      errorMessage.includes('ws://') ||
+      errorMessage.includes('ERR_NAME_NOT_RESOLVED')) {
+    event.preventDefault()
+    event.stopPropagation()
+    return false
+  }
+  
+  return true
+}, true) // Use capture phase to catch errors early
+
+// Additional console error suppression for checkout-related errors, Workbox, and Socket.IO
 const originalConsoleError = console.error
 console.error = function(...args) {
   const errorString = args.join(' ')
@@ -53,6 +78,15 @@ console.error = function(...args) {
   // Suppress checkout popup errors from browser extensions
   if (errorString.includes('checkout popup config') || 
       (errorString.includes('checkout') && errorString.includes('popup'))) {
+    return
+  }
+  
+  // Suppress WebSocket/Socket.IO connection errors (socket is disabled)
+  if (errorString.includes('WebSocket') || 
+      errorString.includes('socket.io') || 
+      errorString.includes('wss://') ||
+      errorString.includes('ws://') ||
+      errorString.includes('ERR_NAME_NOT_RESOLVED')) {
     return
   }
   

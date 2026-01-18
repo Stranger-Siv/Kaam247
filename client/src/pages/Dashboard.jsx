@@ -442,9 +442,17 @@ function Dashboard() {
             return
         }
 
+        // Socket is optional - use polling fallback if socket unavailable
         const socket = getSocket()
         if (!socket || !socket.connected) {
-            return
+            // Socket not available - use polling instead
+            // Poll for task updates every 10 seconds
+            const pollInterval = setInterval(() => {
+                if (userMode === 'poster' && user?.id) {
+                    fetchPostedTasks()
+                }
+            }, 10000)
+            return () => clearInterval(pollInterval)
         }
 
         const handleTaskAccepted = () => {
@@ -454,10 +462,26 @@ function Dashboard() {
             }
         }
 
-        socket.on('task_accepted', handleTaskAccepted)
+        try {
+            socket.on('task_accepted', handleTaskAccepted)
+        } catch (error) {
+            // Socket error - fallback to polling
+            const pollInterval = setInterval(() => {
+                if (userMode === 'poster' && user?.id) {
+                    fetchPostedTasks()
+                }
+            }, 10000)
+            return () => clearInterval(pollInterval)
+        }
 
         return () => {
-            socket.off('task_accepted', handleTaskAccepted)
+            if (socket) {
+                try {
+                    socket.off('task_accepted', handleTaskAccepted)
+                } catch (error) {
+                    // Ignore cleanup errors
+                }
+            }
         }
     }, [userMode, user?.id, getSocket]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -696,6 +720,7 @@ function Dashboard() {
     }, [userMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Listen for new tasks via Socket.IO (only when online and in worker mode)
+    // Socket is optional - if unavailable, tasks are fetched via REST API polling
     useEffect(() => {
         if (!isOnline || userMode !== 'worker') {
             return
@@ -703,6 +728,8 @@ function Dashboard() {
 
         const socket = getSocket()
         if (!socket || !socket.connected) {
+            // Socket not available - tasks are already fetched via REST API in fetchAvailableTasks()
+            // No need for polling fallback here as fetchAvailableTasks() handles it
             return
         }
 
