@@ -1,0 +1,172 @@
+From baa735bbcd3b81cc42edb93067f6755c5b88cf60 Mon Sep 17 00:00:00 2001
+From: Stranger-Siv <programmersiv21@gmail.com>
+Date: Mon, 19 Jan 2026 01:10:36 +0530
+Subject: [PATCH] changes
+
+---
+ GIT_CONNECTION_FIX.md | 153 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 153 insertions(+)
+ create mode 100644 GIT_CONNECTION_FIX.md
+
+diff --git a/GIT_CONNECTION_FIX.md b/GIT_CONNECTION_FIX.md
+new file mode 100644
+index 0000000..c8284f3
+--- /dev/null
++++ b/GIT_CONNECTION_FIX.md
+@@ -0,0 +1,153 @@
++# Git Connection Fix - GitHub HTTPS Issue
++
++## Problem
++```
++fatal: unable to access 'https://github.com/Stranger-Siv/Kaam247.git/': 
++Failed to connect to github.com port 443 after 83 ms: Couldn't connect to server
++```
++
++## Diagnosis
++- ✅ GitHub is reachable via ping (network connectivity OK)
++- ❌ HTTPS port 443 connection fails (likely firewall/proxy/SSL issue)
++
++## Solutions
++
++### Solution 1: Use SSH Instead of HTTPS (Recommended)
++
++**Step 1: Check if you have SSH keys**
++```bash
++ls -la ~/.ssh/id_*.pub
++```
++
++**Step 2: Generate SSH key if needed**
++```bash
++ssh-keygen -t ed25519 -C "your_email@example.com"
++```
++
++**Step 3: Add SSH key to GitHub**
++```bash
++cat ~/.ssh/id_ed25519.pub
++# Copy output and add to GitHub: Settings > SSH and GPG keys > New SSH key
++```
++
++**Step 4: Change remote URL to SSH**
++```bash
++cd /Users/siv/Kaam247
++git remote set-url origin git@github.com:Stranger-Siv/Kaam247.git
++git push
++```
++
++### Solution 2: Fix HTTPS Connection
++
++**Option A: Check Proxy Settings**
++```bash
++# Check if proxy is set
++git config --global --get http.proxy
++git config --global --get https.proxy
++
++# If proxy is set incorrectly, unset it:
++git config --global --unset http.proxy
++git config --global --unset https.proxy
++```
++
++**Option B: Use GitHub CLI**
++```bash
++# Install GitHub CLI if not installed
++brew install gh
++
++# Authenticate
++gh auth login
++
++# Then try push again
++git push
++```
++
++**Option C: Increase Git Timeout**
++```bash
++git config --global http.timeout 300
++git config --global http.postBuffer 524288000
++```
++
++**Option D: Use Different Port**
++```bash
++# Try using port 443 explicitly
++git config --global url."https://github.com:443/".insteadOf "https://github.com/"
++```
++
++### Solution 3: Check Network/Firewall
++
++1. **Check if you're on VPN** - Try disconnecting VPN
++2. **Check firewall settings** - Allow Git/HTTPS connections
++3. **Try different network** - Mobile hotspot, different WiFi
++4. **Check corporate proxy** - If on corporate network, configure proxy
++
++### Solution 4: Use GitHub Desktop
++
++If command line fails:
++1. Install GitHub Desktop
++2. Open repository
++3. Push via GUI
++
++## Quick Test Commands
++
++```bash
++# Test HTTPS connection
++curl -I https://github.com
++
++# Test SSH connection
++ssh -T git@github.com
++
++# Test Git connection
++git ls-remote https://github.com/Stranger-Siv/Kaam247.git
++```
++
++## Current Status
++
++- **Branch**: main
++- **Commits ahead**: 1 commit ready to push
++- **Working tree**: Clean
++- **Remote**: git@github.com:Stranger-Siv/Kaam247.git (SSH)
++- **Issue**: Both port 22 and 443 are blocked (network/firewall issue)
++
++## Immediate Solutions
++
++### Option 1: Try Different Network
++```bash
++# Switch to mobile hotspot or different WiFi
++# Then try:
++git push
++```
++
++### Option 2: Use GitHub Desktop
++1. Download GitHub Desktop: https://desktop.github.com/
++2. Open repository
++3. Push via GUI (may work even if CLI doesn't)
++
++### Option 3: Wait and Retry
++Network issues are often temporary. Try again in a few minutes.
++
++### Option 4: Check VPN/Firewall
++- Disconnect VPN if connected
++- Check firewall settings
++- Contact network admin if on corporate network
++
++## Recommended Next Steps
++
++1. **Try SSH first** (most reliable):
++   ```bash
++   git remote set-url origin git@github.com:Stranger-Siv/Kaam247.git
++   git push
++   ```
++
++2. **If SSH doesn't work**, try:
++   ```bash
++   git config --global http.timeout 300
++   git push
++   ```
++
++3. **If still failing**, check network/VPN/firewall settings
++
++---
++
++**Note**: Your changes are safe locally. Once connection is fixed, you can push.
++
+-- 
+2.50.1 (Apple Git-155)
+
