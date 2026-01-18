@@ -6,10 +6,40 @@ const { calculateDistance } = require('../utils/distance')
 let io = null
 
 const initializeSocket = (server) => {
+    // Socket.IO CORS configuration - match Express CORS
+    const allowedSocketOrigins = [
+        'https://kaam247.netlify.app',           // Netlify frontend (production)
+        'https://kaam247.onrender.com',           // Render frontend (if deployed there)
+        'http://localhost:5173',                  // Vite dev server
+        'http://localhost:3000',                  // Alternative dev port
+        'http://localhost:3001',                  // Local backend (for testing)
+        'http://127.0.0.1:5173',                  // Alternative localhost format
+        'http://127.0.0.1:3000',                  // Alternative localhost format
+    ]
+
     io = new Server(server, {
         cors: {
-            origin: '*',
-            methods: ['GET', 'POST']
+            origin: function (origin, callback) {
+                // Allow requests with no origin
+                if (!origin) return callback(null, true)
+                
+                // Check if origin is allowed
+                const isAllowed = allowedSocketOrigins.some(allowedOrigin => {
+                    if (origin === allowedOrigin) return true
+                    if (allowedOrigin.includes('localhost') && origin.includes('localhost')) return true
+                    if (allowedOrigin.includes('127.0.0.1') && origin.includes('127.0.0.1')) return true
+                    return false
+                })
+
+                if (isAllowed || process.env.NODE_ENV !== 'production') {
+                    callback(null, true)
+                } else {
+                    console.log('Socket.IO CORS: Blocked origin:', origin)
+                    callback(new Error('Not allowed by CORS'))
+                }
+            },
+            methods: ['GET', 'POST'],
+            credentials: true
         }
     })
 

@@ -18,21 +18,50 @@ const PORT = process.env.PORT || 3001
 initializeSocket(server)
 
 // Middleware
-// CORS configuration - allow Render frontend and local development
+// CORS configuration - allow Netlify frontend, Render frontend, and local development
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true)
 
-    // Allow Render frontend
-    if (origin.includes('kaam247.onrender.com') || origin.includes('localhost')) {
-      return callback(null, true)
-    }
+    // List of allowed origins
+    const allowedOrigins = [
+      'https://kaam247.netlify.app',           // Netlify frontend (production)
+      'https://kaam247.onrender.com',           // Render frontend (if deployed there)
+      'http://localhost:5173',                  // Vite dev server
+      'http://localhost:3000',                  // Alternative dev port
+      'http://localhost:3001',                 // Local backend (for testing)
+      'http://127.0.0.1:5173',                  // Alternative localhost format
+      'http://127.0.0.1:3000',                  // Alternative localhost format
+    ]
 
-    // In production, you can add more specific origins here
-    callback(null, true) // For now, allow all origins (you can restrict this later)
+    // Check if origin is in allowed list
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      // Exact match
+      if (origin === allowedOrigin) return true
+      // For localhost, also check if it starts with http://localhost or http://127.0.0.1
+      if (allowedOrigin.includes('localhost') && origin.includes('localhost')) return true
+      if (allowedOrigin.includes('127.0.0.1') && origin.includes('127.0.0.1')) return true
+      return false
+    })
+
+    if (isAllowed) {
+      callback(null, true)
+    } else {
+      // Log blocked origin for debugging
+      console.log('CORS: Blocked origin:', origin)
+      // In development, allow all origins for easier testing
+      if (process.env.NODE_ENV !== 'production') {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Authorization']
 }
 app.use(cors(corsOptions))
 app.use(express.json())
