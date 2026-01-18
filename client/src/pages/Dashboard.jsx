@@ -710,7 +710,7 @@ function Dashboard() {
     }, [isOnline, userMode, getSocket])
 
     return (
-        <div className="max-w-7xl mx-auto w-full px-3 sm:px-6 overflow-x-hidden">
+        <div className="max-w-7xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
             {userMode === 'worker' ? (
                 <>
                     {/* Location Requirement Block */}

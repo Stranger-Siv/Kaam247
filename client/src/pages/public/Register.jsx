@@ -89,8 +89,8 @@ function Register() {
     }
 
     return (
-        <div className="max-w-md mx-auto px-3 sm:px-6 lg:px-8 py-12 sm:py-16 w-full overflow-x-hidden">
-            <div className="bg-white rounded-xl shadow-sm p-8 sm:p-10 border border-gray-100">
+        <div className="max-w-md mx-auto px-0 sm:px-6 lg:px-8 py-12 sm:py-16 w-full overflow-x-hidden">
+            <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-6 sm:p-8 lg:p-10 border-0 sm:border border-gray-100">
                 <div className="text-center mb-8">
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                         Create Account

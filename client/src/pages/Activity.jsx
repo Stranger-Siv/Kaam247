@@ -158,7 +158,7 @@ function Activity() {
   const currentTasks = getCurrentTasks()
 
   return (
-    <div className="max-w-6xl mx-auto w-full px-3 sm:px-6 overflow-x-hidden">
+    <div className="max-w-6xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
       <div className="mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 mb-1 sm:mb-2 break-words">Activity History</h1>
         <p className="text-sm sm:text-base text-gray-600 break-words">View all your tasks and activities</p>

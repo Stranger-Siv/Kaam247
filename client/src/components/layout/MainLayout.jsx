@@ -23,7 +23,7 @@ function MainLayout() {
         <div className="min-h-screen bg-gray-50 flex flex-col">
             {/* Header */}
             <header className="bg-white shadow-sm sticky top-0 z-[1000]">
-                <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo + Brand Name */}
                         <Link to="/dashboard" className="flex items-center h-full gap-2 sm:gap-2.5">

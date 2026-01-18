@@ -410,31 +410,33 @@ function PostTask() {
 
   return (
     <div className="max-w-3xl mx-auto w-full overflow-x-hidden">
-      {/* Progress Indicator - Sticky on Mobile */}
-      <div className="mb-4 sm:mb-6 sticky top-16 sm:top-0 z-40 bg-white py-3 sm:py-0 border-b border-gray-200 sm:border-0 px-3 sm:px-0">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Step {step} of 3</span>
-          <span className="text-sm text-gray-500">{Math.round((step / 3) * 100)}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-            style={{ width: `${(step / 3) * 100}%` }}
-          ></div>
+      {/* Progress Indicator - Sticky on Mobile - Edge to Edge */}
+      <div className="mb-4 sm:mb-6 sticky top-16 sm:top-0 z-40 bg-white py-3 sm:py-4 border-b border-gray-200 sm:border-0">
+        <div className="px-4 sm:px-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Step {step} of 3</span>
+            <span className="text-sm text-gray-500">{Math.round((step / 3) * 100)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+              style={{ width: `${(step / 3) * 100}%` }}
+            ></div>
+          </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
         {/* Error Display */}
         {error && (
-          <div className="mb-4 sm:mb-6 p-4 bg-red-50 border border-red-200 rounded-lg mx-3 sm:mx-0">
+          <div className="mb-4 sm:mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-700 font-medium">{error}</p>
           </div>
         )}
 
         {/* Step 1: Basic Details */}
         {step === 1 && (
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border border-gray-100 mx-3 sm:mx-0">
+          <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border-0 sm:border border-gray-100">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">What task do you need help with?</h2>
             
             <div className="space-y-6">
@@ -526,7 +528,7 @@ function PostTask() {
 
         {/* Step 2: Location & Time */}
         {step === 2 && (
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border border-gray-100 mx-3 sm:mx-0">
+          <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border-0 sm:border border-gray-100">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">Where and when?</h2>
             
             <div className="space-y-6">
@@ -699,7 +701,7 @@ function PostTask() {
 
         {/* Step 3: Budget */}
         {step === 3 && (
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border border-gray-100 mx-3 sm:mx-0">
+          <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border-0 sm:border border-gray-100">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">Set your budget</h2>
             
             <div className="space-y-6">
