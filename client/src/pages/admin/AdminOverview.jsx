@@ -60,9 +60,20 @@ function AdminOverview() {
 
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading stats...</p>
+      <div>
+        <div className="mb-6">
+          <div className="h-8 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
+          <div className="h-5 bg-gray-200 rounded w-64 animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="p-6 rounded-xl border-2 border-gray-200 bg-gray-50 animate-pulse">
+              <div className="h-8 bg-gray-200 rounded mb-2"></div>
+              <div className="h-10 bg-gray-200 rounded mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -121,17 +132,17 @@ function AdminOverview() {
         <p className="text-gray-600">Marketplace statistics and health metrics</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {statCards.map((card, index) => (
           <div
             key={index}
-            className={`p-6 rounded-xl border-2 ${card.color} transition-shadow hover:shadow-md`}
+            className={`p-4 sm:p-6 rounded-xl border-2 ${card.color} transition-shadow hover:shadow-md active:scale-95`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl">{card.icon}</span>
+              <span className="text-xl sm:text-2xl">{card.icon}</span>
             </div>
-            <p className="text-3xl font-bold mb-1">{card.value}</p>
-            <p className="text-sm font-medium opacity-80">{card.label}</p>
+            <p className="text-2xl sm:text-3xl font-bold mb-1 break-words">{card.value}</p>
+            <p className="text-xs sm:text-sm font-medium opacity-80 leading-tight">{card.label}</p>
           </div>
         ))}
       </div>

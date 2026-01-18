@@ -71,9 +71,41 @@ function AdminUsers() {
 
   if (loading && users.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading users...</p>
+      <div>
+        <div className="mb-6">
+          <div className="h-8 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
+          <div className="h-5 bg-gray-200 rounded w-48 animate-pulse"></div>
+        </div>
+        <div className="space-y-3 md:hidden">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
+              <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+              <div className="flex gap-3 pt-3 border-t border-gray-100">
+                <div className="flex-1">
+                  <div className="h-3 bg-gray-200 rounded w-20 mb-1"></div>
+                  <div className="h-4 bg-gray-200 rounded w-8"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="h-3 bg-gray-200 rounded w-16 mb-1"></div>
+                  <div className="h-4 bg-gray-200 rounded w-12"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="hidden md:block bg-white rounded-lg border border-gray-200 p-8">
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex gap-4 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded flex-1"></div>
+                <div className="h-4 bg-gray-200 rounded w-48"></div>
+                <div className="h-4 bg-gray-200 rounded w-32"></div>
+                <div className="h-4 bg-gray-200 rounded w-24"></div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
@@ -98,7 +130,7 @@ function AdminUsers() {
                 setPagination(prev => ({ ...prev, page: 1 }))
               }}
               placeholder="Name, email, or phone"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[44px]"
             />
           </div>
           <div>
@@ -109,7 +141,7 @@ function AdminUsers() {
                 setStatusFilter(e.target.value)
                 setPagination(prev => ({ ...prev, page: 1 }))
               }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[44px]"
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
@@ -125,7 +157,7 @@ function AdminUsers() {
                 setRoleFilter(e.target.value)
                 setPagination(prev => ({ ...prev, page: 1 }))
               }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[44px]"
             >
               <option value="">All Roles</option>
               <option value="user">User</option>
@@ -135,18 +167,55 @@ function AdminUsers() {
         </div>
       </div>
 
-      {/* Users Table */}
+      {/* Users - Mobile Cards / Desktop Table */}
       {error ? (
         <div className="text-center py-12">
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600 text-sm sm:text-base">{error}</p>
         </div>
       ) : users.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-          <p className="text-gray-600">No users found</p>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+          <p className="text-gray-600 text-sm sm:text-base">No users found</p>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {/* Mobile: Card Layout */}
+          <div className="md:hidden space-y-3">
+            {users.map((user) => (
+              <Link
+                key={user._id}
+                to={`/admin/users/${user._id}`}
+                className="block bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow active:bg-gray-50"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-gray-900 truncate mb-1">
+                      {user.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                    <p className="text-sm text-gray-600 truncate">{user.phone}</p>
+                  </div>
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border flex-shrink-0 ml-2 ${getStatusBadge(user.status)}`}>
+                    {user.status || 'active'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 pt-3 border-t border-gray-100">
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 mb-0.5">Tasks Completed</p>
+                    <p className="text-sm font-medium text-gray-900">{user.stats?.tasksCompleted || 0}</p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 mb-0.5">Rating</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {user.stats?.averageRating ? `${user.stats.averageRating.toFixed(1)} ⭐` : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop: Table Layout */}
+          <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -211,22 +280,22 @@ function AdminUsers() {
 
           {/* Pagination */}
           {pagination.pages > 1 && (
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-gray-600 text-center sm:text-left">
                 Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} users
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
                   disabled={pagination.page === 1}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] touch-manipulation transition-colors"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                   disabled={pagination.page >= pagination.pages}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] touch-manipulation transition-colors"
                 >
                   Next
                 </button>

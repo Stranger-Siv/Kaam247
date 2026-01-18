@@ -183,22 +183,27 @@ function AdminLayout() {
         </header>
 
         {/* Mobile Bottom Tab Bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[999] shadow-lg safe-area-inset-bottom">
           <div className="flex">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex-1 flex flex-col items-center justify-center py-3 text-xs font-medium transition-colors min-h-[64px] ${
-                  isActive(item.path)
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-xl mb-1">{item.icon}</span>
-                <span className="text-[10px]">{item.label}</span>
-              </Link>
-            ))}
+            {menuItems.map((item) => {
+              const active = isActive(item.path)
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex-1 flex flex-col items-center justify-center py-2.5 px-2 text-[10px] font-medium transition-colors min-h-[64px] touch-manipulation ${
+                    active
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'
+                  }`}
+                >
+                  <span className={`text-xl mb-1 transition-transform ${active ? 'scale-110' : ''}`}>
+                    {item.icon}
+                  </span>
+                  <span className="text-[10px] leading-tight">{item.label}</span>
+                </Link>
+              )
+            })}
           </div>
         </nav>
 

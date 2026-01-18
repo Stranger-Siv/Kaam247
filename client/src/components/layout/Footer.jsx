@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 
-function Footer() {
+function Footer({ className = '' }) {
   return (
-    <footer className="bg-gray-100 border-t border-gray-200 mt-auto">
+    <footer className={`bg-gray-100 border-t border-gray-200 mt-auto ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 mb-8">
           {/* Brand Section */}

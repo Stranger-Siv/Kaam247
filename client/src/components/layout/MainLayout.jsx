@@ -6,6 +6,7 @@ import ModeToggle from '../ModeToggle'
 import AvailabilityToggle from '../AvailabilityToggle'
 import Footer from './Footer'
 import NotificationToast from '../NotificationToast'
+import BottomNav from './BottomNav'
 
 function MainLayout() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -230,12 +231,15 @@ function MainLayout() {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+            <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-20 md:pb-6">
                 <Outlet />
             </main>
 
-            {/* Footer */}
-            <Footer />
+            {/* Footer - Hidden on mobile when bottom nav is present */}
+            <Footer className="hidden md:block" />
+
+            {/* Bottom Navigation - Mobile Only */}
+            <BottomNav />
 
             {/* Global Notification Toast */}
             <NotificationToast />

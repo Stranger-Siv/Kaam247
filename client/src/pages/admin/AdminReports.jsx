@@ -124,9 +124,21 @@ function AdminReports() {
 
   if (loading && reports.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading reports...</p>
+      <div>
+        <div className="mb-6">
+          <div className="h-8 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
+          <div className="h-5 bg-gray-200 rounded w-48 animate-pulse"></div>
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-24 mb-3"></div>
+              <div className="h-5 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
+              <div className="h-10 bg-gray-200 rounded w-full sm:w-32"></div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -195,7 +207,7 @@ function AdminReports() {
             {reports.map((report) => (
               <div
                 key={report._id}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow active:bg-gray-50"
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="flex-1 space-y-4">
@@ -278,7 +290,7 @@ function AdminReports() {
                           setSelectedReport(report)
                           setShowResolveModal(true)
                         }}
-                        className="px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors min-h-[44px] w-full md:w-auto"
+                        className="px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 active:bg-green-800 transition-colors min-h-[44px] w-full md:w-auto touch-manipulation"
                       >
                         Mark as Resolved
                       </button>
