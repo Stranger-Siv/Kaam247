@@ -118,8 +118,8 @@ function MainLayout() {
                 </div>
             </header>
 
-            {/* Main Content - No padding on mobile, padding on larger screens */}
-            <main className="flex-1 max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 py-4 sm:py-6 w-full pb-20 md:pb-6 overflow-x-hidden">
+            {/* Main Content - Small gap on mobile, padding on larger screens */}
+            <main className="flex-1 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 w-full pb-20 md:pb-6 overflow-x-hidden">
                 <div className="w-full max-w-full overflow-x-hidden">
                     <Outlet />
                 </div>

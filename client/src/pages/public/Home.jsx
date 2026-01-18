@@ -18,7 +18,7 @@ function Home() {
     return (
         <div className="bg-white">
             {/* HERO SECTION */}
-            <section className="bg-white py-12 sm:py-16 lg:py-20 px-0 sm:px-6 lg:px-8">
+            <section className="bg-white py-12 sm:py-16 lg:py-20 px-2 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto text-center">
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
                         Get local help for everyday tasks — fast.
@@ -46,7 +46,7 @@ function Home() {
             </section>
 
             {/* CATEGORIES */}
-            <section className="bg-gray-50 py-12 sm:py-16 px-0 sm:px-6 lg:px-8">
+            <section className="bg-gray-50 py-12 sm:py-16 px-2 sm:px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
                         {categories.map((category) => (
@@ -65,7 +65,7 @@ function Home() {
             </section>
 
             {/* HOW IT WORKS */}
-            <section className="bg-white py-12 sm:py-16 px-0 sm:px-6 lg:px-8">
+            <section className="bg-white py-12 sm:py-16 px-2 sm:px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto">
                     <div className="text-center mb-8 sm:mb-10">
                         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
