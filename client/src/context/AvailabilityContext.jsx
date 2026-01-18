@@ -101,13 +101,44 @@ export function AvailabilityProvider({ children }) {
           })
         })
         
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+        
         const location = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
+          lat,
+          lng
         }
         
         setWorkerLocation(location)
         localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
+        
+        // Try to reverse geocode and persist location to user profile
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'User-Agent': 'Kaam247/1.0'
+              }
+            }
+          )
+          
+          if (response.ok) {
+            const data = await response.json()
+            const address = data.address || {}
+            const area = address.suburb || address.neighbourhood || address.road || address.locality || null
+            const city = address.city || address.town || address.county || address.state || null
+            
+            // Persist location to user profile
+            await persistUserLocation(lat, lng, area, city)
+          } else {
+            // Persist coordinates even without area/city
+            await persistUserLocation(lat, lng, null, null)
+          }
+        } catch (geocodeError) {
+          // Persist coordinates even if reverse geocoding fails
+          await persistUserLocation(lat, lng, null, null)
+        }
       } catch (error) {
         // Continue without location - worker can still see tasks but without distance filtering
       }

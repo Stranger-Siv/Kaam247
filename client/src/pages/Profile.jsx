@@ -83,6 +83,45 @@ function Profile() {
         fetchProfile()
     }, [user?.id, userMode])
 
+    // Listen for location updates and refetch profile
+    useEffect(() => {
+        const handleLocationUpdate = () => {
+            // Refetch profile to get updated location
+            const fetchProfile = async () => {
+                if (!user?.id) return
+
+                try {
+                    const token = localStorage.getItem('kaam247_token')
+                    const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    })
+
+                    if (response.ok) {
+                        const data = await response.json()
+                        const userData = data.user
+                        setProfile(prev => ({
+                            ...prev,
+                            location: userData.location?.area
+                                ? `${userData.location.area}${userData.location.city ? `, ${userData.location.city}` : ''}`
+                                : 'Location not set'
+                        }))
+                    }
+                } catch (err) {
+                    // Silently fail - location update is non-critical
+                }
+            }
+
+            fetchProfile()
+        }
+
+        window.addEventListener('profile_location_updated', handleLocationUpdate)
+        return () => {
+            window.removeEventListener('profile_location_updated', handleLocationUpdate)
+        }
+    }, [user?.id])
+
     // DATA CONSISTENCY: Fetch activity for stats - always fresh from backend
     const fetchActivity = useCallback(async () => {
         if (!user?.id) return

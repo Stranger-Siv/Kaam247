@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
 import LocationPickerMap from '../components/LocationPickerMap'
+import { persistUserLocation } from '../utils/locationPersistence'
 
 function PostTask() {
   const navigate = useNavigate()
@@ -337,9 +338,14 @@ function PostTask() {
             area: area || finalLocation.area,
             city: city || finalLocation.city
           }
+          
+          // Persist location to user profile
+          await persistUserLocation(lat, lng, area, city)
         } catch (geocodeError) {
           // If reverse geocoding fails, use coordinates but keep existing area/city if available
           finalLocation.coordinates = [lng, lat]
+          // Still persist coordinates even without area/city
+          await persistUserLocation(lat, lng, finalLocation.area, finalLocation.city)
         }
       } catch (locationError) {
         // Location capture failed - use existing location data

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config/env'
+import { persistUserLocation } from '../utils/locationPersistence'
 
 const AuthContext = createContext()
 
@@ -77,30 +78,46 @@ export function AuthProvider({ children }) {
           })
         })
 
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+
         const location = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
+          lat,
+          lng
         }
 
-        // Update user profile with location
-        const updateResponse = await fetch(`${API_BASE_URL}/api/users/me`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${data.token}`
-          },
-          body: JSON.stringify({
-            location: location
-          })
-        })
-
-        if (updateResponse.ok) {
-          // Location updated successfully
-          // Store location in localStorage for AvailabilityContext
-          localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
-          // Trigger location update event for AvailabilityContext
-          window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
+        // Try to reverse geocode and persist location to user profile
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'User-Agent': 'Kaam247/1.0'
+              }
+            }
+          )
+          
+          if (response.ok) {
+            const geocodeData = await response.json()
+            const address = geocodeData.address || {}
+            const area = address.suburb || address.neighbourhood || address.road || address.locality || null
+            const city = address.city || address.town || address.county || address.state || null
+            
+            // Persist location to user profile
+            await persistUserLocation(lat, lng, area, city)
+          } else {
+            // Persist coordinates even without area/city
+            await persistUserLocation(lat, lng, null, null)
+          }
+        } catch (geocodeError) {
+          // Persist coordinates even if reverse geocoding fails
+          await persistUserLocation(lat, lng, null, null)
         }
+        
+        // Store location in localStorage for AvailabilityContext
+        localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
+        // Trigger location update event for AvailabilityContext
+        window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
       } catch (locationError) {
         // Location capture failed - non-fatal, continue with login
         // User can still use the app, but location features won't work until they grant permission
@@ -164,30 +181,46 @@ export function AuthProvider({ children }) {
           })
         })
 
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+
         const location = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
+          lat,
+          lng
         }
 
-        // Update user profile with location
-        const updateResponse = await fetch(`${API_BASE_URL}/api/users/me`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${data.token}`
-          },
-          body: JSON.stringify({
-            location: location
-          })
-        })
-
-        if (updateResponse.ok) {
-          // Location updated successfully
-          // Store location in localStorage for AvailabilityContext
-          localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
-          // Trigger location update event for AvailabilityContext
-          window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
+        // Try to reverse geocode and persist location to user profile
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'User-Agent': 'Kaam247/1.0'
+              }
+            }
+          )
+          
+          if (response.ok) {
+            const geocodeData = await response.json()
+            const address = geocodeData.address || {}
+            const area = address.suburb || address.neighbourhood || address.road || address.locality || null
+            const city = address.city || address.town || address.county || address.state || null
+            
+            // Persist location to user profile
+            await persistUserLocation(lat, lng, area, city)
+          } else {
+            // Persist coordinates even without area/city
+            await persistUserLocation(lat, lng, null, null)
+          }
+        } catch (geocodeError) {
+          // Persist coordinates even if reverse geocoding fails
+          await persistUserLocation(lat, lng, null, null)
         }
+        
+        // Store location in localStorage for AvailabilityContext
+        localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
+        // Trigger location update event for AvailabilityContext
+        window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
       } catch (locationError) {
         // Location capture failed - non-fatal, continue with registration
         // User can still use the app, but location features won't work until they grant permission
