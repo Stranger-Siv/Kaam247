@@ -134,7 +134,7 @@ function Earnings() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto w-full px-2 sm:px-6 overflow-x-hidden">
+      <div className="max-w-6xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading earnings...</p>
@@ -145,7 +145,7 @@ function Earnings() {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto w-full px-2 sm:px-6 overflow-x-hidden">
+      <div className="max-w-6xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
         <div className="text-center py-12 text-red-600">
           <p>{error}</p>
         </div>

@@ -26,24 +26,24 @@ function MainLayout() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo + Brand Name */}
-                        <Link to="/dashboard" className="flex items-center h-full gap-2 sm:gap-2.5">
+                        <Link to="/dashboard" className="flex items-center gap-2 sm:gap-2.5 min-h-[44px]">
                             <img
                                 src="/logo.svg"
                                 alt="Kaam247"
-                                className="h-8 sm:h-10 max-h-12 w-auto object-contain"
+                                className="h-8 sm:h-9 w-auto object-contain flex-shrink-0"
                             />
-                            <span className="text-base sm:text-lg font-medium text-gray-900 whitespace-nowrap">
+                            <span className="text-lg sm:text-xl font-semibold text-gray-900 whitespace-nowrap">
                                 Kaam247
                             </span>
                         </Link>
 
                         {/* Desktop Navigation */}
-                        <nav className="hidden md:flex items-center space-x-6">
+                        <nav className="hidden md:flex items-center gap-1">
                             <Link
                                 to="/dashboard"
-                                className={`text-base font-medium transition-colors ${location.pathname === '/dashboard'
-                                    ? 'text-blue-600'
-                                    : 'text-gray-700 hover:text-gray-900'
+                                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/dashboard'
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                                     }`}
                             >
                                 Dashboard
@@ -51,9 +51,9 @@ function MainLayout() {
                             {userMode === 'worker' && (
                                 <Link
                                     to="/tasks"
-                                    className={`text-base font-medium transition-colors ${location.pathname.startsWith('/tasks') && !location.pathname.match(/\/tasks\/\d+/)
-                                        ? 'text-blue-600'
-                                        : 'text-gray-700 hover:text-gray-900'
+                                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname.startsWith('/tasks') && !location.pathname.match(/\/tasks\/\d+/)
+                                        ? 'text-blue-600 bg-blue-50'
+                                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                                         }`}
                                 >
                                     Tasks
@@ -62,9 +62,9 @@ function MainLayout() {
                             {userMode === 'poster' && (
                                 <Link
                                     to="/post-task"
-                                    className={`text-base font-medium transition-colors ${location.pathname === '/post-task'
-                                        ? 'text-blue-600'
-                                        : 'text-gray-700 hover:text-gray-900'
+                                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/post-task'
+                                        ? 'text-blue-600 bg-blue-50'
+                                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                                         }`}
                                 >
                                     Post a Task
@@ -72,9 +72,9 @@ function MainLayout() {
                             )}
                             <Link
                                 to="/activity"
-                                className={`text-base font-medium transition-colors ${location.pathname === '/activity'
-                                    ? 'text-blue-600'
-                                    : 'text-gray-700 hover:text-gray-900'
+                                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/activity'
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                                     }`}
                             >
                                 Activity
@@ -82,9 +82,9 @@ function MainLayout() {
                             {userMode === 'worker' && (
                                 <Link
                                     to="/earnings"
-                                    className={`text-base font-medium transition-colors ${location.pathname === '/earnings'
-                                        ? 'text-blue-600'
-                                        : 'text-gray-700 hover:text-gray-900'
+                                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/earnings'
+                                        ? 'text-blue-600 bg-blue-50'
+                                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                                         }`}
                                 >
                                     Earnings
@@ -92,25 +92,26 @@ function MainLayout() {
                             )}
                             <Link
                                 to="/profile"
-                                className={`text-base font-medium transition-colors ${location.pathname === '/profile'
-                                    ? 'text-blue-600'
-                                    : 'text-gray-700 hover:text-gray-900'
+                                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/profile'
+                                    ? 'text-blue-600 bg-blue-50'
+                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                                     }`}
                             >
                                 Profile
                             </Link>
+                            <div className="h-6 w-px bg-gray-300 mx-1"></div>
                             {userMode === 'worker' && <AvailabilityToggle />}
                             <ModeToggle />
                             <button
                                 onClick={handleLogout}
-                                className="text-base font-medium text-red-600 hover:text-red-700 transition-colors"
+                                className="px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors min-h-[36px] flex items-center"
                             >
                                 Logout
                             </button>
                         </nav>
 
                         {/* Mobile Header Right Side - Only Availability Toggle */}
-                        <div className="md:hidden flex items-center">
+                        <div className="md:hidden flex items-center gap-2">
                             {/* Availability Toggle - Mobile Header (Worker Mode Only) */}
                             {userMode === 'worker' && <AvailabilityToggle />}
                         </div>
@@ -118,8 +119,8 @@ function MainLayout() {
                 </div>
             </header>
 
-            {/* Main Content - Small gap on mobile, padding on larger screens */}
-            <main className="flex-1 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 w-full pb-20 md:pb-6 overflow-x-hidden">
+            {/* Main Content - No padding on mobile, padding on larger screens */}
+            <main className="flex-1 max-w-7xl mx-auto sm:px-6 lg:px-8 py-4 sm:py-6 w-full pb-20 md:pb-6 overflow-x-hidden">
                 <div className="w-full max-w-full overflow-x-hidden">
                     <Outlet />
                 </div>

@@ -386,7 +386,7 @@ function Tasks() {
   const filteredTasks = tasks // In real app, apply filters here
 
   return (
-    <div className="max-w-7xl mx-auto w-full px-2 sm:px-6 overflow-x-hidden">
+    <div className="max-w-7xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
       
       {/* Header */}
       <div className="mb-6 sm:mb-8 w-full">
@@ -395,7 +395,7 @@ function Tasks() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-100 w-full overflow-x-hidden">
+      <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6 border-0 sm:border border-gray-100 w-full overflow-x-hidden">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full">
           {/* Category Filter */}
           <div>
@@ -448,7 +448,7 @@ function Tasks() {
             <Link
               key={task.id}
               to={`/tasks/${task.id}`}
-              className={`group bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 border-2 active:bg-gray-50 w-full overflow-hidden ${
+              className={`group bg-white rounded-none sm:rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 border-2 active:bg-gray-50 w-full overflow-hidden ${
                 task.isNew || newTaskHighlightRef.current.has(task.id)
                   ? 'border-blue-300 bg-blue-50/50'
                   : 'border-gray-100 hover:border-gray-200'
@@ -503,7 +503,7 @@ function Tasks() {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm p-16 text-center border border-gray-100">
+        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-16 text-center border-0 sm:border border-gray-100">
           {loading ? (
             <>
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>

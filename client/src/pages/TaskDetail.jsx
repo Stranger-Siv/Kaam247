@@ -229,7 +229,7 @@ function TaskDetail() {
       socket.off('task_accepted', handleTaskAccepted)
       socket.off('task_updated', handleTaskUpdated)
     }
-  }, [taskId, userMode, user, workerLocation, getSocket, navigate, fetchTask, checkActiveTask])
+  }, [taskId, userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // STATE RECOVERY: Page load recovery sequence
   useEffect(() => {
@@ -251,7 +251,7 @@ function TaskDetail() {
     }
 
     recoverState()
-  }, [user?.id, taskId, userMode, fetchTask, checkActiveTask])
+  }, [user?.id, taskId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check for active task when component loads or task changes (for worker mode)
   useEffect(() => {
@@ -269,7 +269,7 @@ function TaskDetail() {
       }
     }
     checkActive()
-  }, [userMode, user?.id, taskId, checkActiveTask])
+  }, [userMode, user?.id, taskId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // STATE RECOVERY: Listen for task completion and status changes via window events
   useEffect(() => {
@@ -933,7 +933,7 @@ function TaskDetail() {
   // Show loading state
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto w-full px-2 sm:px-6 overflow-x-hidden">
+      <div className="max-w-4xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
         <button
           onClick={handleBack}
           className="mb-6 sm:mb-8 flex items-center text-gray-600 hover:text-gray-900 transition-colors py-2"
@@ -964,7 +964,7 @@ function TaskDetail() {
   // Show error state
   if (error || !task) {
     return (
-      <div className="max-w-4xl mx-auto w-full px-2 sm:px-6 overflow-x-hidden">
+      <div className="max-w-4xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
         <button
           onClick={handleBack}
           className="mb-6 sm:mb-8 flex items-center text-gray-600 hover:text-gray-900 transition-colors py-2"

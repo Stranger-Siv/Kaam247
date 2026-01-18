@@ -20,6 +20,7 @@ function Dashboard() {
     const [requestingLocation, setRequestingLocation] = useState(false)
     const [hasLocationPermission, setHasLocationPermission] = useState(false)
     const newTaskHighlightRef = useRef(new Set())
+    const fetchingRef = useRef({ workerStats: false, posterStats: false, acceptedTasks: false, postedTasks: false, availableTasks: false })
 
     const [acceptedTasks, setAcceptedTasks] = useState([])
     const [workerStats, setWorkerStats] = useState({
@@ -36,10 +37,11 @@ function Dashboard() {
 
     // DATA CONSISTENCY: Fetch worker stats (earnings, rating) - always fresh from backend
     const fetchWorkerStats = useCallback(async () => {
-        if (userMode !== 'worker' || !user?.id) {
+        if (userMode !== 'worker' || !user?.id || fetchingRef.current.workerStats) {
             return
         }
 
+        fetchingRef.current.workerStats = true
         try {
             const token = localStorage.getItem('kaam247_token')
             const [earningsResponse, profileResponse] = await Promise.all([
@@ -69,19 +71,24 @@ function Dashboard() {
             }
         } catch (err) {
             console.error('Error fetching worker stats:', err)
+        } finally {
+            fetchingRef.current.workerStats = false
         }
     }, [userMode, user?.id])
 
     useEffect(() => {
-        fetchWorkerStats()
-    }, [fetchWorkerStats])
+        if (userMode === 'worker' && user?.id) {
+            fetchWorkerStats()
+        }
+    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Fetch poster stats
     const fetchPosterStats = useCallback(async () => {
-        if (userMode !== 'poster' || !user?.id) {
+        if (userMode !== 'poster' || !user?.id || fetchingRef.current.posterStats) {
             return
         }
 
+        fetchingRef.current.posterStats = true
         try {
             const token = localStorage.getItem('kaam247_token')
             const activityResponse = await fetch(`${API_BASE_URL}/api/users/me/activity`, {
@@ -100,19 +107,28 @@ function Dashboard() {
             }
         } catch (err) {
             console.error('Error fetching poster stats:', err)
+        } finally {
+            fetchingRef.current.posterStats = false
         }
     }, [userMode, user?.id])
 
     useEffect(() => {
-        fetchPosterStats()
-    }, [userMode, user?.id])
+        if (userMode === 'poster' && user?.id) {
+            fetchPosterStats()
+        }
+    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    // STATE RECOVERY: Page load recovery sequence
+    // STATE RECOVERY: Page load recovery sequence (only on initial mount, skip if stats already fetched)
     useEffect(() => {
         if (!user?.id) return
 
         const recoverState = async () => {
             try {
+                // Only recover if stats haven't been fetched yet
+                if (fetchingRef.current.workerStats || fetchingRef.current.posterStats) {
+                    return
+                }
+
                 const recoveredState = await performStateRecovery(userMode, user.id)
 
                 // Update stats if recovered
@@ -134,8 +150,11 @@ function Dashboard() {
             }
         }
 
-        recoverState()
-    }, [user?.id, userMode]) // Run on mount and when user/mode changes
+        // Only run recovery if we haven't fetched stats yet
+        if (!fetchingRef.current.workerStats && !fetchingRef.current.posterStats) {
+            recoverState()
+        }
+    }, [user?.id, userMode]) // Run on mount and mode change
 
     // STATE RECOVERY: Listen for socket reconnection
     useEffect(() => {
@@ -175,25 +194,16 @@ function Dashboard() {
 
     // STATE RECOVERY: Tab visibility change recovery
     useEffect(() => {
-        const handleVisibilityChange = async () => {
-            if (document.visibilityState === 'visible' && user?.id) {
-                // Tab became visible - lightweight resync
-                try {
-                    const activeTask = await fetch(`${API_BASE_URL}/api/users/me/active-task`, {
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('kaam247_token')}`
-                        }
-                    }).then(res => res.ok ? res.json() : null)
+        if (!user?.id) return
 
-                    // Update available tasks if worker mode
-                    if (userMode === 'worker' && isOnline) {
-                        // Trigger task list refresh
-                        window.dispatchEvent(new CustomEvent('refetch_required', {
-                            detail: { type: 'visibility_change' }
-                        }))
-                    }
-                } catch (error) {
-                    console.error('Visibility change recovery failed:', error)
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible') {
+                // Tab became visible - lightweight resync (only if online)
+                if (userMode === 'worker' && isOnline) {
+                    // Trigger task list refresh via event (debounced by refetch handler)
+                    window.dispatchEvent(new CustomEvent('refetch_required', {
+                        detail: { type: 'visibility_change' }
+                    }))
                 }
             }
         }
@@ -202,7 +212,7 @@ function Dashboard() {
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange)
         }
-    }, [user?.id, userMode, isOnline])
+    }, [user?.id, userMode]) // Removed isOnline from deps - checked inside handler
 
     // STATE RECOVERY: Listen for refetch_required events (from socket events)
     useEffect(() => {
@@ -211,7 +221,7 @@ function Dashboard() {
 
             if (type === 'task_completed' || type === 'task_status_changed' || type === 'task_cancelled' || type === 'task_updated') {
                 // Refresh stats silently
-                if (userMode === 'worker') {
+                if (userMode === 'worker' && user?.id) {
                     const token = localStorage.getItem('kaam247_token')
                     try {
                         const [earningsRes, profileRes] = await Promise.all([
@@ -242,7 +252,7 @@ function Dashboard() {
                     } catch (err) {
                         // Silent fail
                     }
-                } else {
+                } else if (userMode === 'poster' && user?.id) {
                     fetchPosterStats()
                 }
             }
@@ -252,10 +262,12 @@ function Dashboard() {
         return () => {
             window.removeEventListener('refetch_required', handleRefetch)
         }
-    }, [userMode, fetchPosterStats])
+    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // DATA CONSISTENCY: Listen for task completion and status changes to refresh stats
     useEffect(() => {
+        if (!user?.id) return
+
         const handleTaskCompleted = () => {
             // DATA CONSISTENCY: Always refetch fresh stats from backend after task completion
             if (userMode === 'worker') {
@@ -292,14 +304,15 @@ function Dashboard() {
             window.removeEventListener('task_status_changed', handleTaskStatusChanged)
             window.removeEventListener('task_cancelled', handleTaskCancelled)
         }
-    }, [userMode, user?.id, fetchPosterStats, fetchWorkerStats])
+    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // DATA CONSISTENCY: Fetch accepted tasks for worker mode - always fresh from backend
     const fetchAcceptedTasks = useCallback(async () => {
-        if (userMode !== 'worker' || !user?.id) {
+        if (userMode !== 'worker' || !user?.id || fetchingRef.current.acceptedTasks) {
             return
         }
 
+        fetchingRef.current.acceptedTasks = true
         try {
             // Fetch all tasks and filter by acceptedBy
             const response = await fetch(`${API_BASE_URL}/api/tasks`)
@@ -334,12 +347,16 @@ function Dashboard() {
             }
         } catch (err) {
             console.error('Error fetching accepted tasks:', err)
+        } finally {
+            fetchingRef.current.acceptedTasks = false
         }
     }, [userMode, user?.id])
 
     useEffect(() => {
-        fetchAcceptedTasks()
-    }, [fetchAcceptedTasks])
+        if (userMode === 'worker' && user?.id) {
+            fetchAcceptedTasks()
+        }
+    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // DATA CONSISTENCY: Refresh accepted tasks on task completion/status change
     useEffect(() => {
@@ -371,16 +388,17 @@ function Dashboard() {
             window.removeEventListener('task_status_changed', handleTaskStatusChanged)
             window.removeEventListener('task_cancelled', handleTaskCancelled)
         }
-    }, [userMode, user?.id, fetchAcceptedTasks])
+    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const [postedTasks, setPostedTasks] = useState([])
 
     // DATA CONSISTENCY: Fetch posted tasks for poster mode - always fresh from backend
     const fetchPostedTasks = useCallback(async () => {
-        if (userMode !== 'poster' || !user?.id) {
+        if (userMode !== 'poster' || !user?.id || fetchingRef.current.postedTasks) {
             return
         }
 
+        fetchingRef.current.postedTasks = true
         try {
             const response = await fetch(`${API_BASE_URL}/api/tasks/user/${user.id}`, {
                 headers: {
@@ -407,12 +425,16 @@ function Dashboard() {
             }
         } catch (err) {
             console.error('Error fetching posted tasks:', err)
+        } finally {
+            fetchingRef.current.postedTasks = false
         }
     }, [userMode, user?.id])
 
     useEffect(() => {
-        fetchPostedTasks()
-    }, [fetchPostedTasks])
+        if (userMode === 'poster' && user?.id) {
+            fetchPostedTasks()
+        }
+    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // DATA CONSISTENCY: Listen for task_accepted events (for posters) - always refetch fresh
     useEffect(() => {
@@ -427,7 +449,9 @@ function Dashboard() {
 
         const handleTaskAccepted = () => {
             // DATA CONSISTENCY: Always refetch fresh from backend
-            fetchPostedTasks()
+            if (userMode === 'poster' && user?.id) {
+                fetchPostedTasks()
+            }
         }
 
         socket.on('task_accepted', handleTaskAccepted)
@@ -435,7 +459,7 @@ function Dashboard() {
         return () => {
             socket.off('task_accepted', handleTaskAccepted)
         }
-    }, [userMode, user?.id, getSocket, fetchPostedTasks])
+    }, [userMode, user?.id, getSocket]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // DATA CONSISTENCY: Listen for task status changes to refresh posted tasks
     useEffect(() => {
@@ -467,7 +491,7 @@ function Dashboard() {
             window.removeEventListener('task_completed', handleTaskCompleted)
             window.removeEventListener('task_cancelled', handleTaskCancelled)
         }
-    }, [userMode, user?.id, fetchPostedTasks])
+    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Request location permission if not available
     const requestLocation = useCallback(async () => {
@@ -500,20 +524,20 @@ function Dashboard() {
 
             // Store location in localStorage
             localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
-            
+
             // Update availability context by triggering a location update event
             window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
-            
+
             // Update state to trigger re-render
             setHasLocationPermission(true)
             setRequestingLocation(false)
             setLocationError(null)
-            
+
             // Small delay to ensure context updates, then fetch tasks
             setTimeout(() => {
                 fetchAvailableTasks()
             }, 100)
-            
+
             return true
         } catch (error) {
             setRequestingLocation(false)
@@ -533,7 +557,7 @@ function Dashboard() {
 
     // DATA CONSISTENCY: Fetch initial tasks for worker mode - always fresh from backend with location filtering
     const fetchAvailableTasks = useCallback(async () => {
-        if (userMode !== 'worker') {
+        if (userMode !== 'worker' || fetchingRef.current.availableTasks) {
             return
         }
 
@@ -545,11 +569,12 @@ function Dashboard() {
             return
         }
 
+        fetchingRef.current.availableTasks = true
         try {
             // Fetch tasks with location filter (5km radius)
             const url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
             const response = await fetch(url)
-            
+
             if (response.ok) {
                 const data = await response.json()
                 const transformedTasks = data.tasks
@@ -583,31 +608,33 @@ function Dashboard() {
                         if (b.distanceKm === null || b.distanceKm === undefined) return -1
                         return a.distanceKm - b.distanceKm
                     })
-                
+
                 setAvailableTasks(transformedTasks)
                 setLocationError(null)
             }
         } catch (err) {
             console.error('Error fetching available tasks:', err)
+        } finally {
+            fetchingRef.current.availableTasks = false
         }
-    }, [userMode, workerLocation, requestLocation])
+    }, [userMode, workerLocation]) // Removed requestLocation from deps
 
-    // Request location on mount for workers
+    // Request location on mount for workers (only once)
     useEffect(() => {
-        if (userMode === 'worker') {
+        if (userMode === 'worker' && !hasLocationPermission && !requestingLocation) {
             requestLocation().then(hasLocation => {
                 if (hasLocation) {
-                    fetchAvailableTasks()
+                    setHasLocationPermission(true)
                 }
             })
         }
-    }, [userMode, requestLocation])
+    }, [userMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
-        if (userMode === 'worker' && workerLocation) {
+        if (userMode === 'worker' && user?.id && workerLocation?.lat && workerLocation?.lng) {
             fetchAvailableTasks()
         }
-    }, [fetchAvailableTasks, workerLocation])
+    }, [userMode, user?.id, workerLocation?.lat, workerLocation?.lng]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // DATA CONSISTENCY: Refresh available tasks on task status changes
     useEffect(() => {
@@ -632,7 +659,7 @@ function Dashboard() {
             window.removeEventListener('task_status_changed', handleTaskStatusChanged)
             window.removeEventListener('task_cancelled', handleTaskCancelled)
         }
-    }, [userMode, fetchAvailableTasks])
+    }, [userMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Listen for new tasks via Socket.IO (only when online and in worker mode)
     useEffect(() => {
@@ -710,7 +737,7 @@ function Dashboard() {
     }, [isOnline, userMode, getSocket])
 
     return (
-        <div className="max-w-7xl mx-auto w-full px-2 sm:px-6 overflow-x-hidden">
+        <div className="max-w-7xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
             {userMode === 'worker' ? (
                 <>
                     {/* Location Requirement Block */}
@@ -788,7 +815,7 @@ function Dashboard() {
 
                     {/* Task Stats - Worker Mode */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-12">
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="p-2 bg-blue-50 rounded-lg">
                                     <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -799,7 +826,7 @@ function Dashboard() {
                             </div>
                             <p className="text-3xl font-bold text-gray-900">{availableTasks.length}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="p-2 bg-orange-50 rounded-lg">
                                     <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -810,7 +837,7 @@ function Dashboard() {
                             </div>
                             <p className="text-3xl font-bold text-gray-900">{acceptedTasks.filter(t => t.status === 'accepted' || t.status === 'in_progress').length}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="p-2 bg-green-50 rounded-lg">
                                     <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -821,7 +848,7 @@ function Dashboard() {
                             </div>
                             <p className="text-3xl font-bold text-gray-900">{acceptedTasks.filter(t => t.status === 'completed').length}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="p-2 bg-purple-50 rounded-lg">
                                     <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -832,7 +859,7 @@ function Dashboard() {
                             </div>
                             <p className="text-3xl font-bold text-gray-900">₹{workerStats.earningsThisMonth}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="p-2 bg-yellow-50 rounded-lg">
                                     <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -1030,7 +1057,7 @@ function Dashboard() {
 
                     {/* Task Stats - Poster Mode */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="p-2 bg-blue-50 rounded-lg">
                                     <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1041,7 +1068,7 @@ function Dashboard() {
                             </div>
                             <p className="text-3xl font-bold text-gray-900">{posterStats.tasksPosted}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="p-2 bg-orange-50 rounded-lg">
                                     <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1052,7 +1079,7 @@ function Dashboard() {
                             </div>
                             <p className="text-3xl font-bold text-gray-900">{posterStats.inProgress}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="p-2 bg-green-50 rounded-lg">
                                     <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1063,7 +1090,7 @@ function Dashboard() {
                             </div>
                             <p className="text-3xl font-bold text-gray-900">{posterStats.completed}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="p-2 bg-red-50 rounded-lg">
                                     <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

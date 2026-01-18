@@ -116,8 +116,10 @@ function Profile() {
     }, [user?.id, userMode])
 
     useEffect(() => {
-        fetchActivity()
-    }, [fetchActivity])
+        if (user?.id) {
+            fetchActivity()
+        }
+    }, [user?.id, userMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // DATA CONSISTENCY: Listen for task completion and rating to update stats
     useEffect(() => {
@@ -165,7 +167,7 @@ function Profile() {
             window.removeEventListener('task_completed', handleTaskCompleted)
             window.removeEventListener('task_rated', handleTaskRated)
         }
-    }, [userMode, fetchActivity])
+    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Fetch earnings for worker
     useEffect(() => {
@@ -246,14 +248,14 @@ function Profile() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto w-full px-2 sm:px-6 overflow-x-hidden">
+        <div className="max-w-4xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
             <div className="mb-8">
                 <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">Profile</h1>
                 <p className="text-sm text-gray-500">Manage your account and view your activity</p>
             </div>
 
             {/* Profile Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-6">
+            <div className="bg-white rounded-none sm:rounded-xl shadow-sm border-0 sm:border border-gray-100 p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
                     <div className="flex items-center gap-4">
                         <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-sm">
@@ -305,7 +307,7 @@ function Profile() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                     {userMode === 'worker' ? (
                         <>
-                            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-5 border border-blue-200">
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-none sm:rounded-xl p-4 sm:p-5 border-0 sm:border border-blue-200">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="p-1.5 bg-blue-200 rounded-lg">
                                         <svg className="w-4 h-4 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -316,7 +318,7 @@ function Profile() {
                                 </div>
                                 <p className="text-3xl font-bold text-gray-900">{stats.tasksCompleted}</p>
                             </div>
-                            <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-5 border border-green-200">
+                            <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-none sm:rounded-xl p-4 sm:p-5 border-0 sm:border border-green-200">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="p-1.5 bg-green-200 rounded-lg">
                                         <svg className="w-4 h-4 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -327,7 +329,7 @@ function Profile() {
                                 </div>
                                 <p className="text-3xl font-bold text-gray-900">₹{stats.earnings}</p>
                             </div>
-                            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100/50 rounded-xl p-5 border border-yellow-200">
+                            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100/50 rounded-none sm:rounded-xl p-4 sm:p-5 border-0 sm:border border-yellow-200">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="p-1.5 bg-yellow-200 rounded-lg">
                                         <svg className="w-4 h-4 text-yellow-700" fill="currentColor" viewBox="0 0 20 20">
@@ -346,7 +348,7 @@ function Profile() {
                         </>
                     ) : (
                         <>
-                            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-5 border border-blue-200">
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-none sm:rounded-xl p-4 sm:p-5 border-0 sm:border border-blue-200">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="p-1.5 bg-blue-200 rounded-lg">
                                         <svg className="w-4 h-4 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -357,7 +359,7 @@ function Profile() {
                                 </div>
                                 <p className="text-3xl font-bold text-gray-900">{stats.tasksPosted}</p>
                             </div>
-                            <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-5 border border-green-200">
+                            <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-none sm:rounded-xl p-4 sm:p-5 border-0 sm:border border-green-200">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="p-1.5 bg-green-200 rounded-lg">
                                         <svg className="w-4 h-4 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -368,7 +370,7 @@ function Profile() {
                                 </div>
                                 <p className="text-3xl font-bold text-gray-900">{stats.tasksCompleted}</p>
                             </div>
-                            <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-5 border border-purple-200">
+                            <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-none sm:rounded-xl p-4 sm:p-5 border-0 sm:border border-purple-200">
                                 <div className="flex items-center gap-2 mb-2">
                                     <div className="p-1.5 bg-purple-200 rounded-lg">
                                         <svg className="w-4 h-4 text-purple-700" fill="currentColor" viewBox="0 0 20 20">

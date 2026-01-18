@@ -158,14 +158,14 @@ function Activity() {
   const currentTasks = getCurrentTasks()
 
   return (
-    <div className="max-w-6xl mx-auto w-full px-2 sm:px-6 overflow-x-hidden">
+    <div className="max-w-6xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
       <div className="mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 mb-1 sm:mb-2 break-words">Activity History</h1>
         <p className="text-sm sm:text-base text-gray-600 break-words">View all your tasks and activities</p>
       </div>
 
       {/* Tabs - Mobile Scrollable (contained) */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 mb-4 sm:mb-6 overflow-hidden w-full">
+      <div className="bg-white rounded-none sm:rounded-lg shadow-sm border-0 sm:border border-gray-100 mb-4 sm:mb-6 overflow-hidden w-full">
         <div className="flex overflow-x-auto scrollbar-hide w-full">
           {tabs.map((tab) => (
             <button
@@ -186,7 +186,7 @@ function Activity() {
 
       {/* Task List */}
       {currentTasks.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-16 text-center">
+        <div className="bg-white rounded-none sm:rounded-xl shadow-sm border-0 sm:border border-gray-100 p-16 text-center">
           <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
@@ -199,7 +199,7 @@ function Activity() {
             <Link
               key={task.id}
               to={`/tasks/${task.id}`}
-              className="group block bg-white rounded-xl shadow-sm border-2 border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 p-4 sm:p-6 active:bg-gray-50 w-full overflow-hidden"
+              className="group block bg-white rounded-none sm:rounded-xl shadow-sm border-2 border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 p-4 sm:p-6 active:bg-gray-50 w-full overflow-hidden"
             >
               {/* Title and Badges Row */}
               <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 w-full min-w-0">
