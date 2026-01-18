@@ -8,7 +8,7 @@ const isProduction = import.meta.env.PROD ||
                       !window.location.hostname.includes('localhost') && 
                       !window.location.hostname.includes('127.0.0.1'))
 
-// Get API base URL - use environment variable or default to Render backend
+// Get API base URL - use environment variable or default to backend
 // In production, NEVER use localhost
 const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_BASE_URL
@@ -18,24 +18,24 @@ const getApiBaseUrl = () => {
     // But reject localhost in production
     if (isProduction && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
       console.error('⚠️ ERROR: VITE_API_BASE_URL is set to localhost in production!')
-      console.error('This will cause CORS errors. Please set it to your Render backend URL in Netlify.')
+      console.error('This will cause CORS errors. Please set it to your backend URL in Netlify.')
       // Fall back to production default
-      return 'https://kaam247.onrender.com'
+      return 'https://api.kaam247.in'
     }
     return envUrl.trim()
   }
   
   // No environment variable set - use defaults based on environment
   if (isProduction) {
-    // Production default - your Render backend URL
-    return 'https://kaam247.onrender.com'
+    // Production default - your backend URL
+    return 'https://api.kaam247.in'
   }
   
   // Development default
   return 'http://localhost:3001'
 }
 
-// Get Socket URL - use environment variable or default to Render backend
+// Get Socket URL - use environment variable or default to backend
 const getSocketUrl = () => {
   const envUrl = import.meta.env.VITE_SOCKET_URL
   
@@ -44,17 +44,17 @@ const getSocketUrl = () => {
     // But reject localhost in production
     if (isProduction && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
       console.error('⚠️ ERROR: VITE_SOCKET_URL is set to localhost in production!')
-      console.error('This will cause CORS errors. Please set it to your Render backend URL in Netlify.')
+      console.error('This will cause CORS errors. Please set it to your backend URL in Netlify.')
       // Fall back to production default
-      return 'https://kaam247.onrender.com'
+      return 'https://api.kaam247.in'
     }
     return envUrl.trim()
   }
   
   // No environment variable set - use defaults based on environment
   if (isProduction) {
-    // Production default - your Render backend URL
-    return 'https://kaam247.onrender.com'
+    // Production default - your backend URL
+    return 'https://api.kaam247.in'
   }
   
   // Development default

@@ -8,6 +8,8 @@ let io = null
 const initializeSocket = (server) => {
     // Socket.IO CORS configuration - match Express CORS
     const allowedSocketOrigins = [
+        'https://kaam247.in',                     // Custom domain (production)
+        'https://www.kaam247.in',                 // Custom domain with www (production)
         'https://kaam247.netlify.app',           // Netlify frontend (production)
         'https://kaam247.onrender.com',           // Render frontend (if deployed there)
         'http://localhost:5173',                  // Vite dev server
