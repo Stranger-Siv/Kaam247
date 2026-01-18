@@ -30,11 +30,16 @@ function Tasks() {
         setLoading(true)
         setError(null)
 
-        // Build query string with location if available
-        let url = `${API_BASE_URL}/api/tasks`
-        if (workerLocation && workerLocation.lat && workerLocation.lng) {
-          url += `?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
+        // REQUIRE LOCATION: Don't fetch tasks if no location
+        if (!workerLocation || !workerLocation.lat || !workerLocation.lng) {
+          setTasks([])
+          setError('Location access is required to view tasks. Please enable location access.')
+          setLoading(false)
+          return
         }
+
+        // Build query string with location (REQUIRED - 5km radius)
+        const url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
 
         const response = await fetch(url)
 
@@ -45,28 +50,37 @@ function Tasks() {
         const data = await response.json()
 
         // Transform backend task format to frontend format
-        const transformedTasks = data.tasks.map((task) => ({
-          id: task._id,
-          title: task.title,
-          description: task.description,
-          location: task.location?.area
-            ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
-            : 'Location not specified',
-          distance: task.distanceKm !== null && task.distanceKm !== undefined 
-            ? `${task.distanceKm} km away`
-            : 'Distance unavailable',
-          distanceKm: task.distanceKm,
-          budget: `₹${task.budget}`,
-          category: task.category,
-          time: task.scheduledAt
-            ? new Date(task.scheduledAt).toLocaleString('en-IN', {
-              weekday: 'short',
-              hour: 'numeric',
-              minute: '2-digit'
-            })
-            : 'Flexible',
-          status: task.status === 'SEARCHING' ? 'open' : task.status.toLowerCase()
-        }))
+        // Filter to only show tasks within 5km and sort by distance
+        const transformedTasks = data.tasks
+          .filter(task => task.distanceKm !== null && task.distanceKm !== undefined && task.distanceKm <= 5) // Only within 5km
+          .map((task) => ({
+            id: task._id,
+            title: task.title,
+            description: task.description,
+            location: task.location?.area
+              ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
+              : 'Location not specified',
+            distance: task.distanceKm !== null && task.distanceKm !== undefined 
+              ? `${task.distanceKm.toFixed(1)} km away`
+              : 'Distance unavailable',
+            distanceKm: task.distanceKm,
+            budget: `₹${task.budget}`,
+            category: task.category,
+            time: task.scheduledAt
+              ? new Date(task.scheduledAt).toLocaleString('en-IN', {
+                weekday: 'short',
+                hour: 'numeric',
+                minute: '2-digit'
+              })
+              : 'Flexible',
+            status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
+          }))
+          // Sort by distance (nearest first)
+          .sort((a, b) => {
+            if (a.distanceKm === null || a.distanceKm === undefined) return 1
+            if (b.distanceKm === null || b.distanceKm === undefined) return -1
+            return a.distanceKm - b.distanceKm
+          })
 
         setTasks(transformedTasks)
       } catch (err) {

@@ -24,6 +24,20 @@ export function AvailabilityProvider({ children }) {
         // Invalid location data, ignore
       }
     }
+
+    // Listen for location updates from other components
+    const handleLocationUpdate = (event) => {
+      const location = event.detail
+      if (location && location.lat && location.lng) {
+        setWorkerLocation(location)
+        localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
+      }
+    }
+
+    window.addEventListener('location_updated', handleLocationUpdate)
+    return () => {
+      window.removeEventListener('location_updated', handleLocationUpdate)
+    }
   }, [])
 
   const checkActiveTask = async () => {

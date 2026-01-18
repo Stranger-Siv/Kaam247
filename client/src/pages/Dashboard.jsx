@@ -12,10 +12,13 @@ import { performStateRecovery } from '../utils/stateRecovery'
 function Dashboard() {
     const { userMode } = useUserMode()
     const { getSocket } = useSocket()
-    const { isOnline } = useAvailability()
+    const { isOnline, workerLocation, setOnline } = useAvailability()
     const { user } = useAuth()
     const { cancellationStatus } = useCancellation()
     const [availableTasks, setAvailableTasks] = useState([])
+    const [locationError, setLocationError] = useState(null)
+    const [requestingLocation, setRequestingLocation] = useState(false)
+    const [hasLocationPermission, setHasLocationPermission] = useState(false)
     const newTaskHighlightRef = useRef(new Set())
 
     const [acceptedTasks, setAcceptedTasks] = useState([])
@@ -466,18 +469,92 @@ function Dashboard() {
         }
     }, [userMode, user?.id, fetchPostedTasks])
 
-    // DATA CONSISTENCY: Fetch initial tasks for worker mode - always fresh from backend
+    // Request location permission if not available
+    const requestLocation = useCallback(async () => {
+        if (userMode !== 'worker') {
+            return true
+        }
+
+        if (workerLocation && workerLocation.lat && workerLocation.lng) {
+            setLocationError(null)
+            setHasLocationPermission(true)
+            return true
+        }
+
+        setRequestingLocation(true)
+        setLocationError(null)
+
+        try {
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                })
+            })
+
+            const location = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            }
+
+            // Store location in localStorage
+            localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
+            
+            // Update availability context by triggering a location update event
+            window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
+            
+            // Update state to trigger re-render
+            setHasLocationPermission(true)
+            setRequestingLocation(false)
+            setLocationError(null)
+            
+            // Small delay to ensure context updates, then fetch tasks
+            setTimeout(() => {
+                fetchAvailableTasks()
+            }, 100)
+            
+            return true
+        } catch (error) {
+            setRequestingLocation(false)
+            setHasLocationPermission(false)
+            let errorMessage = 'Location access is required to use this app.'
+            if (error.code === 1) {
+                errorMessage = 'Location permission denied. Please enable location access in your browser settings to use this app.'
+            } else if (error.code === 2) {
+                errorMessage = 'Location unavailable. Please check your device location settings.'
+            } else if (error.code === 3) {
+                errorMessage = 'Location request timed out. Please try again.'
+            }
+            setLocationError(errorMessage)
+            return false
+        }
+    }, [userMode, workerLocation])
+
+    // DATA CONSISTENCY: Fetch initial tasks for worker mode - always fresh from backend with location filtering
     const fetchAvailableTasks = useCallback(async () => {
         if (userMode !== 'worker') {
             return
         }
 
+        // REQUIRE LOCATION: Don't fetch tasks if no location
+        if (!workerLocation || !workerLocation.lat || !workerLocation.lng) {
+            setAvailableTasks([])
+            // Try to get location
+            await requestLocation()
+            return
+        }
+
         try {
-            const response = await fetch(`${API_BASE_URL}/api/tasks`)
+            // Fetch tasks with location filter (5km radius)
+            const url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
+            const response = await fetch(url)
+            
             if (response.ok) {
                 const data = await response.json()
                 const transformedTasks = data.tasks
                     .filter(task => task.status === 'OPEN' || task.status === 'SEARCHING') // Only show available tasks
+                    .filter(task => task.distanceKm !== null && task.distanceKm !== undefined && task.distanceKm <= 5) // Only within 5km
                     .map((task) => ({
                         id: task._id,
                         title: task.title,
@@ -485,7 +562,10 @@ function Dashboard() {
                         location: task.location?.area
                             ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
                             : 'Location not specified',
-                        distance: 'Distance not calculated',
+                        distance: task.distanceKm !== null && task.distanceKm !== undefined
+                            ? `${task.distanceKm.toFixed(1)} km away`
+                            : 'Distance unavailable',
+                        distanceKm: task.distanceKm,
                         budget: `₹${task.budget}`,
                         category: task.category,
                         time: task.scheduledAt
@@ -497,16 +577,37 @@ function Dashboard() {
                             : 'Flexible',
                         status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
                     }))
+                    // Sort by distance (nearest first)
+                    .sort((a, b) => {
+                        if (a.distanceKm === null || a.distanceKm === undefined) return 1
+                        if (b.distanceKm === null || b.distanceKm === undefined) return -1
+                        return a.distanceKm - b.distanceKm
+                    })
+                
                 setAvailableTasks(transformedTasks)
+                setLocationError(null)
             }
         } catch (err) {
             console.error('Error fetching available tasks:', err)
         }
-    }, [userMode])
+    }, [userMode, workerLocation, requestLocation])
+
+    // Request location on mount for workers
+    useEffect(() => {
+        if (userMode === 'worker') {
+            requestLocation().then(hasLocation => {
+                if (hasLocation) {
+                    fetchAvailableTasks()
+                }
+            })
+        }
+    }, [userMode, requestLocation])
 
     useEffect(() => {
-        fetchAvailableTasks()
-    }, [fetchAvailableTasks])
+        if (userMode === 'worker' && workerLocation) {
+            fetchAvailableTasks()
+        }
+    }, [fetchAvailableTasks, workerLocation])
 
     // DATA CONSISTENCY: Refresh available tasks on task status changes
     useEffect(() => {
@@ -545,6 +646,11 @@ function Dashboard() {
         }
 
         const handleNewTask = (taskData) => {
+            // Only add if task is within 5km (backend already filters, but double-check)
+            if (taskData.distanceKm !== null && taskData.distanceKm !== undefined && taskData.distanceKm > 5) {
+                return // Task is outside 5km radius
+            }
+
             // Convert backend task format to frontend format
             const newTask = {
                 id: taskData.taskId,
@@ -553,7 +659,10 @@ function Dashboard() {
                 location: taskData.location?.area
                     ? `${taskData.location.area}${taskData.location.city ? `, ${taskData.location.city}` : ''}`
                     : 'Location not specified',
-                distance: 'Just added',
+                distance: taskData.distanceKm !== null && taskData.distanceKm !== undefined
+                    ? `${taskData.distanceKm.toFixed(1)} km away`
+                    : 'Just added',
+                distanceKm: taskData.distanceKm,
                 budget: `₹${taskData.budget}`,
                 category: taskData.category,
                 time: 'Just now',
@@ -561,8 +670,15 @@ function Dashboard() {
                 isNew: true
             }
 
-            // Add to top of list
-            setAvailableTasks(prev => [newTask, ...prev])
+            // Add to list and sort by distance
+            setAvailableTasks(prev => {
+                const updated = [newTask, ...prev]
+                return updated.sort((a, b) => {
+                    if (a.distanceKm === null || a.distanceKm === undefined) return 1
+                    if (b.distanceKm === null || b.distanceKm === undefined) return -1
+                    return a.distanceKm - b.distanceKm
+                })
+            })
 
             // Mark for highlight
             newTaskHighlightRef.current.add(taskData.taskId)
@@ -597,10 +713,45 @@ function Dashboard() {
         <div className="max-w-7xl mx-auto">
             {userMode === 'worker' ? (
                 <>
+                    {/* Location Requirement Block */}
+                    {(!workerLocation || !workerLocation.lat || !workerLocation.lng) && (
+                        <div className="mb-8 p-6 bg-red-50 border-2 border-red-200 rounded-xl">
+                            <div className="flex items-start gap-4">
+                                <div className="flex-shrink-0">
+                                    <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <h2 className="text-xl font-bold text-red-900 mb-2">Location Access Required</h2>
+                                    <p className="text-red-800 mb-4">
+                                        {locationError || 'Location access is required to use this app. We need your location to show tasks near you (within 5km radius).'}
+                                    </p>
+                                    {requestingLocation ? (
+                                        <div className="flex items-center gap-2 text-red-700">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+                                            <span>Requesting location access...</span>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={requestLocation}
+                                            className="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                                        >
+                                            Enable Location Access
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Mode Header - Worker Mode */}
                     <div className="mb-8 sm:mb-10">
                         <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-2">Perform Tasks</h1>
-                        <p className="text-base sm:text-lg text-gray-500">Find and complete tasks to earn money</p>
+                        <p className="text-base sm:text-lg text-gray-500">
+                            {workerLocation ? `Tasks within 5km of your location` : 'Find and complete tasks to earn money'}
+                        </p>
                     </div>
 
                     {/* Cancellation Limit Warning */}
@@ -766,14 +917,29 @@ function Dashboard() {
                                 <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
-                                <p className="text-gray-600 mb-2 font-medium">No tasks near you right now</p>
-                                <p className="text-sm text-gray-500 mb-6">Check back later or expand your search radius</p>
-                                <Link
-                                    to="/tasks"
-                                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    Browse All Tasks
-                                </Link>
+                                {!workerLocation || !workerLocation.lat || !workerLocation.lng ? (
+                                    <>
+                                        <p className="text-gray-600 mb-2 font-medium">Location access required</p>
+                                        <p className="text-sm text-gray-500 mb-6">Please enable location access to see tasks near you</p>
+                                        <button
+                                            onClick={requestLocation}
+                                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                                        >
+                                            Enable Location
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-gray-600 mb-2 font-medium">No tasks within 5km</p>
+                                        <p className="text-sm text-gray-500 mb-6">No tasks found near your location. Check back later!</p>
+                                        <Link
+                                            to="/tasks"
+                                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                                        >
+                                            Browse All Tasks
+                                        </Link>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
