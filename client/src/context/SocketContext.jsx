@@ -17,25 +17,35 @@ export function SocketProvider({ children }) {
 
   useEffect(() => {
     // Connect socket when: logged in AND (worker mode OR poster mode)
+    // Socket is OPTIONAL - app works without it using REST APIs
     if (isAuthenticated && (userMode === 'worker' || userMode === 'poster')) {
       if (!socketRef.current) {
-        socketRef.current = io(SOCKET_URL, {
-          autoConnect: true,
-          reconnection: true,
-          // Only use websocket and polling - explicitly disable any WebRTC or local network features
-          transports: ['websocket', 'polling'], // Restrict to only these two transports
-          // Allow upgrade from polling to websocket (but only within allowed transports)
-          upgrade: true,
-          // Force websocket first, fallback to polling
-          forceNew: false,
-          // Disable any local network discovery features
-          rememberUpgrade: false,
-          // Additional options to prevent local network access
-          withCredentials: false, // Don't send credentials that might trigger network discovery
-          // Ensure we're only connecting to the specified URL, not discovering local services
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000
-        })
+        try {
+          socketRef.current = io(SOCKET_URL, {
+            autoConnect: true,
+            reconnection: true,
+            // Only use websocket and polling - explicitly disable any WebRTC or local network features
+            transports: ['websocket', 'polling'], // Restrict to only these two transports
+            // Allow upgrade from polling to websocket (but only within allowed transports)
+            upgrade: true,
+            // Force websocket first, fallback to polling
+            forceNew: false,
+            // Disable any local network discovery features
+            rememberUpgrade: false,
+            // Additional options to prevent local network access
+            withCredentials: false, // Don't send credentials that might trigger network discovery
+            // Ensure we're only connecting to the specified URL, not discovering local services
+            reconnectionAttempts: 3, // Reduced from 5 to prevent spam
+            reconnectionDelay: 2000, // Increased delay to prevent spam
+            reconnectionDelayMax: 10000, // Max delay between reconnection attempts
+            timeout: 10000 // Connection timeout
+          })
+        } catch (error) {
+          // Socket initialization failed - app continues without socket
+          console.warn('Socket.IO initialization failed, continuing without real-time features:', error.message)
+          socketRef.current = null
+          return
+        }
 
         socketRef.current.on('connect', () => {
           // Use authenticated user's ID
@@ -85,11 +95,33 @@ export function SocketProvider({ children }) {
         })
 
         socketRef.current.on('connect_error', (error) => {
-          // Connection error handled silently
+          // Connection error handled silently - app continues without socket
+          // Don't spam console with connection errors
+          if (socketRef.current?.reconnecting) {
+            // Only log first connection error, not every reconnection attempt
+            return
+          }
+        })
+        
+        // Prevent infinite reconnection spam
+        let reconnectCount = 0
+        socketRef.current.on('reconnect_attempt', () => {
+          reconnectCount++
+          if (reconnectCount > 3) {
+            // Stop reconnecting after 3 attempts
+            socketRef.current?.disconnect()
+            socketRef.current = null
+            console.warn('Socket.IO: Stopped reconnecting after multiple failures. App continues with REST APIs.')
+          }
         })
       } else if (!socketRef.current.connected) {
-        // Reconnect if disconnected
-        socketRef.current.connect()
+        // Reconnect if disconnected (but don't crash if it fails)
+        try {
+          socketRef.current.connect()
+        } catch (error) {
+          console.warn('Socket.IO reconnection failed, continuing without socket:', error.message)
+          socketRef.current = null
+        }
       } else if (socketRef.current.connected) {
         // Socket is connected, re-register based on current mode
         const userId = user?.id
@@ -120,7 +152,11 @@ export function SocketProvider({ children }) {
     } else {
       // Disconnect if not logged in
       if (socketRef.current) {
-        socketRef.current.disconnect()
+        try {
+          socketRef.current.disconnect()
+        } catch (error) {
+          // Ignore disconnect errors
+        }
         socketRef.current = null
       }
     }
@@ -215,13 +251,24 @@ export function SocketProvider({ children }) {
     }
 
     return () => {
-      socket.off('new_task', handleNewTask)
-      socket.off('connect', setupListener)
+      if (socket) {
+        try {
+          socket.off('new_task', handleNewTask)
+          socket.off('connect', setupListener)
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
     }
   }, [isAuthenticated, userMode, isOnline, showNotification])
 
   const getSocket = () => {
-    return socketRef.current
+    // Return socket if available and connected, otherwise null
+    // Components should handle null socket gracefully
+    if (socketRef.current && socketRef.current.connected) {
+      return socketRef.current
+    }
+    return null
   }
 
   // Listen for task completion and status changes (for all authenticated users)
@@ -297,12 +344,18 @@ export function SocketProvider({ children }) {
     }
 
     return () => {
-      socket.off('task_completed', handleTaskCompleted)
-      socket.off('task_status_changed', handleTaskStatusChanged)
-      socket.off('task_cancelled', handleTaskCancelled)
-      socket.off('admin_stats_refresh', handleAdminStatsRefresh)
-      socket.off('task_updated', handleTaskUpdated)
-      socket.off('connect', setupListeners)
+      if (socket) {
+        try {
+          socket.off('task_completed', handleTaskCompleted)
+          socket.off('task_status_changed', handleTaskStatusChanged)
+          socket.off('task_cancelled', handleTaskCancelled)
+          socket.off('admin_stats_refresh', handleAdminStatsRefresh)
+          socket.off('task_updated', handleTaskUpdated)
+          socket.off('connect', setupListeners)
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+      }
     }
   }, [isAuthenticated, user?.id])
 

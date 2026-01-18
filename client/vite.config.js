@@ -36,18 +36,27 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Exclude API routes from precaching
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
         runtimeCaching: [
+          // DO NOT cache API routes - use NetworkOnly (no timeout option)
           {
-            urlPattern: /^https:\/\/api\./,
-            handler: 'NetworkFirst',
+            urlPattern: /^https?:\/\/.*\/api\/.*/,
+            handler: 'NetworkOnly',
             options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
+              cacheName: 'api-requests'
             }
           },
+          // DO NOT cache Socket.IO connections
+          {
+            urlPattern: /^https?:\/\/.*\/socket\.io\/.*/,
+            handler: 'NetworkOnly',
+            options: {
+              cacheName: 'socket-requests'
+            }
+          },
+          // Cache geocoding API (read-only, safe to cache)
           {
             urlPattern: /^https:\/\/nominatim\.openstreetmap\.org\//,
             handler: 'NetworkFirst',
@@ -56,6 +65,18 @@ export default defineConfig({
               networkTimeoutSeconds: 10,
               cacheableResponse: {
                 statuses: [0, 200]
+              }
+            }
+          },
+          // Cache static assets
+          {
+            urlPattern: /\.(?:js|css|html|ico|png|svg|woff2|jpg|jpeg|gif)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'static-assets',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
           }

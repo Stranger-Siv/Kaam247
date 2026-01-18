@@ -45,18 +45,48 @@ window.addEventListener('unhandledrejection', (event) => {
   return true
 }, true) // Use capture phase to catch errors early
 
-// Additional console error suppression for checkout-related errors
+// Additional console error suppression for checkout-related errors and Workbox
 const originalConsoleError = console.error
 console.error = function(...args) {
   const errorString = args.join(' ')
+  
+  // Suppress checkout popup errors from browser extensions
   if (errorString.includes('checkout popup config') || 
       (errorString.includes('checkout') && errorString.includes('popup'))) {
-    // Suppress this error
     return
   }
+  
+  // Suppress Workbox no-response errors for API routes (expected behavior)
+  if (errorString.includes('no-response') && 
+      (errorString.includes('/api/') || errorString.includes('api.kaam247') || errorString.includes('kaam247.onrender.com'))) {
+    // This is expected - API routes use NetworkOnly strategy
+    return
+  }
+  
+  // Suppress Workbox FetchEvent errors for API routes
+  if (errorString.includes('FetchEvent') && 
+      (errorString.includes('/api/') || errorString.includes('network error'))) {
+    return
+  }
+  
   // Call original console.error for other errors
   originalConsoleError.apply(console, args)
 }
+
+// Suppress Workbox unhandled promise rejections for API routes
+window.addEventListener('unhandledrejection', (event) => {
+  const errorMessage = event.reason?.message || event.reason?.toString() || ''
+  
+  // Suppress Workbox no-response errors
+  if (errorMessage.includes('no-response') && 
+      (errorMessage.includes('/api/') || errorMessage.includes('api.kaam247') || errorMessage.includes('kaam247.onrender.com'))) {
+    event.preventDefault()
+    event.stopPropagation()
+    return false
+  }
+  
+  return true
+}, true)
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />
