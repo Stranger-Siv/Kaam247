@@ -1,0 +1,9 @@
+<svg width="40" height="48" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Location pin shape -->
+  <path d="M20 0C9.507 0 1 8.507 1 19C1 30.5 20 48 20 48S39 30.5 39 19C39 8.507 30.493 0 20 0Z" fill="#1E40AF"/>
+  <!-- Inner circle -->
+  <circle cx="20" cy="19" r="10" fill="white"/>
+  <!-- Checkmark -->
+  <path d="M15 19L18 22L25 15" stroke="#1E40AF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
