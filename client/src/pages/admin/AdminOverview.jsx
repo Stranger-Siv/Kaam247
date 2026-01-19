@@ -134,22 +134,22 @@ function AdminOverview() {
 
   return (
     <div className="w-full overflow-x-hidden">
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2 break-words">Admin Overview</h1>
-        <p className="text-gray-600 break-words">Marketplace statistics and health metrics</p>
+      <div className="mb-6 sm:mb-8 lg:mb-10">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight break-words">Admin Overview</h1>
+        <p className="text-sm sm:text-base text-gray-600 leading-relaxed break-words">Marketplace statistics and health metrics</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
         {statCards.map((card, index) => (
           <div
             key={index}
-            className={`p-4 sm:p-6 rounded-xl border-2 ${card.color} transition-shadow hover:shadow-md active:scale-95`}
+            className={`p-4 sm:p-5 lg:p-6 rounded-xl border-2 ${card.color} transition-all duration-200 hover:shadow-md active:scale-[0.98]`}
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xl sm:text-2xl">{card.icon}</span>
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <span className="text-xl sm:text-2xl lg:text-3xl">{card.icon}</span>
             </div>
-            <p className="text-2xl sm:text-3xl font-bold mb-1 break-words">{card.value}</p>
-            <p className="text-xs sm:text-sm font-medium opacity-80 leading-tight">{card.label}</p>
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 leading-none break-words">{card.value}</p>
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-wide opacity-90 leading-tight">{card.label}</p>
           </div>
         ))}
       </div>
