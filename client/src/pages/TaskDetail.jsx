@@ -1148,7 +1148,7 @@ function TaskDetail() {
           <p className="text-sm text-gray-600 mb-6">{error || 'The task you are looking for does not exist.'}</p>
           <button
             onClick={handleBack}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
           >
             Go Back
           </button>
@@ -1234,7 +1234,7 @@ function TaskDetail() {
                     <button
                       onClick={handleRateTask}
                       disabled={isRating || rating === 0}
-                      className="w-full px-6 py-3 bg-blue-600 text-white text-base font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
                     >
                       {isRating ? (
                         <>
@@ -1281,7 +1281,7 @@ function TaskDetail() {
                 <button
                   onClick={handleConfirmComplete}
                   disabled={isConfirming}
-                  className="w-full px-6 py-4 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full px-5 sm:px-6 py-3.5 sm:py-4 bg-green-600 text-white text-base sm:text-lg font-semibold rounded-xl hover:bg-green-700 transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
                 >
                   {isConfirming ? (
                     <>
@@ -1317,7 +1317,7 @@ function TaskDetail() {
             <button
               onClick={handleCancelTask}
               disabled={isCancelling}
-              className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
             >
               {isCancelling ? 'Cancelling...' : 'Cancel Task'}
             </button>
@@ -1349,7 +1349,7 @@ function TaskDetail() {
               </button>
               <button
                 onClick={() => setShowEditModal(true)}
-                className="px-4 py-3 bg-blue-600 text-white text-base font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                className="px-5 sm:px-6 py-3 sm:py-3.5 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1359,7 +1359,7 @@ function TaskDetail() {
               <button
                 onClick={handleDeleteTask}
                 disabled={isDeleting}
-                className="px-4 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 {isDeleting ? (
                   <>
@@ -1382,7 +1382,7 @@ function TaskDetail() {
             <button
               onClick={handleCancelTask}
               disabled={isCancelling}
-              className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
             >
               {isCancelling ? 'Cancelling...' : 'Cancel Task'}
             </button>
@@ -1527,7 +1527,7 @@ function TaskDetail() {
             <button
               onClick={handleCancelTask}
               disabled={isCancelling}
-              className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
             >
               {isCancelling ? 'Cancelling...' : 'Cancel Task'}
             </button>
@@ -1587,7 +1587,7 @@ function TaskDetail() {
             <button
               onClick={handleCancelTask}
               disabled={isCancelling}
-              className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
             >
               {isCancelling ? 'Cancelling...' : 'Cancel Task'}
             </button>
@@ -1724,7 +1724,7 @@ function TaskDetail() {
             <button
               onClick={handleCancelTask}
               disabled={isCancelling}
-              className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
             >
               {isCancelling ? 'Cancelling...' : 'Cancel Task'}
             </button>
@@ -1744,7 +1744,7 @@ function TaskDetail() {
             <button
               onClick={handleCancelTask}
               disabled={isCancelling}
-              className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
             >
               {isCancelling ? 'Cancelling...' : 'Cancel Task'}
             </button>
@@ -1769,7 +1769,7 @@ function TaskDetail() {
                 <button
                   onClick={handleConfirmComplete}
                   disabled={isConfirming}
-                  className="w-full px-6 py-4 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full px-5 sm:px-6 py-3.5 sm:py-4 bg-green-600 text-white text-base sm:text-lg font-semibold rounded-xl hover:bg-green-700 transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
                 >
                   {isConfirming ? (
                     <>
@@ -1809,12 +1809,12 @@ function TaskDetail() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-0">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 overflow-x-hidden">
       {/* Back Button */}
       {/* Back Button - show only on medium+ screens */}
       <button
         onClick={handleBack}
-        className="hidden sm:flex mb-6 sm:mb-8 items-center text-gray-600 hover:text-gray-900 transition-colors py-2"
+        className="hidden sm:flex mb-6 sm:mb-8 lg:mb-10 items-center text-gray-600 hover:text-gray-900 transition-colors py-2 touch-manipulation"
       >
         <svg
           className="w-5 h-5 mr-2"
@@ -1829,69 +1829,69 @@ function TaskDetail() {
             d="M15 19l-7-7 7-7"
           />
         </svg>
-        <span className="font-medium text-base">Back</span>
+        <span className="font-semibold text-base">Back</span>
       </button>
 
       {/* Task Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 sm:p-8">
+        <div className="p-5 sm:p-6 lg:p-8">
           {/* Header with Status */}
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <span className="inline-flex items-center px-2.5 py-1 bg-gray-50 text-gray-700 text-xs font-medium rounded-md">
+          <div className="mb-6 sm:mb-8 lg:mb-10">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-5 flex-wrap">
+              <span className="inline-flex items-center px-2.5 sm:px-3 py-1 bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg">
                 {task.category}
               </span>
               <StatusBadge status={task.status || task.rawStatus} />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">
               {task.title}
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                       {userMode === 'worker' ? `Posted by ${task.postedByName || 'User'}` : 'Your task'} • {task.postedTime}
             </p>
           </div>
 
           {/* Description */}
-          <div className="mb-8 pb-8 border-b border-gray-200">
-            <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Description</h2>
-            <p className="text-base text-gray-700 leading-relaxed">
+          <div className="mb-6 sm:mb-8 lg:mb-10 pb-6 sm:pb-8 border-b border-gray-200">
+            <h2 className="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide mb-3 sm:mb-4">Description</h2>
+            <p className="text-sm sm:text-base lg:text-lg text-gray-700 leading-relaxed">
               {task.description}
             </p>
           </div>
 
           {/* Task Details Grid */}
-          <div className="space-y-6 mb-8">
+          <div className="space-y-5 sm:space-y-6 lg:space-y-7 mb-6 sm:mb-8 lg:mb-10">
             {/* Budget Card */}
-            <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-5 border border-green-200">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 bg-green-200 rounded-lg">
-                  <svg className="h-4 w-4 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-5 sm:p-6 border border-green-200">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3">
+                <div className="p-2 bg-green-200 rounded-xl flex-shrink-0">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="text-xs font-semibold text-green-700 uppercase tracking-wide">Budget</span>
+                <span className="text-xs sm:text-sm font-bold text-green-700 uppercase tracking-wide">Budget</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{task.budget}</p>
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">{task.budget}</p>
             </div>
 
             {/* Location Card */}
-            <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="p-1.5 bg-blue-50 rounded-lg">
-                  <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4">
+                <div className="p-2 bg-blue-50 rounded-xl flex-shrink-0">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Location</span>
+                <span className="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide">Location</span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <p className="text-base font-semibold text-gray-900">{task.location}</p>
-                  <p className="text-sm text-gray-600 mt-0.5">{task.city}</p>
+                  <p className="text-base sm:text-lg font-bold text-gray-900 leading-tight">{task.location}</p>
+                  <p className="text-sm sm:text-base text-gray-600 mt-1 leading-relaxed">{task.city}</p>
                   {userMode === 'worker' && (
-                    <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-2 flex items-center gap-1.5">
+                      <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
                       {task.distance}
@@ -1904,14 +1904,14 @@ function TaskDetail() {
                       href={`https://www.google.com/maps?q=${task.coordinates[1]},${task.coordinates[0]}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                       </svg>
                       Open in Google Maps
                     </a>
-                    <div className="w-full max-w-[500px] mt-4">
+                    <div className="w-full max-w-[500px] mt-4 sm:mt-5">
                       <TaskLocationMap
                         coordinates={task.coordinates}
                         locationName={`${task.location}, ${task.city}`}
@@ -1923,37 +1923,37 @@ function TaskDetail() {
             </div>
 
             {/* Schedule & Duration */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1.5 bg-purple-50 rounded-lg">
-                    <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+              <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3">
+                  <div className="p-2 bg-purple-50 rounded-xl flex-shrink-0">
+                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Scheduled Time</span>
+                  <span className="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide">Scheduled Time</span>
                 </div>
-                <p className="text-base font-semibold text-gray-900 mt-1">{task.time}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-900 mt-1 leading-tight">{task.time}</p>
               </div>
 
-              <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1.5 bg-orange-50 rounded-lg">
-                    <svg className="h-4 w-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3">
+                  <div className="p-2 bg-orange-50 rounded-xl flex-shrink-0">
+                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Expected Duration</span>
+                  <span className="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide">Expected Duration</span>
                 </div>
-                <p className="text-base font-semibold text-gray-900 mt-1">{task.duration}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-900 mt-1 leading-tight">{task.duration}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Task Timeline */}
-        <div className="border-t border-gray-200 p-6 bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Task Timeline</h3>
+        <div className="border-t border-gray-200 p-5 sm:p-6 lg:p-8 bg-gray-50">
+          <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-5 sm:mb-6 lg:mb-8 leading-tight">Task Timeline</h3>
           <div className="relative">
             {/* Timeline Line */}
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-300"></div>
