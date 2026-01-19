@@ -121,7 +121,9 @@ function TaskDetail() {
           ? `${backendTask.expectedDuration} ${backendTask.expectedDuration === 1 ? 'hour' : 'hours'}`
           : 'Not specified',
         status: (backendTask.status === 'SEARCHING' || backendTask.status === 'OPEN') ? 'open' : backendTask.status.toLowerCase(),
-        postedBy: backendTask.postedBy?.name || 'User',
+        // Keep full postedBy object for ID checks + a separate display name
+        postedBy: backendTask.postedBy || null,
+        postedByName: backendTask.postedBy?.name || 'User',
         posterPhone: backendTask.posterPhone || null, // Only included if authorized
         workerPhone: backendTask.workerPhone || null, // Only included if authorized
         postedTime: backendTask.createdAt
@@ -1695,7 +1697,7 @@ function TaskDetail() {
               {task.title}
             </h1>
             <p className="text-sm text-gray-500">
-              {userMode === 'worker' ? `Posted by ${task.postedBy}` : 'Your task'} • {task.postedTime}
+                      {userMode === 'worker' ? `Posted by ${task.postedByName || 'User'}` : 'Your task'} • {task.postedTime}
             </p>
           </div>
 
