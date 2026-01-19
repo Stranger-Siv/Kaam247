@@ -39,7 +39,7 @@ function NotificationToast() {
     <>
       {/* Mobile: Full screen overlay */}
       <div
-        className="fixed inset-0 z-[1500] bg-black/50 animate-slide-in sm:hidden"
+        className="fixed inset-0 z-[1500] bg-slate-950/40 backdrop-blur-[2px] animate-slide-in sm:hidden"
         onClick={hideNotification}
         style={{
           paddingTop: 'env(safe-area-inset-top)',
@@ -48,9 +48,9 @@ function NotificationToast() {
           paddingRight: 'env(safe-area-inset-right)'
         }}
       >
-        <div className="w-full h-full bg-slate-900 text-slate-50 flex flex-col overflow-hidden shadow-2xl">
+        <div className="w-full h-full bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-50 flex flex-col overflow-hidden shadow-2xl">
           {/* Header - Fixed at top */}
-          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/10 flex-shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse flex-shrink-0"></div>
               <h3 className="font-semibold text-lg text-slate-50 tracking-tight">New Task Available</h3>
@@ -61,7 +61,7 @@ function NotificationToast() {
                 navigatedRef.current = true
                 hideNotification()
               }}
-              className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-white transition-colors rounded-full hover:bg-slate-800 flex-shrink-0 touch-manipulation"
+              className="w-10 h-10 flex items-center justify-center text-slate-200 hover:text-white transition-colors rounded-full hover:bg-white/10 flex-shrink-0 touch-manipulation"
               aria-label="Close notification"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -79,14 +79,14 @@ function NotificationToast() {
 
             {/* Info Chips */}
             <div className="flex flex-wrap items-center gap-2.5 mb-4">
-              <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-800 text-slate-50 text-sm font-medium">
+              <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white/10 text-slate-50 text-sm font-medium">
                 {notification.category}
               </span>
-              <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 text-base font-bold">
+              <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-emerald-400/15 text-emerald-200 text-base font-bold">
                 ₹{notification.budget}
               </span>
               {notification.distance && (
-                <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-blue-500/20 text-blue-100 text-sm font-medium gap-1.5">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-sky-400/15 text-sky-100 text-sm font-medium gap-1.5">
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -120,8 +120,8 @@ function NotificationToast() {
           </div>
 
           {/* Footer - Fixed at bottom */}
-          <div className="px-4 pt-3 pb-4 border-t border-slate-800 flex-shrink-0">
-            <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden mb-2">
+          <div className="px-4 pt-3 pb-4 border-t border-white/10 flex-shrink-0">
+            <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden mb-2">
               <div className="h-full bg-blue-500 rounded-full" style={{ width: '100%', animation: 'toastProgress 15s linear forwards' }} />
             </div>
             <p className="text-xs text-slate-400 text-center">
