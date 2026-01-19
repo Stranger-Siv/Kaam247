@@ -1068,9 +1068,178 @@ function TaskDetail() {
     const isWorkerForTask = myId && acceptedById && String(acceptedById) === String(myId)
 
     // Prefer task-specific role:
-    // - If you're the assigned worker, show worker actions.
-    // - Else if you're the poster, show poster actions.
+    // - If you're the POSTER for this task, always show poster actions (including Confirm Completion),
+    //   even if your global mode toggle is currently "worker".
+    // - Else if you're the assigned WORKER, show worker actions.
     // - Else fall back to current mode (e.g., browsing tasks).
+
+    // 1) Poster actions FIRST, so posters see confirm button even while in worker mode
+    if (isPosterForTask || (!isWorkerForTask && userMode === 'poster')) {
+      // Poster actions
+      if (currentStatus === 'COMPLETED' || task.status === 'completed') {
+        // Show rating UI if not rated yet
+        if (!task.rating) {
+          return (
+            <div className="space-y-4">
+              <div className="w-full px-6 py-4 bg-gray-50 text-gray-700 text-base font-medium rounded-lg text-center">
+                Task completed
+              </div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Rate the Worker</h3>
+                {ratingError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{ratingError}</p>
+                  </div>
+                )}
+                {ratingSuccess ? (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-700">Rating submitted successfully!</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            className={`text-3xl transition-colors ${rating >= star ? 'text-yellow-400' : 'text-gray-300'
+                              } hover:text-yellow-400`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                      {rating > 0 && (
+                        <p className="text-sm text-gray-600 mt-2">{rating} out of 5 stars</p>
+                      )}
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Review (optional)</label>
+                      <textarea
+                        value={review}
+                        onChange={(e) => setReview(e.target.value)}
+                        rows={3}
+                        className="block w-full rounded-lg border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                        placeholder="Share your experience working with this worker..."
+                      />
+                    </div>
+                    <button
+                      onClick={handleSubmitRating}
+                      disabled={isRating || rating === 0}
+                      className="w-full px-6 py-3 bg-blue-600 text-white text-base font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isRating ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Submitting...
+                        </>
+                      ) : (
+                        'Submit Rating'
+                      )}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )
+        }
+
+        // Already rated: simple completed state
+        return (
+          <div className="w-full px-6 py-4 bg-gray-50 text-gray-700 text-base font-medium rounded-lg text-center">
+            Task completed
+          </div>
+        )
+      } else if (currentStatus === 'IN_PROGRESS' || task.status === 'in_progress') {
+        // Poster view while task is IN_PROGRESS
+        return (
+          <div className="space-y-3">
+            <div className="w-full px-6 py-4 bg-yellow-50 text-yellow-700 text-base font-medium rounded-lg text-center">
+              Task in progress
+            </div>
+            {task.workerCompleted ? (
+              <>
+                <div className="w-full px-6 py-4 bg-green-50 text-green-700 text-base font-medium rounded-lg text-center border-2 border-green-200">
+                  Worker has marked this task as completed
+                </div>
+                {confirmError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{confirmError}</p>
+                  </div>
+                )}
+                <button
+                  onClick={handleConfirmComplete}
+                  disabled={isConfirming}
+                  className="w-full px-6 py-4 bg-green-600 text-white text-lg font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isConfirming ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Confirming...
+                    </>
+                  ) : (
+                    'Confirm Completion'
+                  )}
+                </button>
+              </>
+            ) : (
+              <div className="w-full px-6 py-3 bg-gray-50 text-gray-600 text-sm rounded-lg text-center">
+                Waiting for worker to mark task as completed
+              </div>
+            )}
+          </div>
+        )
+      } else if (currentStatus === 'ACCEPTED' || task.status === 'accepted') {
+        return (
+          <div className="space-y-3">
+            <div className="w-full px-6 py-4 bg-blue-50 text-blue-700 text-base font-medium rounded-lg text-center">
+              Worker assigned: {task.worker || 'Worker'}
+            </div>
+            {cancelError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{cancelError}</p>
+              </div>
+            )}
+            <button
+              onClick={handleCancelTask}
+              disabled={isCancelling}
+              className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel Task'}
+            </button>
+          </div>
+        )
+      } else if (currentStatus === 'SEARCHING' || currentStatus === 'OPEN' || task.status === 'open') {
+        // Poster can cancel while searching/open
+        return (
+          <div className="space-y-3">
+            {cancelError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{cancelError}</p>
+              </div>
+            )}
+            <button
+              onClick={handleCancelTask}
+              disabled={isCancelling}
+              className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel Task'}
+            </button>
+          </div>
+        )
+      }
+    }
+
+    // 2) Worker actions next
     if (isWorkerForTask || (!isPosterForTask && userMode === 'worker')) {
       if (currentStatus === 'SEARCHING' || currentStatus === 'OPEN' || task.status === 'open') {
         // FRONTEND GUARDS: Calculate if Accept button should be disabled
