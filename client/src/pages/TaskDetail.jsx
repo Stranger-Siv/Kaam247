@@ -42,6 +42,8 @@ function TaskDetail() {
   const [ratingError, setRatingError] = useState(null)
   const [ratingSuccess, setRatingSuccess] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
@@ -912,7 +914,11 @@ function TaskDetail() {
 
   // Handle delete task
   const handleDeleteTask = async () => {
-    if (!confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+    // UI confirmation (no browser alert): require second tap within a short window
+    if (!confirmingDelete) {
+      setConfirmingDelete(true)
+      // Auto-reset confirmation after 4 seconds
+      setTimeout(() => setConfirmingDelete(false), 4000)
       return
     }
 
@@ -970,7 +976,11 @@ function TaskDetail() {
       return
     }
 
-    if (!confirm('Are you sure you want to cancel this task?')) {
+    // UI confirmation (no browser alert): require second tap within a short window
+    if (!confirmingCancel) {
+      setConfirmingCancel(true)
+      // Auto-reset confirmation after 4 seconds
+      setTimeout(() => setConfirmingCancel(false), 4000)
       return
     }
 
@@ -1307,10 +1317,10 @@ function TaskDetail() {
             )}
             <button
               onClick={handleCancelTask}
-              disabled={isCancelling}
+                disabled={isCancelling}
               className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isCancelling ? 'Cancelling...' : 'Cancel Task'}
+              {isCancelling ? 'Cancelling...' : (confirmingCancel ? 'Tap again to confirm cancel' : 'Cancel Task')}
             </button>
           </div>
         )
@@ -1356,7 +1366,7 @@ function TaskDetail() {
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    Delete
+                    {confirmingDelete ? 'Tap again to confirm delete' : 'Delete'}
                   </>
                 )}
               </button>
