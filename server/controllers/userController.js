@@ -287,20 +287,33 @@ const getActivity = async (req, res) => {
         rating: task.rating || null
       })),
       completed: [
-        ...postedTasks.filter(t => t.status === 'COMPLETED'),
-        ...acceptedTasks.filter(t => t.status === 'COMPLETED')
-      ].map(task => ({
-        id: task._id,
-        title: task.title,
-        category: task.category,
-        budget: task.budget,
-        status: task.status,
-        role: task.postedBy?._id?.toString() === userId ? 'Poster' : 'Worker',
-        date: task.completedAt || task.createdAt,
-        postedBy: task.postedBy?.name || null,
-        acceptedBy: task.acceptedBy?.name || null,
-        rating: task.rating || null
-      })).sort((a, b) => new Date(b.date) - new Date(a.date)),
+        // Tasks from postedTasks: user is the Poster
+        ...postedTasks.filter(t => t.status === 'COMPLETED').map(task => ({
+          id: task._id,
+          title: task.title,
+          category: task.category,
+          budget: task.budget,
+          status: task.status,
+          role: 'Poster', // User posted this task
+          date: task.completedAt || task.createdAt,
+          postedBy: task.postedBy?.name || null,
+          acceptedBy: task.acceptedBy?.name || null,
+          rating: task.rating || null
+        })),
+        // Tasks from acceptedTasks: user is the Worker
+        ...acceptedTasks.filter(t => t.status === 'COMPLETED').map(task => ({
+          id: task._id,
+          title: task.title,
+          category: task.category,
+          budget: task.budget,
+          status: task.status,
+          role: 'Worker', // User accepted this task
+          date: task.completedAt || task.createdAt,
+          postedBy: task.postedBy?.name || null,
+          acceptedBy: task.acceptedBy?.name || null,
+          rating: task.rating || null
+        }))
+      ].sort((a, b) => new Date(b.date) - new Date(a.date)),
       cancelled: [
         // Include all cancellation variants for both poster and worker
         ...postedTasks.filter(t =>
