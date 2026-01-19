@@ -43,6 +43,7 @@ function TaskDetail() {
   const [showReportModal, setShowReportModal] = useState(false)
   const fetchInFlightRef = useRef(false)
   const lastFetchAtRef = useRef(0)
+  const pollingIntervalRef = useRef(null)
 
   // Fetch task function (reusable) - using useCallback to avoid dependency issues
   const fetchTask = useCallback(async () => {
@@ -155,6 +156,45 @@ function TaskDetail() {
   useEffect(() => {
     fetchTask()
   }, [fetchTask])
+
+  // Poster mode: lightweight polling fallback when task is active
+  useEffect(() => {
+    // Only posters need this; workers already see active-task state elsewhere
+    if (userMode !== 'poster' || !taskId) {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+        pollingIntervalRef.current = null
+      }
+      return
+    }
+
+    const activeStatuses = ['ACCEPTED', 'IN_PROGRESS']
+    const currentStatus = task?.rawStatus || task?.status
+
+    // Only poll while task is in an active state
+    if (!currentStatus || !activeStatuses.includes(currentStatus)) {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+        pollingIntervalRef.current = null
+      }
+      return
+    }
+
+    // Start / restart polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+    }
+    pollingIntervalRef.current = setInterval(() => {
+      fetchTask()
+    }, 5000) // 5s refresh while worker is acting on the task
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+        pollingIntervalRef.current = null
+      }
+    }
+  }, [userMode, taskId, task?.rawStatus, task?.status, fetchTask])
 
   // Listen for Socket.IO events
   useEffect(() => {
