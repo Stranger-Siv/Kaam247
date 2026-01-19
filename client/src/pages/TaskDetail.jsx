@@ -1316,10 +1316,10 @@ function TaskDetail() {
             )}
             <button
               onClick={handleCancelTask}
-                disabled={isCancelling}
+              disabled={isCancelling}
               className="w-full px-6 py-3 bg-red-600 text-white text-base font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isCancelling ? 'Cancelling...' : (confirmingCancel ? 'Tap again to confirm cancel' : 'Cancel Task')}
+              {isCancelling ? 'Cancelling...' : 'Cancel Task'}
             </button>
           </div>
         )
