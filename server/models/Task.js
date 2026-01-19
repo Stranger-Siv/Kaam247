@@ -97,6 +97,11 @@ const taskSchema = new mongoose.Schema({
         required: false,
         description: 'Timestamp when rating was submitted'
     },
+    lastAlertedAt: {
+        type: Date,
+        required: false,
+        description: 'Timestamp when task was last alerted to workers (for 3-hour cooldown)'
+    },
     createdAt: {
         type: Date,
         default: Date.now

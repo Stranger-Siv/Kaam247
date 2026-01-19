@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { createTask, acceptTask, getAvailableTasks, getTaskById, getTasksByUser, cancelTask, startTask, markComplete, confirmComplete, rateTask } = require('../controllers/taskController')
+const { createTask, acceptTask, getAvailableTasks, getTaskById, getTasksByUser, cancelTask, startTask, markComplete, confirmComplete, rateTask, editTask, deleteTask } = require('../controllers/taskController')
 
 // Test route to verify router is working
 router.get('/test', (req, res) => {
@@ -30,6 +30,12 @@ router.post('/tasks/:taskId/confirm-complete', confirmComplete)
 
 // POST /api/tasks/:taskId/rate - Poster rates worker after completion
 router.post('/tasks/:taskId/rate', rateTask)
+
+// PUT /api/tasks/:taskId/edit - Poster edits their task
+router.put('/tasks/:taskId/edit', editTask)
+
+// DELETE /api/tasks/:taskId - Poster deletes their task
+router.delete('/tasks/:taskId', deleteTask)
 
 // POST /api/tasks/:taskId/accept (MUST come before /tasks to avoid route conflict)
 router.post('/tasks/:taskId/accept', acceptTask)

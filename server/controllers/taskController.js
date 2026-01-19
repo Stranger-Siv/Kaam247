@@ -210,6 +210,14 @@ const createTask = async (req, res) => {
         createdAt: savedTask.createdAt ? savedTask.createdAt.toISOString() : new Date().toISOString()
       }
 
+      // Set lastAlertedAt when task is created (for 3-hour cooldown)
+      savedTask.lastAlertedAt = new Date()
+      await savedTask.save()
+
+      // Set lastAlertedAt when task is created (for 3-hour cooldown)
+      savedTask.lastAlertedAt = new Date()
+      await savedTask.save()
+
       // Pass postedBy to exclude task creator from receiving the notification
       broadcastNewTask(taskData, savedTask.postedBy.toString())
     } catch (broadcastError) {
@@ -1403,6 +1411,230 @@ const rateTask = async (req, res) => {
   }
 }
 
+// PUT /api/tasks/:taskId/edit - Poster edits their task
+const editTask = async (req, res) => {
+  try {
+    const { taskId } = req.params
+    const { posterId, title, description, category, budget, location, scheduledAt, expectedDuration, shouldReAlert } = req.body
+
+    // Validate taskId
+    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+      return res.status(400).json({
+        error: 'Invalid taskId',
+        message: 'taskId must be a valid MongoDB ObjectId'
+      })
+    }
+
+    // Validate posterId
+    if (!posterId || !mongoose.Types.ObjectId.isValid(posterId)) {
+      return res.status(400).json({
+        error: 'Invalid posterId',
+        message: 'posterId is required and must be a valid MongoDB ObjectId'
+      })
+    }
+
+    // Fetch task
+    const task = await Task.findById(taskId)
+      .populate('postedBy', '_id')
+
+    if (!task) {
+      return res.status(404).json({
+        error: 'Task not found',
+        message: 'Task not found'
+      })
+    }
+
+    // Verify user is the task poster
+    if (task.postedBy._id.toString() !== posterId.toString()) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the task poster can edit this task'
+      })
+    }
+
+    // HARDENING: Can only edit tasks that are OPEN or SEARCHING (not accepted/in progress/completed)
+    if (!['OPEN', 'SEARCHING'].includes(task.status)) {
+      return res.status(400).json({
+        error: 'Cannot edit task',
+        message: 'Tasks can only be edited when status is OPEN or SEARCHING. Current status: ' + task.status
+      })
+    }
+
+    // Build update object with only provided fields
+    const updateData = {}
+    if (title !== undefined) updateData.title = title.trim()
+    if (description !== undefined) updateData.description = description.trim()
+    if (category !== undefined) updateData.category = category
+    if (budget !== undefined) {
+      const budgetNumber = Number(budget)
+      if (isNaN(budgetNumber) || budgetNumber <= 0) {
+        return res.status(400).json({
+          error: 'Invalid budget',
+          message: 'budget must be a positive number'
+        })
+      }
+      updateData.budget = budgetNumber
+    }
+    if (location !== undefined) {
+      if (!location.coordinates || !Array.isArray(location.coordinates) || location.coordinates.length !== 2) {
+        return res.status(400).json({
+          error: 'Invalid location',
+          message: 'location.coordinates must be an array of [longitude, latitude]'
+        })
+      }
+      updateData.location = {
+        type: 'Point',
+        coordinates: location.coordinates,
+        area: location.area || task.location?.area,
+        city: location.city || task.location?.city
+      }
+    }
+    if (scheduledAt !== undefined) {
+      updateData.scheduledAt = scheduledAt ? new Date(scheduledAt) : null
+    }
+    if (expectedDuration !== undefined) {
+      updateData.expectedDuration = expectedDuration ? Number(expectedDuration) : null
+    }
+
+    // Update task
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    )
+
+    // Check if we should re-alert workers (only if shouldReAlert is true AND 3+ hours have passed since last alert)
+    let shouldAlert = false
+    if (shouldReAlert === true) {
+      const now = new Date()
+      const lastAlerted = task.lastAlertedAt ? new Date(task.lastAlertedAt) : null
+      const threeHoursInMs = 3 * 60 * 60 * 1000 // 3 hours
+
+      if (!lastAlerted || (now - lastAlerted) >= threeHoursInMs) {
+        shouldAlert = true
+        // Update lastAlertedAt
+        updatedTask.lastAlertedAt = now
+        await updatedTask.save()
+      }
+    }
+
+    // Re-alert workers if conditions are met
+    if (shouldAlert) {
+      try {
+        broadcastNewTask({
+          taskId: updatedTask._id.toString(),
+          title: updatedTask.title,
+          category: updatedTask.category,
+          budget: updatedTask.budget,
+          location: updatedTask.location,
+          createdAt: updatedTask.createdAt
+        }, posterId)
+      } catch (socketError) {
+        console.error('Error re-alerting workers (non-fatal):', socketError.message)
+      }
+    }
+
+    // Emit taskUpdated event for state sync
+    try {
+      notifyTaskUpdated(taskId, {
+        status: updatedTask.status,
+        title: updatedTask.title,
+        budget: updatedTask.budget,
+        postedBy: updatedTask.postedBy,
+        acceptedBy: updatedTask.acceptedBy
+      })
+      notifyTaskStatusChanged(posterId, taskId, updatedTask.status)
+    } catch (socketError) {
+      // Don't fail if socket emit fails
+    }
+
+    return res.status(200).json({
+      message: 'Task updated successfully',
+      task: updatedTask,
+      reAlerted: shouldAlert
+    })
+  } catch (error) {
+    console.error('Error editing task:', error)
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while editing the task'
+    })
+  }
+}
+
+// DELETE /api/tasks/:taskId - Poster deletes their task
+const deleteTask = async (req, res) => {
+  try {
+    const { taskId } = req.params
+    const { posterId } = req.body
+
+    // Validate taskId
+    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+      return res.status(400).json({
+        error: 'Invalid taskId',
+        message: 'taskId must be a valid MongoDB ObjectId'
+      })
+    }
+
+    // Validate posterId
+    if (!posterId || !mongoose.Types.ObjectId.isValid(posterId)) {
+      return res.status(400).json({
+        error: 'Invalid posterId',
+        message: 'posterId is required and must be a valid MongoDB ObjectId'
+      })
+    }
+
+    // Fetch task
+    const task = await Task.findById(taskId)
+      .populate('postedBy', '_id')
+      .populate('acceptedBy', '_id')
+
+    if (!task) {
+      return res.status(404).json({
+        error: 'Task not found',
+        message: 'Task not found'
+      })
+    }
+
+    // Verify user is the task poster
+    if (task.postedBy._id.toString() !== posterId.toString()) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the task poster can delete this task'
+      })
+    }
+
+    // HARDENING: Can only delete tasks that are OPEN or SEARCHING (not accepted/in progress/completed)
+    if (!['OPEN', 'SEARCHING'].includes(task.status)) {
+      return res.status(400).json({
+        error: 'Cannot delete task',
+        message: 'Tasks can only be deleted when status is OPEN or SEARCHING. Current status: ' + task.status
+      })
+    }
+
+    // Delete task
+    await Task.findByIdAndDelete(taskId)
+
+    // Emit socket events to notify workers
+    try {
+      notifyTaskRemoved(null, taskId) // Remove from all workers
+      notifyTaskStatusChanged(posterId, taskId, 'DELETED')
+    } catch (socketError) {
+      // Don't fail if socket emit fails
+    }
+
+    return res.status(200).json({
+      message: 'Task deleted successfully'
+    })
+  } catch (error) {
+    console.error('Error deleting task:', error)
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while deleting the task'
+    })
+  }
+}
+
 module.exports = {
   createTask,
   acceptTask,
@@ -1413,5 +1645,7 @@ module.exports = {
   startTask,
   markComplete,
   confirmComplete,
-  rateTask
+  rateTask,
+  editTask,
+  deleteTask
 }
