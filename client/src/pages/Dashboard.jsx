@@ -596,7 +596,8 @@ function Dashboard() {
 
     // DATA CONSISTENCY: Fetch initial tasks for worker mode - always fresh from backend with location filtering
     const fetchAvailableTasks = useCallback(async () => {
-        if (userMode !== 'worker' || fetchingRef.current.availableTasks) {
+        // Only fetch when in worker mode AND online
+        if (userMode !== 'worker' || !isOnline || fetchingRef.current.availableTasks) {
             return
         }
 
@@ -656,7 +657,7 @@ function Dashboard() {
         } finally {
             fetchingRef.current.availableTasks = false
         }
-    }, [userMode, workerLocation]) // Removed requestLocation from deps
+    }, [userMode, workerLocation, isOnline]) // Removed requestLocation from deps
 
     // Request location on mount for workers (only once)
     useEffect(() => {
@@ -670,14 +671,17 @@ function Dashboard() {
     }, [userMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
-        if (userMode === 'worker' && user?.id && workerLocation?.lat && workerLocation?.lng) {
+        if (userMode === 'worker' && isOnline && user?.id && workerLocation?.lat && workerLocation?.lng) {
             fetchAvailableTasks()
+        } else if (userMode === 'worker' && !isOnline) {
+            // Clear tasks when going OFF DUTY
+            setAvailableTasks([])
         }
-    }, [userMode, user?.id, workerLocation?.lat, workerLocation?.lng]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [userMode, isOnline, user?.id, workerLocation?.lat, workerLocation?.lng]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // DATA CONSISTENCY: Refresh available tasks on task status changes
     useEffect(() => {
-        if (userMode !== 'worker') {
+        if (userMode !== 'worker' || !isOnline) {
             return
         }
 
@@ -866,7 +870,9 @@ function Dashboard() {
                                 </div>
                                 <p className="text-sm font-medium text-gray-600">Available Tasks</p>
                             </div>
-                            <p className="text-3xl font-bold text-gray-900">{availableTasks.length}</p>
+                            <p className="text-3xl font-bold text-gray-900">
+                                {isOnline ? availableTasks.length : 0}
+                            </p>
                         </div>
                         <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 border-0 sm:border border-gray-100 hover:shadow-md transition-shadow">
                             <div className="flex items-center gap-3 mb-3">
