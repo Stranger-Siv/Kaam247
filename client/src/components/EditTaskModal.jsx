@@ -353,12 +353,14 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
               )}
             </div>
             <LocationPickerMap
-              initialLocation={locationData.coordinates ? {
-                lat: locationData.coordinates[1],
-                lng: locationData.coordinates[0]
-              } : null}
+              initialCenter={locationData.coordinates ? [
+                // [lat, lng] for Leaflet display
+                locationData.coordinates[1],
+                locationData.coordinates[0]
+              ] : undefined}
+              initialZoom={13}
               onLocationChange={handleMapLocationChange}
-              height="300px"
+              isGettingLocation={isGettingLocation}
             />
             {locationData.area && (
               <p className="mt-2 text-sm text-gray-600">
