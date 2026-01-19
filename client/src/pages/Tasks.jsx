@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useSocket } from '../context/SocketContext'
 import { useAvailability } from '../context/AvailabilityContext'
 import { useAuth } from '../context/AuthContext'
+import { useUserMode } from '../context/UserModeContext'
 import StatusBadge from '../components/StatusBadge'
 import { API_BASE_URL } from '../config/env'
 import { fetchActiveTask } from '../utils/stateRecovery'
@@ -18,6 +19,7 @@ function Tasks() {
   const { getSocket } = useSocket()
   const { isOnline, workerLocation } = useAvailability()
   const { user } = useAuth()
+  const { userMode } = useUserMode()
   const newTaskHighlightRef = useRef(new Set())
 
   const categories = ['All', 'Cleaning', 'Delivery', 'Helper / Labour', 'Tutor / Mentor', 'Tech Help', 'Errands']
@@ -28,6 +30,14 @@ function Tasks() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
+        // Worker OFF DUTY: do not fetch/render tasks
+        if (userMode === 'worker' && !isOnline) {
+          setTasks([])
+          setError(null)
+          setLoading(false)
+          return
+        }
+
         setLoading(true)
         setError(null)
 
@@ -95,7 +105,7 @@ function Tasks() {
     }
 
     fetchTasks()
-  }, [workerLocation])
+  }, [workerLocation, isOnline, userMode, user?.id]) // include mode/online to stop fetching when OFF DUTY
 
   // Listen for new tasks via Socket.IO (only when online)
   useEffect(() => {
@@ -390,6 +400,26 @@ function Tasks() {
   }, [workerLocation])
 
   const filteredTasks = tasks // In real app, apply filters here
+
+  // Worker OFF DUTY: hide task feed completely
+  if (userMode === 'worker' && !isOnline) {
+    return (
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
+        <div className="mb-6 sm:mb-8 w-full">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2 break-words">Available Tasks</h1>
+          <p className="text-sm sm:text-base text-gray-600 break-words">Go online (ON DUTY) to see tasks near you</p>
+        </div>
+
+        <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-10 sm:p-16 text-center border-0 sm:border border-gray-100">
+          <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6l4 2" />
+          </svg>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">You are OFF DUTY</h3>
+          <p className="text-sm text-gray-600">Turn ON DUTY to start receiving and viewing tasks.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
