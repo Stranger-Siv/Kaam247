@@ -33,10 +33,10 @@ export function NotificationProvider({ children }) {
 
     setNotification(formattedTask)
 
-    // Auto-dismiss after 7 seconds
+    // Auto-dismiss after 15 seconds (toast also auto-navigates to /tasks)
     setTimeout(() => {
       setNotification(null)
-    }, 7000)
+    }, 15000)
   }, [alertedTaskIds])
 
   const hideNotification = useCallback(() => {
