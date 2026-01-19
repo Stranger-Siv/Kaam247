@@ -35,6 +35,7 @@ function Dashboard() {
         completed: 0,
         cancelled: 0
     })
+    const [pendingConfirmations, setPendingConfirmations] = useState([])
 
     // DATA CONSISTENCY: Fetch worker stats (earnings, rating) - always fresh from backend
     const fetchWorkerStats = useCallback(async () => {
@@ -113,11 +114,44 @@ function Dashboard() {
         }
     }, [userMode, user?.id])
 
+    // Always fetch a tiny subset: tasks posted by me that are waiting for my confirmation.
+    // This is intentionally shown even in worker mode so posters can confirm completion
+    // without switching Activity tabs/mode.
+    const fetchPendingConfirmations = useCallback(async () => {
+        if (!user?.id) return
+        try {
+            const token = localStorage.getItem('kaam247_token')
+            if (!token) return
+
+            const res = await fetch(`${API_BASE_URL}/api/users/me/activity`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            if (!res.ok) return
+            const data = await res.json()
+
+            // Heuristic: backend activity items include role + status fields.
+            // We treat "worker completed" as items in-progress requiring poster confirmation.
+            const posted = data?.activity?.posted || []
+            const needsConfirm = posted.filter(t =>
+                (t.status === 'IN_PROGRESS' || t.status === 'in_progress') &&
+                (t.workerCompleted === true || t.isWorkerCompleted === true || t.completedByWorker === true)
+            )
+
+            setPendingConfirmations(needsConfirm.slice(0, 3))
+        } catch (e) {
+            // silent
+        }
+    }, [user?.id])
+
     useEffect(() => {
         if (userMode === 'poster' && user?.id) {
             fetchPosterStats()
         }
     }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        fetchPendingConfirmations()
+    }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // STATE RECOVERY: Page load recovery sequence (only on initial mount, skip if stats already fetched)
     useEffect(() => {
@@ -256,6 +290,11 @@ function Dashboard() {
                 } else if (userMode === 'poster' && user?.id) {
                     fetchPosterStats()
                 }
+            }
+
+            // Also refresh pending confirmations on relevant events
+            if (type === 'task_status_changed' || type === 'task_updated' || type === 'task_completed') {
+                fetchPendingConfirmations()
             }
         }
 
@@ -940,6 +979,40 @@ function Dashboard() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Pending Confirmations (poster actions) - shown even in worker mode */}
+                    {pendingConfirmations.length > 0 && (
+                        <div className="mb-12">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">Pending Confirmations</h2>
+                                    <p className="text-sm text-gray-500">Tasks you posted that need your confirmation</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {pendingConfirmations.map((task) => (
+                                    <Link
+                                        key={task.id || task._id}
+                                        to={`/tasks/${task.id || task._id}`}
+                                        className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border border-green-200"
+                                    >
+                                        <div className="flex items-start justify-between gap-3 mb-2">
+                                            <h3 className="text-base font-semibold text-gray-900 group-hover:text-green-700 transition-colors flex-1 min-w-0 break-words">
+                                                {task.title}
+                                            </h3>
+                                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-700 border border-green-200 whitespace-nowrap">
+                                                Confirm
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 line-clamp-2">
+                                            Worker marked complete — open to confirm.
+                                        </p>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Available Tasks Nearby */}
                     <div className="mb-12">
