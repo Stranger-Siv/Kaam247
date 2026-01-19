@@ -18,6 +18,8 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
     area: '',
     city: ''
   })
+  const [isGettingLocation, setIsGettingLocation] = useState(false)
+  const [locationError, setLocationError] = useState(null)
   const [shouldReAlert, setShouldReAlert] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -106,6 +108,43 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
     }
   }
 
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.')
+      return
+    }
+    setIsGettingLocation(true)
+    setLocationError(null)
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        setLocationData(prev => ({
+          ...prev,
+          coordinates: [lng, lat]
+        }))
+        const { area, city } = await reverseGeocode(lat, lng)
+        setLocationData(prev => ({
+          ...prev,
+          area,
+          city
+        }))
+      } catch (err) {
+        setLocationError('Unable to fetch location details. Please try again.')
+      } finally {
+        setIsGettingLocation(false)
+      }
+    }, (err) => {
+      setIsGettingLocation(false)
+      setLocationError(err.message || 'Unable to fetch current location.')
+    }, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    })
+  }
+
   const validateForm = () => {
     const errors = {}
     
@@ -123,6 +162,10 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
     e.preventDefault()
     
     if (!validateForm()) {
+      return
+    }
+
+    if (!confirm('Update this task with the new details?')) {
       return
     }
 
@@ -296,6 +339,19 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Location *
             </label>
+            <div className="flex flex-wrap gap-3 mb-3">
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isGettingLocation}
+              >
+                {isGettingLocation ? 'Getting location…' : 'Use my current location'}
+              </button>
+              {locationError && (
+                <span className="text-sm text-red-600">{locationError}</span>
+              )}
+            </div>
             <LocationPickerMap
               initialLocation={locationData.coordinates ? {
                 lat: locationData.coordinates[1],
