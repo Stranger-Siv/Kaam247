@@ -53,6 +53,8 @@ function Tasks() {
         // Transform backend task format to frontend format
         // Filter to only show tasks within 5km and sort by distance
         const transformedTasks = data.tasks
+          // Hide tasks posted by the current user (don't show your own tasks in worker list)
+          .filter(task => !user?.id || String(task.postedBy) !== String(user.id))
           .filter(task => task.distanceKm !== null && task.distanceKm !== undefined && task.distanceKm <= 5) // Only within 5km
           .map((task) => ({
             id: task._id,

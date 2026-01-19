@@ -41,19 +41,19 @@ function Activity() {
       }
 
       const data = await response.json()
-      
+
       // DATA CONSISTENCY: Ensure no duplicates by using unique task IDs
       const deduplicatedActivity = {
-        posted: data.activity.posted.filter((task, index, self) => 
+        posted: data.activity.posted.filter((task, index, self) =>
           index === self.findIndex(t => t.id === task.id || t._id === task._id || t._id === task.id)
         ),
-        accepted: data.activity.accepted.filter((task, index, self) => 
+        accepted: data.activity.accepted.filter((task, index, self) =>
           index === self.findIndex(t => t.id === task.id || t._id === task._id || t._id === task.id)
         ),
-        completed: data.activity.completed.filter((task, index, self) => 
+        completed: data.activity.completed.filter((task, index, self) =>
           index === self.findIndex(t => t.id === task.id || t._id === task._id || t._id === task.id)
         ),
-        cancelled: data.activity.cancelled.filter((task, index, self) => 
+        cancelled: data.activity.cancelled.filter((task, index, self) =>
           index === self.findIndex(t => t.id === task.id || t._id === task._id || t._id === task.id)
         )
       }
@@ -68,7 +68,7 @@ function Activity() {
         completed: deduplicatedActivity.completed.filter(task => !task.role || task.role === modeRole),
         cancelled: deduplicatedActivity.cancelled.filter(task => !task.role || task.role === modeRole)
       }
-      
+
       setActivity(filteredActivity)
     } catch (err) {
       console.error('Error fetching activity:', err)
@@ -123,12 +123,19 @@ function Activity() {
     })
   }
 
-  const tabs = [
+  // Tabs depend on current mode:
+  // - Poster: focus on posted-side lifecycle
+  // - Worker: focus on worker-side lifecycle
+  const baseTabs = [
     { id: 'posted', label: 'Posted Tasks', count: activity.posted.length },
     { id: 'accepted', label: 'Accepted Tasks', count: activity.accepted.length },
     { id: 'completed', label: 'Completed', count: activity.completed.length },
     { id: 'cancelled', label: 'Cancelled', count: activity.cancelled.length }
   ]
+
+  const tabs = userMode === 'worker'
+    ? baseTabs.filter(tab => tab.id !== 'posted')   // Workers don’t care about posted tasks list
+    : baseTabs.filter(tab => tab.id !== 'accepted') // Posters don’t care about accepted-as-worker
 
   const getCurrentTasks = () => {
     switch (activeTab) {
@@ -182,11 +189,10 @@ function Activity() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex-shrink-0 touch-manipulation ${
-                activeTab === tab.id
+              className={`px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex-shrink-0 touch-manipulation ${activeTab === tab.id
                   ? 'border-blue-600 text-blue-600 bg-blue-50'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+                }`}
             >
               <span className="block sm:inline">{tab.label}</span>
               <span className="ml-1 sm:ml-2 text-xs">({tab.count})</span>
@@ -218,7 +224,7 @@ function Activity() {
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors flex-1 min-w-0 break-words pr-2">
                   {task.title}
                 </h3>
-                
+
                 {/* Badges/Buttons on right - no wrap */}
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                   <StatusBadge status={task.status} />
@@ -230,7 +236,7 @@ function Activity() {
                   </svg>
                 </div>
               </div>
-              
+
               {/* Category and Price - wraps on mobile */}
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 w-full">
                 <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-gray-50 text-gray-700 rounded-md text-xs font-medium whitespace-nowrap">
@@ -238,7 +244,7 @@ function Activity() {
                 </span>
                 <span className="font-semibold text-gray-900 text-sm sm:text-base whitespace-nowrap">₹{task.budget}</span>
               </div>
-              
+
               {/* Date and Rating - wraps on mobile */}
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-500 w-full">
                 <span className="whitespace-nowrap">{formatDate(task.date)}</span>
