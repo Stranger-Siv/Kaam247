@@ -1102,7 +1102,6 @@ function TaskDetail() {
           <p className="text-base text-gray-600">Loading task details...</p>
         </div>
       </div>
-      </>
     )
   }
 
