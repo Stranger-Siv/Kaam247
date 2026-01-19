@@ -42,32 +42,17 @@ function Activity() {
       }
 
       const data = await response.json()
-
-      // DATA CONSISTENCY: Ensure no duplicates by using unique task IDs
-      const deduplicatedActivity = {
-        posted: data.activity.posted.filter((task, index, self) =>
-          index === self.findIndex(t => t.id === task.id || t._id === task._id || t._id === task.id)
-        ),
-        accepted: data.activity.accepted.filter((task, index, self) =>
-          index === self.findIndex(t => t.id === task.id || t._id === task._id || t._id === task.id)
-        ),
-        completed: data.activity.completed.filter((task, index, self) =>
-          index === self.findIndex(t => t.id === task.id || t._id === task._id || t._id === task.id)
-        ),
-        cancelled: data.activity.cancelled.filter((task, index, self) =>
-          index === self.findIndex(t => t.id === task.id || t._id === task._id || t._id === task.id)
-        )
-      }
+      const apiActivity = data.activity || { posted: [], accepted: [], completed: [], cancelled: [] }
 
       // MODE FILTERING:
       // - In poster mode: show only poster-side activity
       // - In worker mode: show only worker-side activity
       const modeRole = userMode === 'worker' ? 'Worker' : 'Poster'
       const filteredActivity = {
-        posted: deduplicatedActivity.posted.filter(task => !task.role || task.role === modeRole),
-        accepted: deduplicatedActivity.accepted.filter(task => !task.role || task.role === modeRole),
-        completed: deduplicatedActivity.completed.filter(task => !task.role || task.role === modeRole),
-        cancelled: deduplicatedActivity.cancelled.filter(task => !task.role || task.role === modeRole)
+        posted: apiActivity.posted.filter(task => !task.role || task.role === modeRole),
+        accepted: apiActivity.accepted.filter(task => !task.role || task.role === modeRole),
+        completed: apiActivity.completed.filter(task => !task.role || task.role === modeRole),
+        cancelled: apiActivity.cancelled.filter(task => !task.role || task.role === modeRole)
       }
 
       setActivity(filteredActivity)
