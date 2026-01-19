@@ -10,6 +10,7 @@ import { API_BASE_URL } from '../config/env'
 import TaskLocationMap from '../components/TaskLocationMap'
 import ReportModal from '../components/ReportModal'
 import EditTaskModal from '../components/EditTaskModal'
+import ConfirmationModal from '../components/ConfirmationModal'
 
 function TaskDetail() {
   const navigate = useNavigate()
@@ -42,8 +43,8 @@ function TaskDetail() {
   const [ratingError, setRatingError] = useState(null)
   const [ratingSuccess, setRatingSuccess] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
-  const [confirmingCancel, setConfirmingCancel] = useState(false)
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
@@ -913,14 +914,12 @@ function TaskDetail() {
   }
 
   // Handle delete task
-  const handleDeleteTask = async () => {
-    // UI confirmation (no browser alert): require second tap within a short window
-    if (!confirmingDelete) {
-      setConfirmingDelete(true)
-      // Auto-reset confirmation after 4 seconds
-      setTimeout(() => setConfirmingDelete(false), 4000)
-      return
-    }
+  const handleDeleteTask = () => {
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDeleteTask = async () => {
+    setShowDeleteConfirm(false)
 
     if (!user?.id || !taskId) {
       setDeleteError('You must be logged in to delete tasks')
@@ -958,7 +957,7 @@ function TaskDetail() {
     }
   }
 
-  const handleCancelTask = async () => {
+  const handleCancelTask = () => {
     // FRONTEND GUARD: Prevent double actions
     if (isCancelling || !user?.id || !taskId) {
       return
@@ -976,13 +975,11 @@ function TaskDetail() {
       return
     }
 
-    // UI confirmation (no browser alert): require second tap within a short window
-    if (!confirmingCancel) {
-      setConfirmingCancel(true)
-      // Auto-reset confirmation after 4 seconds
-      setTimeout(() => setConfirmingCancel(false), 4000)
-      return
-    }
+    setShowCancelConfirm(true)
+  }
+
+  const confirmCancelTask = async () => {
+    setShowCancelConfirm(false)
 
     try {
       setIsCancelling(true)
@@ -1366,7 +1363,7 @@ function TaskDetail() {
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
-                    {confirmingDelete ? 'Tap again to confirm delete' : 'Delete'}
+                    Delete
                   </>
                 )}
               </button>
@@ -2175,6 +2172,30 @@ function TaskDetail() {
           onSuccess={handleEditSuccess}
         />
       )}
+
+      {/* Cancel Task Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showCancelConfirm}
+        onConfirm={confirmCancelTask}
+        onCancel={() => setShowCancelConfirm(false)}
+        title="Cancel Task"
+        message="Are you sure you want to cancel this task? This action cannot be undone."
+        confirmText="Yes, Cancel Task"
+        cancelText="Keep Task"
+        confirmColor="red"
+      />
+
+      {/* Delete Task Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onConfirm={confirmDeleteTask}
+        onCancel={() => setShowDeleteConfirm(false)}
+        title="Delete Task"
+        message="Are you sure you want to delete this task? This action cannot be undone and the task will be permanently removed."
+        confirmText="Yes, Delete"
+        cancelText="Keep Task"
+        confirmColor="red"
+      />
     </div>
   )
 }

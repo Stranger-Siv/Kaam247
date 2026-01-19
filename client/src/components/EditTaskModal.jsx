@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config/env'
 import LocationPickerMap from './LocationPickerMap'
 import { reverseGeocode } from '../utils/geocoding'
+import ConfirmationModal from './ConfirmationModal'
 
 function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -24,6 +25,7 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   const categories = [
     'Cleaning',
@@ -165,10 +167,11 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
       return
     }
 
-    if (!confirm('Update this task with the new details?')) {
-      return
-    }
+    setShowConfirmModal(true)
+  }
 
+  const confirmSubmit = async () => {
+    setShowConfirmModal(false)
     setIsSubmitting(true)
     setError(null)
 
@@ -235,6 +238,10 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleConfirmSubmit = async () => {
+    await confirmSubmit()
   }
 
   if (!isOpen) return null
@@ -453,6 +460,18 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
             </button>
           </div>
         </form>
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showConfirmModal}
+          onConfirm={handleConfirmSubmit}
+          onCancel={() => setShowConfirmModal(false)}
+          title="Update Task"
+          message="Are you sure you want to update this task with the new details?"
+          confirmText="Yes, Update"
+          cancelText="Cancel"
+          confirmColor="blue"
+        />
       </div>
     </div>
   )
