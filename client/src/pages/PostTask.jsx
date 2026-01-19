@@ -357,12 +357,6 @@ function PostTask() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         const errorMessage = errorData.message || errorData.error || `Server error: ${response.status} ${response.statusText}`
-        
-        // Handle rate limit (429)
-        if (response.status === 429) {
-          setPostingLimitReached(true)
-        }
-        
         throw new Error(errorMessage)
       }
 
