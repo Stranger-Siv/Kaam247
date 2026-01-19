@@ -13,13 +13,13 @@ export const getStatusBadge = (status) => {
   if (upper === 'CANCELLED' || upper.startsWith('CANCELLED_BY_') || lower === 'cancelled') normalizedStatus = 'cancelled'
   
   const badges = {
-    open: { text: 'Open', className: 'bg-blue-50 text-blue-700 border border-blue-200' },
-    searching: { text: 'Searching', className: 'bg-blue-50 text-blue-700 border border-blue-200' },
-    accepted: { text: 'Accepted', className: 'bg-yellow-50 text-yellow-700 border border-yellow-200' },
-    in_progress: { text: 'In Progress', className: 'bg-orange-50 text-orange-700 border border-orange-200' },
-    completed: { text: 'Completed', className: 'bg-green-50 text-green-700 border border-green-200' },
-    cancelled: { text: 'Cancelled', className: 'bg-red-50 text-red-700 border border-red-200' },
-    unknown: { text: 'Unknown', className: 'bg-gray-50 text-gray-700 border border-gray-200' }
+    open: { text: 'Open', className: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800' },
+    searching: { text: 'Searching', className: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800' },
+    accepted: { text: 'Accepted', className: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800' },
+    in_progress: { text: 'In Progress', className: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800' },
+    completed: { text: 'Completed', className: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800' },
+    cancelled: { text: 'Cancelled', className: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800' },
+    unknown: { text: 'Unknown', className: 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700' }
   }
   
   return badges[normalizedStatus] || badges.unknown

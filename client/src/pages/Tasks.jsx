@@ -78,7 +78,7 @@ function Tasks() {
             location: task.location?.area
               ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
               : 'Location not specified',
-            distance: task.distanceKm !== null && task.distanceKm !== undefined 
+            distance: task.distanceKm !== null && task.distanceKm !== undefined
               ? `${task.distanceKm.toFixed(1)} km away`
               : 'Distance unavailable',
             distanceKm: task.distanceKm,
@@ -207,27 +207,27 @@ function Tasks() {
               return String(postedById) !== String(user.id)
             })
             .map((task) => ({
-            id: task._id,
-            title: task.title,
-            description: task.description,
-            location: task.location?.area
-              ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
-              : 'Location not specified',
-            distance: task.distanceKm !== null && task.distanceKm !== undefined 
-              ? `${task.distanceKm} km away`
-              : 'Distance unavailable',
-            distanceKm: task.distanceKm,
-            budget: `₹${task.budget}`,
-            category: task.category,
-            time: task.scheduledAt
-              ? new Date(task.scheduledAt).toLocaleString('en-IN', {
-                weekday: 'short',
-                hour: 'numeric',
-                minute: '2-digit'
-              })
-              : 'Flexible',
-            status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
-          }))
+              id: task._id,
+              title: task.title,
+              description: task.description,
+              location: task.location?.area
+                ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
+                : 'Location not specified',
+              distance: task.distanceKm !== null && task.distanceKm !== undefined
+                ? `${task.distanceKm} km away`
+                : 'Distance unavailable',
+              distanceKm: task.distanceKm,
+              budget: `₹${task.budget}`,
+              category: task.category,
+              time: task.scheduledAt
+                ? new Date(task.scheduledAt).toLocaleString('en-IN', {
+                  weekday: 'short',
+                  hour: 'numeric',
+                  minute: '2-digit'
+                })
+                : 'Flexible',
+              status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
+            }))
           setTasks(transformedTasks)
         }
       } catch (err) {
@@ -287,7 +287,7 @@ function Tasks() {
               location: task.location?.area
                 ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
                 : 'Location not specified',
-              distance: task.distanceKm !== null && task.distanceKm !== undefined 
+              distance: task.distanceKm !== null && task.distanceKm !== undefined
                 ? `${task.distanceKm} km away`
                 : 'Distance unavailable',
               distanceKm: task.distanceKm,
@@ -338,7 +338,7 @@ function Tasks() {
               location: task.location?.area
                 ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
                 : 'Location not specified',
-              distance: task.distanceKm !== null && task.distanceKm !== undefined 
+              distance: task.distanceKm !== null && task.distanceKm !== undefined
                 ? `${task.distanceKm} km away`
                 : 'Distance unavailable',
               distanceKm: task.distanceKm,
@@ -371,7 +371,7 @@ function Tasks() {
   useEffect(() => {
     const handleRefetch = async (event) => {
       const { type } = event.detail
-      
+
       if (type === 'task_updated' || type === 'task_status_changed' || type === 'task_cancelled') {
         // Silent refetch tasks
         try {
@@ -390,7 +390,7 @@ function Tasks() {
               location: task.location?.area
                 ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
                 : 'Location not specified',
-              distance: task.distanceKm !== null && task.distanceKm !== undefined 
+              distance: task.distanceKm !== null && task.distanceKm !== undefined
                 ? `${task.distanceKm} km away`
                 : 'Distance unavailable',
               distanceKm: task.distanceKm,
@@ -426,16 +426,16 @@ function Tasks() {
     return (
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
         <div className="mb-6 sm:mb-8 lg:mb-10 w-full">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight break-words">Available Tasks</h1>
-          <p className="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed break-words">Go online (ON DUTY) to see tasks near you</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight break-words">Available Tasks</h1>
+          <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-relaxed break-words">Go online (ON DUTY) to see tasks near you</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-12 sm:p-16 lg:p-20 text-center border border-gray-100">
-          <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
+          <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6l4 2" />
           </svg>
-          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">You are OFF DUTY</h3>
-          <p className="text-sm sm:text-base text-gray-600 leading-relaxed">Turn ON DUTY to start receiving and viewing tasks.</p>
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight">You are OFF DUTY</h3>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed">Turn ON DUTY to start receiving and viewing tasks.</p>
         </div>
       </div>
     )
@@ -443,23 +443,23 @@ function Tasks() {
 
   return (
     <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
-      
+
       {/* Header */}
       <div className="mb-6 sm:mb-8 lg:mb-10 w-full">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight break-words">Available Tasks</h1>
-        <p className="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed break-words">Find work near you</p>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight break-words">Available Tasks</h1>
+        <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-relaxed break-words">Find work near you</p>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm sm:shadow-md p-4 sm:p-5 lg:p-6 mb-5 sm:mb-6 lg:mb-8 border border-gray-100 w-full">
+      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm dark:shadow-gray-900/50 sm:shadow-md p-4 sm:p-5 lg:p-6 mb-5 sm:mb-6 lg:mb-8 border border-gray-100 dark:border-gray-700 w-full">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
           {/* Category Filter */}
           <div className="flex flex-col gap-2">
-            <span className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">Category</span>
+            <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Category</span>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-manipulation transition-colors"
+              className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base touch-manipulation transition-colors"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -469,11 +469,11 @@ function Tasks() {
 
           {/* Distance Filter */}
           <div className="flex flex-col gap-2">
-            <span className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">Distance</span>
+            <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Distance</span>
             <select
               value={selectedDistance}
               onChange={(e) => setSelectedDistance(e.target.value)}
-              className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-manipulation transition-colors"
+              className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base touch-manipulation transition-colors"
             >
               {distances.map((dist) => (
                 <option key={dist} value={dist}>{dist}</option>
@@ -483,11 +483,11 @@ function Tasks() {
 
           {/* Budget Filter */}
           <div className="flex flex-col gap-2">
-            <span className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">Budget</span>
+            <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Budget</span>
             <select
               value={selectedBudget}
               onChange={(e) => setSelectedBudget(e.target.value)}
-              className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base touch-manipulation transition-colors"
+              className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base touch-manipulation transition-colors"
             >
               {budgets.map((budget) => (
                 <option key={budget} value={budget}>{budget}</option>
@@ -504,54 +504,53 @@ function Tasks() {
             <Link
               key={task.id}
               to={`/tasks/${task.id}`}
-              className={`group bg-white rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm hover:shadow-lg transition-all duration-200 border-2 active:bg-gray-50 w-full overflow-hidden ${
-                task.isNew || newTaskHighlightRef.current.has(task.id)
-                  ? 'border-blue-300 bg-blue-50/50'
-                  : 'border-gray-100 hover:border-gray-200'
-              }`}
+              className={`group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 active:bg-gray-50 dark:active:bg-gray-700 w-full overflow-hidden ${task.isNew || newTaskHighlightRef.current.has(task.id)
+                ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20'
+                : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
+                }`}
             >
               <div className="flex items-start justify-between mb-4 sm:mb-5 gap-2 sm:gap-3 w-full min-w-0">
-                <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 flex-1 pr-2 group-hover:text-blue-600 transition-colors line-clamp-2 break-words min-w-0 leading-tight">
+                <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-gray-100 flex-1 pr-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 break-words min-w-0 leading-tight">
                   {task.title}
                 </h3>
-                <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
+                <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
                   {task.category}
                 </span>
               </div>
-              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-5 line-clamp-2 leading-relaxed break-words w-full">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-5 line-clamp-2 leading-relaxed break-words w-full">
                 {task.description}
               </p>
               <div className="space-y-2.5 sm:space-y-3 mb-4 sm:mb-5 w-full">
-                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 w-full">
-                  <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400 w-full">
+                  <svg className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   {task.distance && task.distance !== 'Distance unavailable' && (
-                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg whitespace-nowrap border border-blue-100">
+                    <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-lg whitespace-nowrap border border-blue-100 dark:border-blue-800">
                       {task.distance}
                     </span>
                   )}
                   <span className="break-words min-w-0">{task.location}</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full">
-                  <div className="flex items-center gap-1.5 text-sm sm:text-base font-bold text-gray-900 whitespace-nowrap">
-                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="flex items-center gap-1.5 text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                    <svg className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     {task.budget}
                   </div>
-                  <div className="flex items-center gap-1.5 text-sm text-gray-600 whitespace-nowrap">
-                    <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    <svg className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>{task.time}</span>
                   </div>
                 </div>
               </div>
-              <div className="pt-4 sm:pt-5 border-t border-gray-100 flex items-center justify-between w-full">
+              <div className="pt-4 sm:pt-5 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between w-full">
                 <StatusBadge status={task.status} />
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 group-hover:text-blue-600 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
@@ -567,32 +566,32 @@ function Tasks() {
             </>
           ) : error ? (
             <>
-              <svg className="h-14 w-14 sm:h-16 sm:w-16 text-red-300 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-14 w-14 sm:h-16 sm:w-16 text-red-300 dark:text-red-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">Error loading tasks</h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-7 leading-relaxed">{error}</p>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight">Error loading tasks</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 sm:mb-7 leading-relaxed">{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
               >
                 Retry
               </button>
             </>
           ) : (
             <>
-              <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">No tasks near you right now</h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-7 leading-relaxed">Check back later or try adjusting your filters to see more options.</p>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight">No tasks near you right now</h3>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 sm:mb-7 leading-relaxed">Check back later or try adjusting your filters to see more options.</p>
               <button
                 onClick={() => {
                   setSelectedCategory('All')
                   setSelectedDistance('All')
                   setSelectedBudget('All')
                 }}
-                className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
               >
                 Clear Filters
               </button>
