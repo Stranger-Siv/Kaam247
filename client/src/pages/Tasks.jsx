@@ -14,6 +14,7 @@ function Tasks() {
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [hasActiveTask, setHasActiveTask] = useState(false)
   const { getSocket } = useSocket()
   const { isOnline, workerLocation } = useAvailability()
   const { user } = useAuth()
@@ -106,6 +107,10 @@ function Tasks() {
     }
 
     const handleNewTask = (taskData) => {
+      // If worker already has an active task, do not surface new tasks
+      if (hasActiveTask) {
+        return
+      }
       // Convert backend task format to frontend format
       const newTask = {
         id: taskData.taskId,
@@ -211,7 +216,7 @@ function Tasks() {
       window.removeEventListener('task_status_changed', handleTaskStatusChanged)
       window.removeEventListener('task_cancelled', handleTaskStatusChanged)
     }
-  }, [isOnline, getSocket, workerLocation])
+  }, [isOnline, getSocket, workerLocation, hasActiveTask])
 
   // STATE RECOVERY: Page load recovery - fetch active task
   useEffect(() => {
@@ -220,8 +225,7 @@ function Tasks() {
     const recoverState = async () => {
       try {
         const activeTask = await fetchActiveTask()
-        // If user has active task, they might need to navigate to it
-        // This is handled by the active task modal in other components
+        setHasActiveTask(Boolean(activeTask && activeTask.hasActiveTask))
       } catch (error) {
         console.error('State recovery failed:', error)
       }

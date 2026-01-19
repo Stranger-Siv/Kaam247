@@ -57,8 +57,19 @@ function Activity() {
           index === self.findIndex(t => t.id === task.id || t._id === task._id || t._id === task.id)
         )
       }
+
+      // MODE FILTERING:
+      // - In poster mode: show only poster-side activity
+      // - In worker mode: show only worker-side activity
+      const modeRole = userMode === 'worker' ? 'Worker' : 'Poster'
+      const filteredActivity = {
+        posted: deduplicatedActivity.posted.filter(task => !task.role || task.role === modeRole),
+        accepted: deduplicatedActivity.accepted.filter(task => !task.role || task.role === modeRole),
+        completed: deduplicatedActivity.completed.filter(task => !task.role || task.role === modeRole),
+        cancelled: deduplicatedActivity.cancelled.filter(task => !task.role || task.role === modeRole)
+      }
       
-      setActivity(deduplicatedActivity)
+      setActivity(filteredActivity)
     } catch (err) {
       console.error('Error fetching activity:', err)
       setError(err.message || 'Failed to load activity')
