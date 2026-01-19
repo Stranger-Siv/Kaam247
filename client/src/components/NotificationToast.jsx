@@ -18,7 +18,7 @@ function NotificationToast() {
 
   return (
     <div
-      className="fixed inset-0 z-[1500] flex items-start justify-center sm:items-start sm:justify-end bg-black/50 sm:bg-transparent animate-slide-in"
+      className="fixed inset-0 z-[1500] flex items-start justify-center bg-black/60 animate-slide-in"
       onClick={hideNotification}
     >
       <div
@@ -26,14 +26,14 @@ function NotificationToast() {
           e.stopPropagation()
           handleNotificationClick()
         }}
-        className="mt-0 w-full h-full sm:mt-20 sm:h-auto sm:w-full sm:max-w-md sm:mr-6 bg-gradient-to-b sm:bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-none sm:rounded-2xl shadow-2xl p-6 sm:p-6 border-0 sm:border-2 border-blue-400 transition-all duration-200 cursor-pointer"
+        className="mt-0 w-full h-full max-w-screen max-h-screen bg-gradient-to-b from-blue-600 to-blue-800 text-white rounded-none shadow-2xl p-6 border-0 transition-all duration-200 cursor-pointer overflow-hidden"
       >
         <div className="flex items-start justify-between gap-4 h-full">
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <h3 className="font-bold text-2xl sm:text-2xl">New Task Available!</h3>
+                <h3 className="font-bold text-2xl">New Task Available!</h3>
               </div>
               <button
                 onClick={(e) => {
@@ -49,15 +49,15 @@ function NotificationToast() {
               </button>
             </div>
 
-            <div className="flex-1 flex flex-col justify-center sm:justify-start">
-              <p className="text-xl sm:text-lg text-blue-50 mb-4 font-semibold leading-relaxed line-clamp-3 sm:line-clamp-none">
+            <div className="flex-1 flex flex-col justify-center">
+              <p className="text-xl text-blue-50 mb-4 font-semibold leading-relaxed line-clamp-4">
                 {notification.title}
               </p>
               <div className="flex flex-wrap items-center gap-3 text-base">
                 <span className="bg-blue-500/30 px-3 py-1.5 rounded-lg font-medium">
                   {notification.category}
                 </span>
-                <span className="text-2xl sm:text-xl font-bold text-yellow-300">
+                <span className="text-2xl font-bold text-yellow-300">
                   ₹{notification.budget}
                 </span>
                 {notification.distance && (
@@ -81,7 +81,7 @@ function NotificationToast() {
               </div>
             </div>
 
-            <p className="mt-6 text-sm text-blue-100 text-center sm:text-left">
+            <p className="mt-6 text-sm text-blue-100 text-center">
               Tap anywhere on this card to view and accept the task.
             </p>
           </div>
