@@ -383,23 +383,23 @@ function PostTask() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto w-full overflow-x-hidden px-0 sm:px-6">
+    <div className="max-w-3xl mx-auto w-full overflow-x-hidden px-4 sm:px-6">
       <form onSubmit={handleSubmit}>
         {/* Error Display */}
         {error && (
-          <div className="mb-4 sm:mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700 font-medium">{error}</p>
+          <div className="mb-5 sm:mb-6 lg:mb-8 p-4 sm:p-5 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-sm sm:text-base text-red-700 font-semibold leading-relaxed">{error}</p>
           </div>
         )}
 
         {/* Step 1: Basic Details */}
         {step === 1 && (
-          <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border-0 sm:border border-gray-100">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">What task do you need help with?</h2>
+          <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-8 border border-gray-100">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight">What task do you need help with?</h2>
             
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                   Task Title <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -410,20 +410,20 @@ function PostTask() {
                     if (fieldErrors.title) setFieldErrors(prev => ({ ...prev, title: null }))
                   }}
                   placeholder="e.g., Need help moving furniture"
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 min-h-[44px] ${
-                    fieldErrors.title ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${
+                    fieldErrors.title ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
                   }`}
                   required
                 />
                 {fieldErrors.title ? (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.title}</p>
+                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.title}</p>
                 ) : (
-                  <p className="text-xs text-gray-500 mt-1">Be specific about what you need</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">Be specific about what you need</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                   Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -433,21 +433,21 @@ function PostTask() {
                     if (fieldErrors.description) setFieldErrors(prev => ({ ...prev, description: null }))
                   }}
                   placeholder="Describe your task in detail. Include any specific requirements or instructions."
-                  rows={4}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                    fieldErrors.description ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  rows={5}
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors leading-relaxed ${
+                    fieldErrors.description ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
                   }`}
                   required
                 />
                 {fieldErrors.description ? (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.description}</p>
+                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.description}</p>
                 ) : (
-                  <p className="text-xs text-gray-500 mt-1">More details help workers understand your needs</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">More details help workers understand your needs</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                   Category <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -456,8 +456,8 @@ function PostTask() {
                     handleInputChange('category', e.target.value)
                     if (fieldErrors.category) setFieldErrors(prev => ({ ...prev, category: null }))
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 min-h-[44px] ${
-                    fieldErrors.category ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
+                    fieldErrors.category ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
                   }`}
                   required
                 >
@@ -467,16 +467,16 @@ function PostTask() {
                   ))}
                 </select>
                 {fieldErrors.category && (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.category}</p>
+                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.category}</p>
                 )}
               </div>
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:justify-end">
+            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:justify-end">
               <button
                 type="button"
                 onClick={handleNext}
-                className="w-full sm:w-auto h-11 px-6 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 Next
               </button>
@@ -486,12 +486,12 @@ function PostTask() {
 
         {/* Step 2: Location & Time */}
         {step === 2 && (
-          <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border-0 sm:border border-gray-100">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Where and when?</h2>
+          <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-8 border border-gray-100">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight">Where and when?</h2>
             
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                   Location <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -502,23 +502,23 @@ function PostTask() {
                     if (fieldErrors.location) setFieldErrors(prev => ({ ...prev, location: null }))
                   }}
                   placeholder="e.g., Koramangala, Bangalore"
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 min-h-[44px] ${
-                    fieldErrors.location ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${
+                    fieldErrors.location ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
                   }`}
                   required
                 />
                 {fieldErrors.location && (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.location}</p>
+                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.location}</p>
                 )}
                 <button
                   type="button"
                   onClick={handleUseCurrentLocation}
                   disabled={isGettingLocation}
-                  className="mt-2 text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="mt-3 inline-flex items-center gap-2 px-4 py-2 text-sm sm:text-base text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium rounded-xl hover:bg-blue-50 transition-all duration-200 active:scale-[0.98] touch-manipulation"
                 >
                   {isGettingLocation ? (
                     <>
-                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -526,7 +526,7 @@ function PostTask() {
                     </>
                   ) : (
                     <>
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
@@ -535,30 +535,30 @@ function PostTask() {
                   )}
                 </button>
                 {locationError && (
-                  <p className="mt-2 text-sm text-red-600">{locationError}</p>
+                  <p className="mt-2 text-sm sm:text-base text-red-600 leading-relaxed">{locationError}</p>
                 )}
                 {locationData.coordinates && !locationError && (
-                  <p className="mt-2 text-sm text-green-600">
+                  <p className="mt-2 text-sm sm:text-base text-green-600 leading-relaxed">
                     ✓ Location captured: {locationData.area}, {locationData.city}
                   </p>
                 )}
                 
                 {/* Embedded Map */}
-                <div className="mt-4">
+                <div className="mt-4 sm:mt-5">
                   <LocationPickerMap
                     initialCenter={mapCenter}
                     initialZoom={13}
                     onLocationChange={handleMapLocationChange}
                     isGettingLocation={isGettingLocation}
                   />
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-2 text-xs sm:text-sm text-gray-500 leading-relaxed">
                     Drag the marker to set the exact location
                   </p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                   Date <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -574,20 +574,20 @@ function PostTask() {
                     maxDate.setDate(maxDate.getDate() + 2)
                     return maxDate.toISOString().split('T')[0]
                   })()}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 min-h-[44px] ${
-                    fieldErrors.date ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
+                    fieldErrors.date ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
                   }`}
                   required
                 />
                 {fieldErrors.date ? (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.date}</p>
+                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.date}</p>
                 ) : (
-                  <p className="text-xs text-gray-500 mt-1">Select a date within the next 2 days</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">Select a date within the next 2 days</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                   Time <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -597,20 +597,20 @@ function PostTask() {
                     handleInputChange('time', e.target.value)
                     if (fieldErrors.time) setFieldErrors(prev => ({ ...prev, time: null }))
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 min-h-[44px] ${
-                    fieldErrors.time ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
+                    fieldErrors.time ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
                   }`}
                   required
                 />
                 {fieldErrors.time ? (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.time}</p>
+                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.time}</p>
                 ) : (
-                  <p className="text-xs text-gray-500 mt-1">Select the preferred time</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">Select the preferred time</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                   Expected Duration (Hours) <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -619,8 +619,8 @@ function PostTask() {
                     handleInputChange('hours', e.target.value)
                     if (fieldErrors.hours) setFieldErrors(prev => ({ ...prev, hours: null }))
                   }}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 min-h-[44px] ${
-                    fieldErrors.hours ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
+                    fieldErrors.hours ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
                   }`}
                   required
                 >
@@ -631,25 +631,25 @@ function PostTask() {
                   ))}
                 </select>
                 {fieldErrors.hours ? (
-                  <p className="text-xs text-red-600 mt-1">{fieldErrors.hours}</p>
+                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.hours}</p>
                 ) : (
-                  <p className="text-xs text-gray-500 mt-1">How long do you expect this task to take?</p>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">How long do you expect this task to take?</p>
                 )}
               </div>
             </div>
 
-            <div className="mt-8 flex justify-end gap-3 flex-wrap">
+            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:justify-end">
               <button
                 type="button"
                 onClick={handleBack}
-                className="h-11 px-6 bg-gray-100 text-gray-800 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors min-w-[110px]"
+                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-gray-100 text-gray-800 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={handleNext}
-                className="h-11 px-6 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors min-w-[110px]"
+                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 Next
               </button>
@@ -659,24 +659,24 @@ function PostTask() {
 
         {/* Step 3: Budget */}
         {step === 3 && (
-          <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 border-0 sm:border border-gray-100">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Set your budget</h2>
+          <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-8 border border-gray-100">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight">Set your budget</h2>
             
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-3 sm:mb-4 uppercase tracking-wide">
                   Budget Range <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {budgetRanges.map((range) => (
                     <button
                       key={range}
                       type="button"
                       onClick={() => handleInputChange('budget', range)}
-                      className={`px-4 py-3 border-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-4 sm:px-5 py-3 sm:py-3.5 border-2 rounded-xl text-sm sm:text-base font-semibold transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation ${
                         formData.budget === range
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                          ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700'
                       }`}
                     >
                       {range}
@@ -689,28 +689,28 @@ function PostTask() {
                     value={customBudget}
                     onChange={(e) => setCustomBudget(e.target.value)}
                     placeholder="Enter amount in ₹"
-                    className="w-full mt-3 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full mt-4 px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px]"
                     required={formData.budget === 'Custom amount'}
                     min="1"
                   />
                 )}
-                <p className="text-xs text-gray-500 mt-2">You can negotiate with workers after they accept</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-3 leading-relaxed">You can negotiate with workers after they accept</p>
               </div>
             </div>
 
-            <div className="mt-8 flex justify-end gap-3 flex-wrap">
+            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:justify-end">
               <button
                 type="button"
                 onClick={handleBack}
                 disabled={isSubmitting}
-                className="h-11 px-6 bg-gray-100 text-gray-800 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[110px]"
+                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-gray-100 text-gray-800 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-11 px-6 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 min-w-[135px]"
+                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 inline-flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 {isSubmitting ? (
                   <>
