@@ -206,7 +206,7 @@ function AdminLayout() {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto pb-20 md:pb-6 overflow-x-hidden">
-          <div className="max-w-7xl mx-auto px-[3px] sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 w-full overflow-x-hidden">
+          <div className="max-w-7xl mx-auto px-[6px] sm:px-5 lg:px-7 py-4 sm:py-6 lg:py-8 w-full overflow-x-hidden">
             <Outlet />
           </div>
         </main>
