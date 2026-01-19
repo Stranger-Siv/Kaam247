@@ -207,7 +207,7 @@ function TaskDetail() {
 
     // Listen for remove_task event (when task is accepted by another worker)
     const handleRemoveTask = (data) => {
-      if (data.taskId === taskId) {
+      if (String(data.taskId) === String(taskId)) {
         // Task was accepted by another worker
         if (userMode === 'worker') {
           // Redirect worker back to tasks list
@@ -222,7 +222,7 @@ function TaskDetail() {
 
     // Listen for task_accepted event (when task is accepted - for poster and worker)
     const handleTaskAccepted = (data) => {
-      if (data.taskId === taskId) {
+      if (String(data.taskId) === String(taskId)) {
         // Refresh task data to show updated status and phone number
         const fetchUpdatedTask = async () => {
           try {
@@ -260,7 +260,7 @@ function TaskDetail() {
 
     // Listen for task_updated event (real-time state sync)
     const handleTaskUpdated = (data) => {
-      if (data.taskId === taskId) {
+      if (String(data.taskId) === String(taskId)) {
         // Refresh task data when updated
         fetchTask()
         // Recheck active task status
@@ -272,14 +272,46 @@ function TaskDetail() {
       }
     }
 
+    // Listen for task_completed event (when task is completed)
+    const handleTaskCompleted = (data) => {
+      if (String(data.taskId) === String(taskId)) {
+        // Refresh task data to show completed status
+        fetchTask()
+        // Clear active task status for worker
+        if (userMode === 'worker' && checkActiveTask) {
+          checkActiveTask().then(activeTaskData => {
+            setHasActiveTask(activeTaskData?.hasActiveTask || false)
+          })
+        }
+      }
+    }
+
+    // Listen for task_cancelled event (when task is cancelled)
+    const handleTaskCancelled = (data) => {
+      if (String(data.taskId) === String(taskId)) {
+        // Refresh task data to show cancelled status
+        fetchTask()
+        // Clear active task status for worker
+        if (userMode === 'worker' && checkActiveTask) {
+          checkActiveTask().then(activeTaskData => {
+            setHasActiveTask(activeTaskData?.hasActiveTask || false)
+          })
+        }
+      }
+    }
+
     socket.on('remove_task', handleRemoveTask)
     socket.on('task_accepted', handleTaskAccepted)
     socket.on('task_updated', handleTaskUpdated)
+    socket.on('task_completed', handleTaskCompleted)
+    socket.on('task_cancelled', handleTaskCancelled)
 
     return () => {
       socket.off('remove_task', handleRemoveTask)
       socket.off('task_accepted', handleTaskAccepted)
       socket.off('task_updated', handleTaskUpdated)
+      socket.off('task_completed', handleTaskCompleted)
+      socket.off('task_cancelled', handleTaskCancelled)
     }
   }, [taskId, userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
