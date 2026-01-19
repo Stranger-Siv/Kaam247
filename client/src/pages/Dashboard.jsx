@@ -841,28 +841,28 @@ function Dashboard() {
                 <>
                     {/* Location Requirement Block */}
                     {(!workerLocation || !workerLocation.lat || !workerLocation.lng) && (
-                        <div className="mb-8 sm:mb-10 p-5 sm:p-6 lg:p-7 bg-red-50 border-2 border-red-200 rounded-xl">
+                        <div className="mb-8 sm:mb-10 p-5 sm:p-6 lg:p-7 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl">
                             <div className="flex items-start gap-4 sm:gap-5">
                                 <div className="flex-shrink-0">
-                                    <svg className="w-7 h-7 sm:w-8 sm:h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg className="w-7 h-7 sm:w-8 sm:h-8 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h2 className="text-lg sm:text-xl font-bold text-red-900 mb-2 leading-tight">Location Access Required</h2>
-                                    <p className="text-sm sm:text-base text-red-800 mb-4 sm:mb-5 leading-relaxed">
+                                    <h2 className="text-lg sm:text-xl font-bold text-red-900 dark:text-red-200 mb-2 leading-tight">Location Access Required</h2>
+                                    <p className="text-sm sm:text-base text-red-800 dark:text-red-300 mb-4 sm:mb-5 leading-relaxed">
                                         {locationError || 'Location access is required to use this app. We need your location to show tasks near you (within 5km radius).'}
                                     </p>
                                     {requestingLocation ? (
-                                        <div className="flex items-center gap-2.5 text-red-700">
-                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
+                                        <div className="flex items-center gap-2.5 text-red-700 dark:text-red-400">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600 dark:border-red-400"></div>
                                             <span className="text-sm sm:text-base">Requesting location access...</span>
                                         </div>
                                     ) : (
                                         <button
                                             onClick={requestLocation}
-                                            className="px-5 sm:px-6 py-2.5 sm:py-3 bg-red-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                                            className="px-5 sm:px-6 py-2.5 sm:py-3 bg-red-600 dark:bg-red-700 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 dark:hover:bg-red-600 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
                                         >
                                             Enable Location Access
                                         </button>
@@ -874,29 +874,29 @@ function Dashboard() {
 
                     {/* Mode Header - Worker Mode */}
                     <div className="mb-8 sm:mb-10 lg:mb-12">
-                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">Perform Tasks</h1>
-                        <p className="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed">
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight">Perform Tasks</h1>
+                        <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
                             {workerLocation ? `Tasks within 5km of your location` : 'Find and complete tasks to earn money'}
                         </p>
                     </div>
 
                     {/* Cancellation Limit Warning */}
                     {cancellationStatus.limitReached && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                             <div className="flex items-start gap-3">
-                                <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                                 <div className="flex-1">
-                                    <p className="text-sm font-semibold text-red-900 mb-1">Daily Cancellation Limit Reached</p>
-                                    <p className="text-sm text-red-700">You have reached today's cancellation limit (2 tasks). You cannot accept new tasks until tomorrow.</p>
+                                    <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-1">Daily Cancellation Limit Reached</p>
+                                    <p className="text-sm text-red-700 dark:text-red-300">You have reached today's cancellation limit (2 tasks). You cannot accept new tasks until tomorrow.</p>
                                 </div>
                             </div>
                         </div>
                     )}
                     {!cancellationStatus.limitReached && cancellationStatus.dailyCancelCount > 0 && (
-                        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <p className="text-sm text-yellow-800">
+                        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <p className="text-sm text-yellow-800 dark:text-yellow-200">
                                 <span className="font-semibold">Remaining cancellations today: {cancellationStatus.remainingCancellations}</span>
                             </p>
                         </div>
@@ -906,7 +906,7 @@ function Dashboard() {
                     <div className="mb-8 sm:mb-10 lg:mb-12">
                         <Link
                             to="/tasks"
-                            className="inline-flex items-center justify-center w-full sm:w-auto px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-4.5 bg-blue-600 text-white text-base sm:text-lg lg:text-xl font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                            className="inline-flex items-center justify-center w-full sm:w-auto px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-4.5 bg-blue-600 dark:bg-blue-500 text-white text-base sm:text-lg lg:text-xl font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
                         >
                             Find Tasks Near You
                         </Link>
@@ -914,67 +914,67 @@ function Dashboard() {
 
                     {/* Task Stats - Worker Mode */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6 mb-10 sm:mb-12 lg:mb-14">
-                        <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-7 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 bg-blue-50 rounded-xl flex-shrink-0">
-                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                     </svg>
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Available Tasks</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Available Tasks</p>
                             </div>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">
                                 {isOnline ? availableTasks.length : 0}
                             </p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-7 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 bg-orange-50 rounded-xl flex-shrink-0">
-                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2.5 bg-orange-50 dark:bg-orange-900/30 rounded-xl flex-shrink-0">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Active Tasks</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Active Tasks</p>
                             </div>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">{acceptedTasks.filter(t => t.status === 'accepted' || t.status === 'in_progress').length}</p>
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{acceptedTasks.filter(t => t.status === 'accepted' || t.status === 'in_progress').length}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-7 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 bg-green-50 rounded-xl flex-shrink-0">
-                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl flex-shrink-0">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Completed</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Completed</p>
                             </div>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">{acceptedTasks.filter(t => t.status === 'completed').length}</p>
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{acceptedTasks.filter(t => t.status === 'completed').length}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-7 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 bg-purple-50 rounded-xl flex-shrink-0">
-                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2.5 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex-shrink-0">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Earnings This Month</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Earnings This Month</p>
                             </div>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">₹{workerStats.earningsThisMonth}</p>
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">₹{workerStats.earningsThisMonth}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-7 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 bg-yellow-50 rounded-xl flex-shrink-0">
-                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div className="p-2.5 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl flex-shrink-0">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                     </svg>
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Average Rating</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Average Rating</p>
                             </div>
                             <div className="flex items-baseline gap-2">
-                                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">
+                                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">
                                     {workerStats.averageRating > 0 ? workerStats.averageRating.toFixed(1) : '—'}
                                 </p>
                                 {workerStats.averageRating > 0 && (
-                                    <span className="text-sm sm:text-base text-gray-500">/ 5</span>
+                                    <span className="text-sm sm:text-base text-gray-500 dark:text-gray-400">/ 5</span>
                                 )}
                             </div>
                         </div>
@@ -1018,12 +1018,12 @@ function Dashboard() {
                     <div className="mb-10 sm:mb-12 lg:mb-14">
                         <div className="flex items-center justify-between mb-5 sm:mb-6">
                             <div>
-                                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1.5 sm:mb-2 leading-tight">Available Tasks Nearby</h2>
-                                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Tasks you can accept right now</p>
+                                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">Available Tasks Nearby</h2>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Tasks you can accept right now</p>
                             </div>
                             <Link
                                 to="/tasks"
-                                className="text-xs sm:text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors whitespace-nowrap ml-4"
+                                className="text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors whitespace-nowrap ml-4"
                             >
                                 View all →
                             </Link>
@@ -1035,39 +1035,39 @@ function Dashboard() {
                                     <Link
                                         key={task.id}
                                         to={`/tasks/${task.id}`}
-                                        className={`group bg-white rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm hover:shadow-lg transition-all duration-200 border-2 ${task.isNew || newTaskHighlightRef.current.has(task.id)
-                                            ? 'border-blue-300 bg-blue-50/50'
-                                            : 'border-gray-100 hover:border-gray-200'
+                                        className={`group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 ${task.isNew || newTaskHighlightRef.current.has(task.id)
+                                            ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20'
+                                            : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
                                             }`}
                                     >
                                         <div className="flex items-start justify-between mb-4">
-                                            <h3 className="text-lg font-semibold text-gray-900 flex-1 pr-3 group-hover:text-blue-600 transition-colors">
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1 pr-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                                 {task.title}
                                             </h3>
-                                            <span className="inline-flex items-center px-2.5 py-1 bg-gray-50 text-gray-700 text-xs font-medium rounded-md whitespace-nowrap">
+                                            <span className="inline-flex items-center px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-md whitespace-nowrap">
                                                 {task.category}
                                             </span>
                                         </div>
                                         <div className="space-y-2 mb-4">
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                                <svg className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 </svg>
                                                 <span className="truncate">{task.location}</span>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
-                                                    <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                    <svg className="h-4 w-4 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
                                                     {task.budget}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
                                             <StatusBadge status="open" />
-                                            <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                             </svg>
                                         </div>
@@ -1075,28 +1075,28 @@ function Dashboard() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="bg-white rounded-xl shadow-sm p-12 sm:p-16 lg:p-20 text-center border border-gray-100">
-                                <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
+                                <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
                                 {!workerLocation || !workerLocation.lat || !workerLocation.lng ? (
                                     <>
-                                        <p className="text-base sm:text-lg text-gray-700 mb-2 font-semibold">Location access required</p>
-                                        <p className="text-sm sm:text-base text-gray-500 mb-6 leading-relaxed">Please enable location access to see tasks near you</p>
+                                        <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-2 font-semibold">Location access required</p>
+                                        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">Please enable location access to see tasks near you</p>
                                         <button
                                             onClick={requestLocation}
-                                            className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                                            className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
                                         >
                                             Enable Location
                                         </button>
                                     </>
                                 ) : (
                                     <>
-                                        <p className="text-base sm:text-lg text-gray-700 mb-2 font-semibold">No tasks within 5km</p>
-                                        <p className="text-sm sm:text-base text-gray-500 mb-6 leading-relaxed">No tasks found near your location. Check back later!</p>
+                                        <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-2 font-semibold">No tasks within 5km</p>
+                                        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">No tasks found near your location. Check back later!</p>
                                         <Link
                                             to="/tasks"
-                                            className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                                            className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
                                         >
                                             Browse All Tasks
                                         </Link>
@@ -1176,15 +1176,15 @@ function Dashboard() {
                 <>
                     {/* Mode Header - Poster Mode */}
                     <div className="mb-8 sm:mb-10 lg:mb-12">
-                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">Post Tasks</h1>
-                        <p className="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed">Post tasks and manage their progress</p>
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight">Post Tasks</h1>
+                        <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-relaxed">Post tasks and manage their progress</p>
                     </div>
 
                     {/* Primary Action - Poster Mode */}
                     <div className="mb-8 sm:mb-10 lg:mb-12">
                         <Link
                             to="/post-task"
-                            className="inline-flex items-center justify-center w-full sm:w-auto px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-4.5 bg-blue-600 text-white text-base sm:text-lg lg:text-xl font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                            className="inline-flex items-center justify-center w-full sm:w-auto px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-4.5 bg-blue-600 dark:bg-blue-500 text-white text-base sm:text-lg lg:text-xl font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
                         >
                             Post a New Task
                         </Link>
@@ -1192,57 +1192,57 @@ function Dashboard() {
 
                     {/* Task Stats - Poster Mode */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mb-10 sm:mb-12 lg:mb-14">
-                        <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-7 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 bg-blue-50 rounded-xl flex-shrink-0">
-                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Tasks Posted</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Tasks Posted</p>
                             </div>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">{posterStats.tasksPosted}</p>
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{posterStats.tasksPosted}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-7 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 bg-orange-50 rounded-xl flex-shrink-0">
-                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2.5 bg-orange-50 dark:bg-orange-900/30 rounded-xl flex-shrink-0">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">In Progress</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">In Progress</p>
                             </div>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">{posterStats.inProgress}</p>
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{posterStats.inProgress}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-7 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 bg-green-50 rounded-xl flex-shrink-0">
-                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl flex-shrink-0">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Completed</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Completed</p>
                             </div>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">{posterStats.completed}</p>
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{posterStats.completed}</p>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-7 border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2.5 bg-red-50 rounded-xl flex-shrink-0">
-                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2.5 bg-red-50 dark:bg-red-900/30 rounded-xl flex-shrink-0">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </div>
-                                <p className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide">Cancelled</p>
+                                <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Cancelled</p>
                             </div>
-                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-none">{posterStats.cancelled}</p>
+                            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{posterStats.cancelled}</p>
                         </div>
                     </div>
 
                     {/* My Posted Tasks */}
                     <div>
                         <div className="mb-5 sm:mb-6">
-                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1.5 sm:mb-2 leading-tight">My Posted Tasks</h2>
-                            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Manage your tasks and track their progress</p>
+                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">My Posted Tasks</h2>
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Manage your tasks and track their progress</p>
                         </div>
 
                         {postedTasks.length > 0 ? (
@@ -1251,48 +1251,48 @@ function Dashboard() {
                                     <Link
                                         key={task.id}
                                         to={`/tasks/${task.id}`}
-                                        className="group bg-white rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm hover:shadow-lg transition-all duration-200 border-2 border-gray-100 hover:border-gray-200"
+                                        className="group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600"
                                     >
                                         <div className="flex items-start justify-between mb-4">
-                                            <h3 className="text-lg font-semibold text-gray-900 flex-1 pr-3 group-hover:text-blue-600 transition-colors">
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1 pr-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                                 {task.title}
                                             </h3>
-                                            <span className="inline-flex items-center px-2.5 py-1 bg-gray-50 text-gray-700 text-xs font-medium rounded-md whitespace-nowrap">
+                                            <span className="inline-flex items-center px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-md whitespace-nowrap">
                                                 {task.category}
                                             </span>
                                         </div>
                                         <div className="space-y-2 mb-4">
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <svg className="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                                <svg className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 </svg>
                                                 <span className="truncate">{task.location}</span>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
-                                                    <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                    <svg className="h-4 w-4 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
                                                     {task.budget}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <StatusBadge status={task.status} />
                                                 {task.status === 'open' && (
-                                                    <span className="text-xs text-gray-500">
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
                                                         {task.applicants} {task.applicants === 1 ? 'applicant' : 'applicants'}
                                                     </span>
                                                 )}
                                                 {task.status === 'accepted' && task.worker && (
-                                                    <span className="text-xs text-gray-500">
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
                                                         {task.worker}
                                                     </span>
                                                 )}
                                             </div>
-                                            <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                             </svg>
                                         </div>
@@ -1300,15 +1300,15 @@ function Dashboard() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="bg-white rounded-xl shadow-sm p-12 sm:p-16 lg:p-20 text-center border border-gray-100">
-                                <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
+                                <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                <p className="text-base sm:text-lg text-gray-700 mb-2 font-semibold">No tasks posted yet</p>
-                                <p className="text-sm sm:text-base text-gray-500 mb-6 leading-relaxed">Post your first task to get help from nearby workers</p>
+                                <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-2 font-semibold">No tasks posted yet</p>
+                                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">Post your first task to get help from nearby workers</p>
                                 <Link
                                     to="/post-task"
-                                    className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                                    className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
                                 >
                                     Post a Task
                                 </Link>

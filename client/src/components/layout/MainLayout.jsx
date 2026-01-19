@@ -21,9 +21,9 @@ function MainLayout() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
             {/* Header */}
-            <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-[1000]">
+            <header className="bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-900/50 sticky top-0 z-[1000] border-b border-gray-200 dark:border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo + Brand Name */}
@@ -33,7 +33,7 @@ function MainLayout() {
                                 alt="Kaam247"
                                 className="h-8 sm:h-9 w-auto object-contain flex-shrink-0"
                             />
-                            <span className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                            <span className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
                                 Kaam247
                             </span>
                         </Link>
@@ -43,8 +43,8 @@ function MainLayout() {
                             <Link
                                 to="/dashboard"
                                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/dashboard'
-                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40'
+                                    : 'text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
                                     }`}
                             >
                                 Dashboard
@@ -74,8 +74,8 @@ function MainLayout() {
                             <Link
                                 to="/activity"
                                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/activity'
-                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40'
+                                    : 'text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
                                     }`}
                             >
                                 Activity
@@ -94,13 +94,13 @@ function MainLayout() {
                             <Link
                                 to="/profile"
                                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/profile'
-                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40'
+                                    : 'text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
                                     }`}
                             >
                                 Profile
                             </Link>
-                            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                            <div className="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-1"></div>
                             {userMode === 'worker' && <AvailabilityToggle />}
                             <ThemeToggle />
                             <ModeToggle />
