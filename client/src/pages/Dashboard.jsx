@@ -618,6 +618,13 @@ function Dashboard() {
             if (response.ok) {
                 const data = await response.json()
                 const transformedTasks = data.tasks
+                    // Hide tasks posted by the current user (don't show your own tasks in worker list)
+                    .filter(task => {
+                        if (!user?.id) return true
+                        // Handle both object format (task.postedBy._id) and string format (task.postedBy)
+                        const postedById = task.postedBy?._id || task.postedBy
+                        return String(postedById) !== String(user.id)
+                    })
                     .filter(task => task.status === 'OPEN' || task.status === 'SEARCHING') // Only show available tasks
                     .filter(task => task.distanceKm !== null && task.distanceKm !== undefined && task.distanceKm <= 5) // Only within 5km
                     .map((task) => ({
@@ -719,6 +726,13 @@ function Dashboard() {
         }
 
         const handleNewTask = (taskData) => {
+            // CRITICAL: Don't show tasks posted by the current user (even if socket sends them)
+            if (user?.id && taskData.postedBy) {
+                const postedById = taskData.postedBy._id || taskData.postedBy
+                if (String(postedById) === String(user.id)) {
+                    return // Skip own tasks
+                }
+            }
             // Only add if task is within 5km (backend already filters, but double-check)
             if (taskData.distanceKm !== null && taskData.distanceKm !== undefined && taskData.distanceKm > 5) {
                 return // Task is outside 5km radius

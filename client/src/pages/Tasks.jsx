@@ -64,7 +64,12 @@ function Tasks() {
         // Filter to only show tasks within 5km and sort by distance
         const transformedTasks = data.tasks
           // Hide tasks posted by the current user (don't show your own tasks in worker list)
-          .filter(task => !user?.id || String(task.postedBy) !== String(user.id))
+          .filter(task => {
+            if (!user?.id) return true
+            // Handle both object format (task.postedBy._id) and string format (task.postedBy)
+            const postedById = task.postedBy?._id || task.postedBy
+            return String(postedById) !== String(user.id)
+          })
           .filter(task => task.distanceKm !== null && task.distanceKm !== undefined && task.distanceKm <= 5) // Only within 5km
           .map((task) => ({
             id: task._id,
@@ -122,6 +127,13 @@ function Tasks() {
       // If worker already has an active task, do not surface new tasks
       if (hasActiveTask) {
         return
+      }
+      // CRITICAL: Don't show tasks posted by the current user (even if socket sends them)
+      if (user?.id && taskData.postedBy) {
+        const postedById = taskData.postedBy._id || taskData.postedBy
+        if (String(postedById) === String(user.id)) {
+          return // Skip own tasks
+        }
       }
       // Convert backend task format to frontend format
       const newTask = {
@@ -186,7 +198,15 @@ function Tasks() {
         const response = await fetch(url)
         if (response.ok) {
           const data = await response.json()
-          const transformedTasks = data.tasks.map((task) => ({
+          const transformedTasks = data.tasks
+            // Hide tasks posted by the current user (don't show your own tasks in worker list)
+            .filter(task => {
+              if (!user?.id) return true
+              // Handle both object format (task.postedBy._id) and string format (task.postedBy)
+              const postedById = task.postedBy?._id || task.postedBy
+              return String(postedById) !== String(user.id)
+            })
+            .map((task) => ({
             id: task._id,
             title: task.title,
             description: task.description,
