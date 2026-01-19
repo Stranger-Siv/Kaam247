@@ -6,6 +6,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // Do NOT auto-register service worker in production to avoid unexpected reload loops.
+      // Manifest/icons are still generated, but SW is only registered if you manually do it.
+      injectRegister: null,
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo.svg', 'icons/*.png'],
       manifestFilename: 'manifest.json',
