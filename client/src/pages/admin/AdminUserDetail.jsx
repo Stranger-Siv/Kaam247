@@ -14,6 +14,9 @@ function AdminUserDetail() {
   const [actionLoading, setActionLoading] = useState(false)
   const [modalState, setModalState] = useState({ isOpen: false, type: null })
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'success' })
+  const [showEditLimitModal, setShowEditLimitModal] = useState(false)
+  const [newCancelLimit, setNewCancelLimit] = useState(2)
+  const [isUpdatingLimit, setIsUpdatingLimit] = useState(false)
 
   useEffect(() => {
     fetchUserDetails()
@@ -48,12 +51,14 @@ function AdminUserDetail() {
 
       const data = await response.json()
       if (data.user) {
-        // Ensure dailyCancelCount is included and properly set
+        // Ensure dailyCancelCount and totalCancelLimit are included and properly set
         const userData = {
           ...data.user,
-          dailyCancelCount: data.user.dailyCancelCount ?? 0
+          dailyCancelCount: data.user.dailyCancelCount ?? 0,
+          totalCancelLimit: data.user.totalCancelLimit ?? 2
         }
         setUser(userData)
+        setNewCancelLimit(data.user.totalCancelLimit ?? 2)
       } else {
         throw new Error('User data not found in response')
       }
@@ -243,6 +248,34 @@ function AdminUserDetail() {
     }
   }
 
+  const handleUpdateCancelLimit = async () => {
+    setIsUpdatingLimit(true)
+    try {
+      const token = localStorage.getItem('kaam247_token')
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/update-cancel-limit`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ totalCancelLimit: newCancelLimit })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || errorData.error || 'Failed to update cancellation limit')
+      }
+
+      showToast(`Cancellation limit updated to ${newCancelLimit}`, 'success')
+      setShowEditLimitModal(false)
+      fetchUserDetails()
+    } catch (err) {
+      showToast(err.message || 'Failed to update cancellation limit', 'error')
+    } finally {
+      setIsUpdatingLimit(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -374,6 +407,17 @@ function AdminUserDetail() {
                 >
                   Reset Cancellation Count
                 </button>
+
+                <button
+                  onClick={() => {
+                    setNewCancelLimit(user?.totalCancelLimit ?? 2)
+                    setShowEditLimitModal(true)
+                  }}
+                  disabled={actionLoading}
+                  className="w-full px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                >
+                  Edit Cancellation Limit
+                </button>
               </div>
             )}
           </div>
@@ -405,6 +449,9 @@ function AdminUserDetail() {
                   {user?.dailyCancelCount !== undefined && user?.dailyCancelCount !== null
                     ? user.dailyCancelCount
                     : 0}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Limit: {user?.totalCancelLimit ?? 2}
                 </p>
               </div>
               <div>

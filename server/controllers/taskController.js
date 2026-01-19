@@ -322,10 +322,11 @@ const acceptTask = async (req, res) => {
     }
 
     // Check if worker has reached daily cancellation limit
-    if (worker.dailyCancelCount >= 2) {
+    const cancelLimit = worker.totalCancelLimit ?? 2 // Default to 2 if not set
+    if (worker.dailyCancelCount >= cancelLimit) {
       return res.status(403).json({
         error: 'Daily cancellation limit reached',
-        message: "You have reached today's cancellation limit. You cannot accept new tasks."
+        message: `You have reached today's cancellation limit (${cancelLimit}). You cannot accept new tasks.`
       })
     }
 
@@ -872,10 +873,11 @@ const cancelTask = async (req, res) => {
       }
 
       // Check if worker has reached daily limit
-      if (worker.dailyCancelCount >= 2) {
+      const cancelLimit = worker.totalCancelLimit ?? 2 // Default to 2 if not set
+      if (worker.dailyCancelCount >= cancelLimit) {
         return res.status(403).json({
           error: 'Daily cancellation limit reached',
-          message: 'Daily cancellation limit reached. You cannot cancel more tasks today.'
+          message: `Daily cancellation limit reached (${cancelLimit}). You cannot cancel more tasks today.`
         })
       }
 

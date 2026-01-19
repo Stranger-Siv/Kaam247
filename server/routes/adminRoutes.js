@@ -10,6 +10,7 @@ const {
   unblockUser,
   banUser,
   resetCancellations,
+  updateCancelLimit,
   // Task moderation
   getTasks,
   getTaskById,
@@ -49,6 +50,9 @@ router.patch('/users/:userId/ban', banUser)
 
 // PATCH /api/admin/users/:userId/reset-cancellations - Reset daily cancellation count
 router.patch('/users/:userId/reset-cancellations', resetCancellations)
+
+// PATCH /api/admin/users/:userId/update-cancel-limit - Update user's cancellation limit
+router.patch('/users/:userId/update-cancel-limit', updateCancelLimit)
 
 // ============================================
 // ADMIN TASK MODERATION ROUTES

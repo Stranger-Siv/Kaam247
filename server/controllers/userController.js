@@ -490,8 +490,9 @@ const getCancellationStatus = async (req, res) => {
       }
     }
 
-    const remainingCancellations = Math.max(0, 2 - user.dailyCancelCount)
-    const canAcceptTasks = user.dailyCancelCount < 2
+    const cancelLimit = user.totalCancelLimit ?? 2 // Default to 2 if not set
+    const remainingCancellations = Math.max(0, cancelLimit - user.dailyCancelCount)
+    const canAcceptTasks = user.dailyCancelCount < cancelLimit
 
     return res.status(200).json({
       message: 'Cancellation status fetched successfully',

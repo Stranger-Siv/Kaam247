@@ -128,10 +128,13 @@ const getUserById = async (req, res) => {
       })
     }
 
-    // Ensure dailyCancelCount is included and properly set
+    // Ensure dailyCancelCount and totalCancelLimit are included and properly set
     const userObject = user.toObject()
     if (userObject.dailyCancelCount === undefined || userObject.dailyCancelCount === null) {
       userObject.dailyCancelCount = 0
+    }
+    if (userObject.totalCancelLimit === undefined || userObject.totalCancelLimit === null) {
+      userObject.totalCancelLimit = 2 // Default to 2 if not set
     }
 
     // Get user activity
@@ -394,6 +397,80 @@ const resetCancellations = async (req, res) => {
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to reset cancellations'
+    })
+  }
+}
+
+// PATCH /api/admin/users/:userId/update-cancel-limit - Update user's cancellation limit
+const updateCancelLimit = async (req, res) => {
+  try {
+    const { userId } = req.params
+    const { totalCancelLimit } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        error: 'Invalid user ID',
+        message: 'Invalid user ID format'
+      })
+    }
+
+    // Validate totalCancelLimit
+    if (totalCancelLimit === undefined || totalCancelLimit === null) {
+      return res.status(400).json({
+        error: 'Missing totalCancelLimit',
+        message: 'totalCancelLimit is required in request body'
+      })
+    }
+
+    const limitNum = parseInt(totalCancelLimit)
+    if (isNaN(limitNum) || limitNum < 0 || limitNum > 10) {
+      return res.status(400).json({
+        error: 'Invalid totalCancelLimit',
+        message: 'totalCancelLimit must be a number between 0 and 10'
+      })
+    }
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found',
+        message: 'User does not exist'
+      })
+    }
+
+    // Update cancellation limit
+    user.totalCancelLimit = limitNum
+    
+    // Ensure role is valid (fix any legacy 'worker'/'poster' values)
+    if (user.role && !['user', 'admin'].includes(user.role)) {
+      user.role = 'user' // Default to 'user' if invalid
+    }
+    
+    await user.save()
+
+    // Reload user to ensure we have the latest data
+    const updatedUser = await User.findById(userId).select('-password')
+    
+    // Notify user via socket
+    notifyUserUpdated(userId, { totalCancelLimit: limitNum })
+    
+    // Notify admin stats refresh
+    notifyAdminStatsRefresh()
+    
+    res.json({
+      message: 'Cancellation limit updated successfully',
+      user: {
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        totalCancelLimit: updatedUser.totalCancelLimit ?? 2,
+        dailyCancelCount: updatedUser.dailyCancelCount ?? 0
+      }
+    })
+  } catch (error) {
+    console.error('Error updating cancellation limit:', error)
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to update cancellation limit'
     })
   }
 }
@@ -904,6 +981,7 @@ module.exports = {
   unblockUser,
   banUser,
   resetCancellations,
+  updateCancelLimit,
   // Task moderation
   getTasks,
   getTaskById,

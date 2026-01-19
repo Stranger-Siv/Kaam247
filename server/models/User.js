@@ -102,6 +102,13 @@ const userSchema = new mongoose.Schema({
         required: false,
         description: 'Date of last cancellation (used to reset daily count)'
     },
+    totalCancelLimit: {
+        type: Number,
+        default: 2,
+        min: 0,
+        max: 10,
+        description: 'Maximum daily cancellations allowed (admin configurable, default: 2)'
+    },
     dailyTaskPostCount: {
         type: Number,
         default: 0,
