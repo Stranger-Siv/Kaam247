@@ -267,9 +267,11 @@ const getActivity = async (req, res) => {
         category: task.category,
         budget: task.budget,
         status: task.status,
+        workerCompleted: task.workerCompleted || false,
         role: 'Poster',
         date: task.createdAt,
         acceptedBy: task.acceptedBy?.name || null,
+        acceptedById: task.acceptedBy?._id || null,
         completedAt: task.completedAt || null
       })),
       accepted: acceptedTasks.map(task => ({
