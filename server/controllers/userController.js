@@ -302,8 +302,13 @@ const getActivity = async (req, res) => {
         rating: task.rating || null
       })).sort((a, b) => new Date(b.date) - new Date(a.date)),
       cancelled: [
-        ...postedTasks.filter(t => t.status === 'CANCELLED'),
-        ...acceptedTasks.filter(t => t.status === 'CANCELLED')
+        // Include all cancellation variants for both poster and worker
+        ...postedTasks.filter(t =>
+          ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(t.status)
+        ),
+        ...acceptedTasks.filter(t =>
+          ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(t.status)
+        )
       ].map(task => ({
         id: task._id,
         title: task.title,
