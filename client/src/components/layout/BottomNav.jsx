@@ -63,7 +63,7 @@ function BottomNav() {
   ]
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[999] shadow-lg safe-area-inset-bottom">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-[999] shadow-lg safe-area-inset-bottom">
       <div className="flex">
         {navItems.map((item) => {
           const active = isActive(item.path)
@@ -73,8 +73,8 @@ function BottomNav() {
               to={item.path}
               className={`flex-1 flex flex-col items-center justify-center py-2.5 px-2 text-[10px] font-medium transition-colors min-h-[64px] touch-manipulation ${
                 active
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'
+                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600'
               }`}
             >
               <span className={`mb-1 transition-transform ${active ? 'scale-110' : ''}`}>

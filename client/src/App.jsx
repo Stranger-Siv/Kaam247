@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
 import { UserModeProvider } from './context/UserModeContext'
 import { AvailabilityProvider } from './context/AvailabilityContext'
@@ -34,23 +35,24 @@ const AdminReports = lazy(() => import('./pages/admin/AdminReports'))
 
 // Loading component for Suspense fallback
 const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen">
+  <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
     <div className="text-center">
-      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-      <p className="text-gray-600">Loading...</p>
+      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mb-4"></div>
+      <p className="text-gray-600 dark:text-gray-400">Loading...</p>
     </div>
   </div>
 )
 
 function App() {
   return (
-    <ColdStartChecker>
-      <AuthProvider>
-      <UserModeProvider>
-        <AvailabilityProvider>
-          <NotificationProvider>
-            <CancellationProvider>
-              <SocketProvider>
+    <ThemeProvider>
+      <ColdStartChecker>
+        <AuthProvider>
+        <UserModeProvider>
+          <AvailabilityProvider>
+            <NotificationProvider>
+              <CancellationProvider>
+                <SocketProvider>
               <Router
                 future={{
                   v7_startTransition: true,
@@ -141,13 +143,14 @@ function App() {
                   </Routes>
                 </Suspense>
               </Router>
-              </SocketProvider>
-            </CancellationProvider>
-          </NotificationProvider>
-        </AvailabilityProvider>
-      </UserModeProvider>
-    </AuthProvider>
-    </ColdStartChecker>
+                </SocketProvider>
+              </CancellationProvider>
+            </NotificationProvider>
+          </AvailabilityProvider>
+        </UserModeProvider>
+      </AuthProvider>
+      </ColdStartChecker>
+    </ThemeProvider>
   )
 }
 

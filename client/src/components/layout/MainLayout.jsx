@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useUserMode } from '../../context/UserModeContext'
 import ModeToggle from '../ModeToggle'
 import AvailabilityToggle from '../AvailabilityToggle'
+import ThemeToggle from '../ThemeToggle'
 import Footer from './Footer'
 import NotificationToast from '../NotificationToast'
 import BottomNav from './BottomNav'
@@ -20,9 +21,9 @@ function MainLayout() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
             {/* Header */}
-            <header className="bg-white shadow-sm sticky top-0 z-[1000]">
+            <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-[1000]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo + Brand Name */}
@@ -32,7 +33,7 @@ function MainLayout() {
                                 alt="Kaam247"
                                 className="h-8 sm:h-9 w-auto object-contain flex-shrink-0"
                             />
-                            <span className="text-lg sm:text-xl font-semibold text-gray-900 whitespace-nowrap">
+                            <span className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                                 Kaam247
                             </span>
                         </Link>
@@ -42,8 +43,8 @@ function MainLayout() {
                             <Link
                                 to="/dashboard"
                                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/dashboard'
-                                    ? 'text-blue-600 bg-blue-50'
-                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 Dashboard
@@ -52,8 +53,8 @@ function MainLayout() {
                                 <Link
                                     to="/tasks"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname.startsWith('/tasks') && !location.pathname.match(/\/tasks\/\d+/)
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                                        : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                                         }`}
                                 >
                                     Tasks
@@ -63,8 +64,8 @@ function MainLayout() {
                                 <Link
                                     to="/post-task"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/post-task'
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                                        : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                                         }`}
                                 >
                                     Post a Task
@@ -73,8 +74,8 @@ function MainLayout() {
                             <Link
                                 to="/activity"
                                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/activity'
-                                    ? 'text-blue-600 bg-blue-50'
-                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 Activity
@@ -83,8 +84,8 @@ function MainLayout() {
                                 <Link
                                     to="/earnings"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/earnings'
-                                        ? 'text-blue-600 bg-blue-50'
-                                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                                        : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                                         }`}
                                 >
                                     Earnings
@@ -93,18 +94,19 @@ function MainLayout() {
                             <Link
                                 to="/profile"
                                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/profile'
-                                    ? 'text-blue-600 bg-blue-50'
-                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                                    : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 Profile
                             </Link>
-                            <div className="h-6 w-px bg-gray-300 mx-1"></div>
+                            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
                             {userMode === 'worker' && <AvailabilityToggle />}
+                            <ThemeToggle />
                             <ModeToggle />
                             <button
                                 onClick={handleLogout}
-                                className="px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors min-h-[36px] flex items-center"
+                                className="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors min-h-[36px] flex items-center"
                             >
                                 Logout
                             </button>
