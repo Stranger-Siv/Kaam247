@@ -1059,7 +1059,19 @@ function TaskDetail() {
     // Use rawStatus for backend status values, fallback to status for frontend format
     const currentStatus = task.rawStatus || task.status
 
-    if (userMode === 'worker') {
+    // IMPORTANT: Actions should be based on the user's relationship to THIS task,
+    // not only on the global mode toggle.
+    const myId = user?.id
+    const postedById = task?.postedBy?._id || task?.postedBy
+    const acceptedById = task?.acceptedBy?._id || task?.acceptedBy
+    const isPosterForTask = myId && postedById && String(postedById) === String(myId)
+    const isWorkerForTask = myId && acceptedById && String(acceptedById) === String(myId)
+
+    // Prefer task-specific role:
+    // - If you're the assigned worker, show worker actions.
+    // - Else if you're the poster, show poster actions.
+    // - Else fall back to current mode (e.g., browsing tasks).
+    if (isWorkerForTask || (!isPosterForTask && userMode === 'worker')) {
       if (currentStatus === 'SEARCHING' || currentStatus === 'OPEN' || task.status === 'open') {
         // FRONTEND GUARDS: Calculate if Accept button should be disabled
         const isOwnTask = task?.postedBy?._id === user?.id || task?.postedBy === user?.id
@@ -1273,8 +1285,8 @@ function TaskDetail() {
           </div>
         )
       }
-    } else {
-      // Poster mode
+    } else if (isPosterForTask || userMode === 'poster') {
+      // Poster actions
       if (currentStatus === 'COMPLETED' || task.status === 'completed') {
         // Show rating UI if not rated yet
         if (!task.rating) {

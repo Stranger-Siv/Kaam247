@@ -42,22 +42,36 @@ export function UserModeProvider({ children }) {
     try {
       const activeTaskData = await checkActiveTask()
       
-      // Block mode switch if: active task exists OR user is online (ON DUTY)
-      if ((activeTaskData && activeTaskData.hasActiveTask) || isOnlineStatus) {
-        // Block mode switch - call callback to show modal
+      const newMode = userMode === 'worker' ? 'poster' : 'worker'
+
+      // IMPORTANT UX RULE:
+      // - If user has an active task as a WORKER, they must be able to switch into worker mode to complete it.
+      // - Switching from worker -> poster while ON DUTY / active task is still blocked (to avoid abandoning tasks / breaking tracking).
+      const hasActiveTask = Boolean(activeTaskData && activeTaskData.hasActiveTask)
+      const activeRole = activeTaskData?.role || null // 'worker' or 'poster' (backend)
+
+      // If switching into WORKER mode, always allow (even if active task exists)
+      if (newMode === 'worker') {
+        setUserMode(newMode)
+        localStorage.setItem('kaam247_userMode', newMode)
+        return true
+      }
+
+      // Switching into POSTER mode:
+      // Block if user is online OR has an active worker task (they should finish first).
+      if (isOnlineStatus || (hasActiveTask && activeRole === 'worker')) {
         if (onActiveTaskFound) {
           onActiveTaskFound({
             activeTaskId: activeTaskData?.activeTaskId || null,
             activeTaskTitle: activeTaskData?.activeTaskTitle || null,
-            role: activeTaskData?.role || null,
+            role: activeRole,
             isOnline: isOnlineStatus || false
           })
         }
-        return false // Indicate switch was blocked
+        return false
       }
 
-      // No active task and user is offline - allow switch
-      const newMode = userMode === 'worker' ? 'poster' : 'worker'
+      // Allow switch into poster mode (offline + no active worker task)
       setUserMode(newMode)
       localStorage.setItem('kaam247_userMode', newMode)
       
