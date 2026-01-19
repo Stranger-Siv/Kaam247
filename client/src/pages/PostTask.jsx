@@ -387,19 +387,19 @@ function PostTask() {
       <form onSubmit={handleSubmit}>
         {/* Error Display */}
         {error && (
-          <div className="mb-5 sm:mb-6 lg:mb-8 p-4 sm:p-5 bg-red-50 border border-red-200 rounded-xl">
-            <p className="text-sm sm:text-base text-red-700 font-semibold leading-relaxed">{error}</p>
+          <div className="mb-5 sm:mb-6 lg:mb-8 p-4 sm:p-5 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">
+            <p className="text-sm sm:text-base text-red-700 dark:text-red-400 font-semibold leading-relaxed">{error}</p>
           </div>
         )}
 
         {/* Step 1: Basic Details */}
         {step === 1 && (
-          <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-8 border border-gray-100">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight">What task do you need help with?</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">What task do you need help with?</h2>
             
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                   Task Title <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -410,15 +410,15 @@ function PostTask() {
                     if (fieldErrors.title) setFieldErrors(prev => ({ ...prev, title: null }))
                   }}
                   placeholder="e.g., Need help moving furniture"
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${
-                    fieldErrors.title ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${
+                    fieldErrors.title ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400' : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                   }`}
                   required
                 />
                 {fieldErrors.title ? (
-                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.title}</p>
+                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1.5 leading-relaxed">{fieldErrors.title}</p>
                 ) : (
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">Be specific about what you need</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">Be specific about what you need</p>
                 )}
               </div>
 
@@ -476,7 +476,7 @@ function PostTask() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 Next
               </button>
@@ -486,8 +486,8 @@ function PostTask() {
 
         {/* Step 2: Location & Time */}
         {step === 2 && (
-          <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-8 border border-gray-100">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight">Where and when?</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">Where and when?</h2>
             
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
@@ -642,14 +642,14 @@ function PostTask() {
               <button
                 type="button"
                 onClick={handleBack}
-                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-gray-100 text-gray-800 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={handleNext}
-                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 Next
               </button>
@@ -659,8 +659,8 @@ function PostTask() {
 
         {/* Step 3: Budget */}
         {step === 3 && (
-          <div className="bg-white rounded-xl shadow-sm p-5 sm:p-6 lg:p-8 border border-gray-100">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 leading-tight">Set your budget</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">Set your budget</h2>
             
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
@@ -675,8 +675,8 @@ function PostTask() {
                       onClick={() => handleInputChange('budget', range)}
                       className={`px-4 sm:px-5 py-3 sm:py-3.5 border-2 rounded-xl text-sm sm:text-base font-semibold transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation ${
                         formData.budget === range
-                          ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700'
+                          ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 shadow-sm'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                       }`}
                     >
                       {range}
@@ -689,7 +689,7 @@ function PostTask() {
                     value={customBudget}
                     onChange={(e) => setCustomBudget(e.target.value)}
                     placeholder="Enter amount in ₹"
-                    className="w-full mt-4 px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px]"
+                    className="w-full mt-4 px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px]"
                     required={formData.budget === 'Custom amount'}
                     min="1"
                   />

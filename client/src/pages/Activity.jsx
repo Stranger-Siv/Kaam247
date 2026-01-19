@@ -140,8 +140,8 @@ function Activity() {
     return (
       <div className="max-w-6xl mx-auto w-full px-4 sm:px-6">
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading activity...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading activity...</p>
         </div>
       </div>
     )
@@ -150,7 +150,7 @@ function Activity() {
   if (error) {
     return (
       <div className="max-w-6xl mx-auto w-full px-4 sm:px-6">
-        <div className="text-center py-12 text-red-600">
+        <div className="text-center py-12 text-red-600 dark:text-red-400">
           <p>{error}</p>
         </div>
       </div>
@@ -162,20 +162,20 @@ function Activity() {
   return (
     <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
       <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 mb-1 sm:mb-2 break-words">Activity History</h1>
-        <p className="text-sm sm:text-base text-gray-600 break-words">View all your tasks and activities</p>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-1 sm:mb-2 break-words">Activity History</h1>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 break-words">View all your tasks and activities</p>
       </div>
 
       {/* Tabs - Mobile Scrollable (contained) */}
-      <div className="bg-white rounded-none sm:rounded-lg shadow-sm border-0 sm:border border-gray-100 mb-4 sm:mb-6 overflow-hidden w-full">
+      <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-lg shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 mb-4 sm:mb-6 overflow-hidden w-full">
         <div className="flex overflow-x-auto scrollbar-hide w-full">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex-shrink-0 touch-manipulation ${activeTab === tab.id
-                ? 'border-blue-600 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
             >
               <span className="block sm:inline">{tab.label}</span>
@@ -187,12 +187,12 @@ function Activity() {
 
       {/* Task List */}
       {currentTasks.length === 0 ? (
-        <div className="bg-white rounded-none sm:rounded-xl shadow-sm border-0 sm:border border-gray-100 p-16 text-center">
-          <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-16 text-center">
+          <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <p className="text-gray-600 mb-2 font-medium">No {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} yet</p>
-          <p className="text-sm text-gray-500">Your {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} will appear here</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-2 font-medium">No {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} yet</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500">Your {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} will appear here</p>
         </div>
       ) : (
         <div className="space-y-3 sm:space-y-4 w-full">
@@ -200,22 +200,22 @@ function Activity() {
             <Link
               key={task.id}
               to={`/tasks/${task.id}`}
-              className="group block bg-white rounded-none sm:rounded-xl shadow-sm border-2 border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 p-4 sm:p-6 active:bg-gray-50 w-full overflow-hidden"
+              className="group block bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-2 border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-md transition-all duration-200 p-4 sm:p-6 active:bg-gray-50 dark:active:bg-gray-700 w-full overflow-hidden"
             >
               {/* Title and Badges Row */}
               <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 w-full min-w-0">
                 {/* Title on left - wraps if needed */}
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors flex-1 min-w-0 break-words pr-2">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-1 min-w-0 break-words pr-2">
                   {task.title}
                 </h3>
 
                 {/* Badges/Buttons on right - no wrap */}
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                   <StatusBadge status={task.status} />
-                  <span className="inline-flex items-center px-2 sm:px-2.5 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2 sm:px-2.5 py-1 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 whitespace-nowrap">
                     {task.role}
                   </span>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-blue-600 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
@@ -223,18 +223,18 @@ function Activity() {
 
               {/* Category and Price - wraps on mobile */}
               <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 w-full">
-                <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-gray-50 text-gray-700 rounded-md text-xs font-medium whitespace-nowrap">
+                <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md text-xs font-medium whitespace-nowrap">
                   {task.category}
                 </span>
-                <span className="font-semibold text-gray-900 text-sm sm:text-base whitespace-nowrap">₹{task.budget}</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base whitespace-nowrap">₹{task.budget}</span>
               </div>
 
               {/* Date and Rating - wraps on mobile */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-500 w-full">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-gray-500 dark:text-gray-400 w-full">
                 <span className="whitespace-nowrap">{formatDate(task.date)}</span>
                 {task.role === 'Worker' && task.rating && (
                   <span className="flex items-center gap-1 whitespace-nowrap">
-                    <svg className="w-3.5 h-3.5 text-yellow-400 fill-current flex-shrink-0" viewBox="0 0 20 20">
+                    <svg className="w-3.5 h-3.5 text-yellow-400 dark:text-yellow-500 fill-current flex-shrink-0" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     {task.rating}/5

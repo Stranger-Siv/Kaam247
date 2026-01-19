@@ -247,13 +247,13 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-xl font-bold text-gray-900">Edit Task</h2>
+    <div className="fixed inset-0 z-[2000] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Edit Task</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -264,54 +264,54 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Task Title *
             </label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => handleInputChange('title', e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.title ? 'border-red-300' : 'border-gray-300'}`}
+              className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 ${fieldErrors.title ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'}`}
               placeholder="e.g., Need help with cleaning"
             />
             {fieldErrors.title && (
-              <p className="mt-1 text-sm text-red-600">{fieldErrors.title}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.title}</p>
             )}
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Description *
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               rows={4}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.description ? 'border-red-300' : 'border-gray-300'}`}
+              className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 ${fieldErrors.description ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'}`}
               placeholder="Describe what you need help with..."
             />
             {fieldErrors.description && (
-              <p className="mt-1 text-sm text-red-600">{fieldErrors.description}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.description}</p>
             )}
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Category *
             </label>
             <select
               value={formData.category}
               onChange={(e) => handleInputChange('category', e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.category ? 'border-red-300' : 'border-gray-300'}`}
+              className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 ${fieldErrors.category ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'}`}
             >
               <option value="">Select a category</option>
               {categories.map(cat => (
@@ -319,13 +319,13 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
               ))}
             </select>
             {fieldErrors.category && (
-              <p className="mt-1 text-sm text-red-600">{fieldErrors.category}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.category}</p>
             )}
           </div>
 
           {/* Budget */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Budget (₹) *
             </label>
             <input
@@ -333,11 +333,11 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
               value={formData.budget}
               onChange={(e) => handleInputChange('budget', e.target.value)}
               min="1"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${fieldErrors.budget ? 'border-red-300' : 'border-gray-300'}`}
+              className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 ${fieldErrors.budget ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'}`}
               placeholder="e.g., 500"
             />
             {fieldErrors.budget && (
-              <p className="mt-1 text-sm text-red-600">{fieldErrors.budget}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.budget}</p>
             )}
           </div>
 

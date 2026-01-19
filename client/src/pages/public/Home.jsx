@@ -16,14 +16,14 @@ function Home() {
     ]
 
     return (
-        <div className="bg-white">
+        <div className="bg-white dark:bg-gray-950">
             {/* HERO SECTION */}
-            <section className="bg-white py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8">
+            <section className="bg-white dark:bg-gray-950 py-12 sm:py-16 lg:py-24 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-4 sm:mb-5 lg:mb-6 leading-tight tracking-tight">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-5 lg:mb-6 leading-tight tracking-tight">
                         Get local help for everyday tasks — fast.
                     </h1>
-                    <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-8 sm:mb-10 lg:mb-12 max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 mb-8 sm:mb-10 lg:mb-12 max-w-2xl mx-auto leading-relaxed">
                         Post a task or earn by helping nearby people. No agencies. No delays.
                     </p>
 
@@ -31,13 +31,13 @@ function Home() {
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
                         <Link
                             to={isAuthenticated ? "/post-task" : "/login"}
-                            className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 lg:py-4.5 bg-blue-600 text-white text-base sm:text-lg font-semibold rounded-xl shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center touch-manipulation"
+                            className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 lg:py-4.5 bg-blue-600 dark:bg-blue-500 text-white text-base sm:text-lg font-semibold rounded-xl shadow-md hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-lg transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center touch-manipulation"
                         >
                             Post a Task
                         </Link>
                         <Link
                             to={isAuthenticated ? "/tasks" : "/login"}
-                            className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 lg:py-4.5 bg-white text-gray-700 text-base sm:text-lg font-semibold rounded-xl border-2 border-gray-300 shadow-sm hover:bg-gray-50 hover:shadow-md hover:border-gray-400 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center touch-manipulation"
+                            className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 lg:py-4.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-base sm:text-lg font-semibold rounded-xl border-2 border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md hover:border-gray-400 dark:hover:border-gray-500 transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center touch-manipulation"
                         >
                             Find Work Nearby
                         </Link>
@@ -46,16 +46,16 @@ function Home() {
             </section>
 
             {/* CATEGORIES */}
-            <section className="bg-gray-50 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+            <section className="bg-gray-50 dark:bg-gray-900 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
                         {categories.map((category) => (
                             <div
                                 key={category.name}
-                                className="bg-white rounded-xl p-4 sm:p-5 lg:p-6 border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 text-center group"
+                                className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 lg:p-6 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all duration-200 text-center group"
                             >
                                 <span className="text-3xl sm:text-4xl lg:text-5xl mb-2 sm:mb-3 block group-hover:scale-110 transition-transform duration-200">{category.icon}</span>
-                                <span className="text-xs sm:text-sm lg:text-base font-medium text-gray-700 leading-tight block">
+                                <span className="text-xs sm:text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300 leading-tight block">
                                     {category.name}
                                 </span>
                             </div>
@@ -65,34 +65,34 @@ function Home() {
             </section>
 
             {/* HOW IT WORKS */}
-            <section className="bg-white py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
+            <section className="bg-white dark:bg-gray-950 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto">
                     <div className="text-center mb-10 sm:mb-12 lg:mb-16">
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight">
+                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 leading-tight">
                             How Kaam247 Works
                         </h2>
-                        <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                        <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
                             Real people. Real tasks. Nearby help — in minutes.
                         </p>
                     </div>
 
                     <div className="space-y-8 sm:space-y-10 lg:space-y-12">
                         {/* Task Poster Section */}
-                        <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 border border-gray-200 shadow-sm">
+                        <div className="bg-gray-50 dark:bg-gray-900 rounded-xl sm:rounded-2xl p-5 sm:p-6 lg:p-8 border border-gray-200 dark:border-gray-700 shadow-sm">
                             <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-7 lg:mb-8">
                                 <span className="text-2xl sm:text-3xl lg:text-4xl flex-shrink-0">👤</span>
-                                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 leading-tight">
+                                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
                                     If you need help (Task Poster)
                                 </h3>
                             </div>
                             <div className="space-y-4 sm:space-y-5 lg:space-y-6">
                                 <div className="flex items-start gap-3 sm:gap-4">
-                                    <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span className="text-blue-600 font-bold text-sm sm:text-base">1</span>
+                                    <div className="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                        <span className="text-blue-600 dark:text-blue-400 font-bold text-sm sm:text-base">1</span>
                                     </div>
                                     <div className="flex-1 pt-0.5">
-                                        <h4 className="font-semibold text-gray-900 mb-1.5 sm:mb-2 text-sm sm:text-base lg:text-lg">Post what you need done</h4>
-                                        <p className="text-xs sm:text-sm lg:text-base text-gray-600 leading-relaxed">
+                                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 text-sm sm:text-base lg:text-lg">Post what you need done</h4>
+                                        <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400 leading-relaxed">
                                             Describe the task, set your budget, choose location and time.
                                         </p>
                                     </div>

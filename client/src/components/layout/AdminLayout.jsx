@@ -28,9 +28,9 @@ function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 md:bg-white md:border-r md:border-gray-200 md:shadow-sm">
+      <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 md:bg-white dark:md:bg-gray-800 md:border-r md:border-gray-200 dark:md:border-gray-700 md:shadow-sm">
         <div className="flex-1 flex flex-col pt-6 pb-4 overflow-y-auto">
           {/* Logo */}
           <div className="flex items-center flex-shrink-0 px-6 mb-8">
@@ -40,7 +40,7 @@ function AdminLayout() {
                 alt="Kaam247"
                 className="h-8 sm:h-10 w-auto object-contain"
               />
-              <span className="text-base sm:text-lg font-semibold text-gray-900">Admin</span>
+              <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Admin</span>
             </Link>
           </div>
 
@@ -51,8 +51,8 @@ function AdminLayout() {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors min-h-[44px] ${isActive(item.path)
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
               >
                 <span className="text-lg">{item.icon}</span>
@@ -62,23 +62,23 @@ function AdminLayout() {
           </nav>
 
           {/* User Info & Logout */}
-          <div className="px-4 py-4 border-t border-gray-200">
+          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 text-sm font-semibold">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 dark:text-blue-400 text-sm font-semibold">
                   {user?.name?.charAt(0)?.toUpperCase() || 'A'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                   {user?.name || 'Admin'}
                 </p>
-                <p className="text-xs text-gray-500 truncate">Admin</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Admin</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="w-full px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors min-h-[44px] border border-red-200"
+              className="w-full px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors min-h-[44px] border border-red-200 dark:border-red-800"
             >
               Logout
             </button>
@@ -89,7 +89,7 @@ function AdminLayout() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col md:pl-64">
         {/* Mobile Header */}
-        <header className="md:hidden bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <header className="md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
           <div className="flex items-center justify-between px-4 h-16">
             <Link to="/admin" className="flex items-center gap-2.5">
               <img
@@ -97,7 +97,7 @@ function AdminLayout() {
                 alt="Kaam247"
                 className="h-8 w-auto object-contain"
               />
-              <span className="text-base font-semibold text-gray-900">Admin</span>
+              <span className="text-base font-semibold text-gray-900 dark:text-gray-100">Admin</span>
             </Link>
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
