@@ -569,6 +569,56 @@ function AdminUserDetail() {
         loading={actionLoading}
       />
 
+      {/* Edit Cancellation Limit Modal */}
+      {showEditLimitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Cancellation Limit</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Set the maximum number of tasks this user can cancel per day. Current limit: <strong>{user?.totalCancelLimit ?? 2}</strong>
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Limit (0-10)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="10"
+                value={newCancelLimit}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value)
+                  if (!isNaN(value) && value >= 0 && value <= 10) {
+                    setNewCancelLimit(value)
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                disabled={isUpdatingLimit}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Current cancellations today: {user?.dailyCancelCount ?? 0}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowEditLimitModal(false)}
+                disabled={isUpdatingLimit}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateCancelLimit}
+                disabled={isUpdatingLimit || newCancelLimit === (user?.totalCancelLimit ?? 2)}
+                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUpdatingLimit ? 'Updating...' : 'Update Limit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast Notification */}
       <AdminToast
         message={toast.message}
