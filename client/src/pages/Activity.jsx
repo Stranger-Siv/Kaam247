@@ -8,7 +8,8 @@ import { API_BASE_URL } from '../config/env'
 function Activity() {
   const { user } = useAuth()
   const { userMode } = useUserMode()
-  const [activeTab, setActiveTab] = useState('posted')
+  // Set initial tab based on mode: workers start with 'accepted', posters with 'posted'
+  const [activeTab, setActiveTab] = useState(userMode === 'worker' ? 'accepted' : 'posted')
   const [activity, setActivity] = useState({
     posted: [],
     accepted: [],
@@ -124,8 +125,8 @@ function Activity() {
   }
 
   // Tabs depend on current mode:
-  // - Poster: focus on posted-side lifecycle
-  // - Worker: focus on worker-side lifecycle
+  // - Poster: focus on posted-side lifecycle (Posted, Completed, Cancelled)
+  // - Worker: focus on worker-side lifecycle (Accepted, Completed, Cancelled)
   const baseTabs = [
     { id: 'posted', label: 'Posted Tasks', count: activity.posted.length },
     { id: 'accepted', label: 'Accepted Tasks', count: activity.accepted.length },
@@ -134,8 +135,16 @@ function Activity() {
   ]
 
   const tabs = userMode === 'worker'
-    ? baseTabs.filter(tab => tab.id !== 'posted')   // Workers don’t care about posted tasks list
-    : baseTabs.filter(tab => tab.id !== 'accepted') // Posters don’t care about accepted-as-worker
+    ? baseTabs.filter(tab => tab.id !== 'posted')   // Workers don't see posted tasks tab
+    : baseTabs.filter(tab => tab.id !== 'accepted') // Posters don't see accepted tasks tab
+
+  // Ensure activeTab is valid for current mode - switch to first available tab if needed
+  useEffect(() => {
+    const availableTabIds = tabs.map(t => t.id)
+    if (!availableTabIds.includes(activeTab)) {
+      setActiveTab(availableTabIds[0] || 'completed')
+    }
+  }, [userMode, tabs.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const getCurrentTasks = () => {
     switch (activeTab) {
@@ -190,8 +199,8 @@ function Activity() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-colors flex-shrink-0 touch-manipulation ${activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600 bg-blue-50'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-blue-600 text-blue-600 bg-blue-50'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
             >
               <span className="block sm:inline">{tab.label}</span>
