@@ -32,8 +32,6 @@ function PostTask() {
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [locationError, setLocationError] = useState(null)
   const [mapCenter, setMapCenter] = useState([12.9716, 77.5946]) // Bangalore default [lat, lng]
-  const [postingLimitReached, setPostingLimitReached] = useState(false)
-  const [checkingLimit, setCheckingLimit] = useState(false)
   
   // Initialize location data with default coordinates if not set
   useEffect(() => {
@@ -706,20 +704,6 @@ function PostTask() {
               </div>
             </div>
 
-            {postingLimitReached && (
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <div>
-                    <p className="text-sm font-semibold text-yellow-900 mb-1">Daily Posting Limit Reached</p>
-                    <p className="text-sm text-yellow-700">You have reached the daily task posting limit (5 tasks). Try again tomorrow.</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="mt-8 flex justify-end gap-3 flex-wrap">
               <button
                 type="button"
@@ -731,7 +715,7 @@ function PostTask() {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || postingLimitReached}
+                disabled={isSubmitting}
                 className="h-11 px-6 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 min-w-[135px]"
               >
                 {isSubmitting ? (
@@ -742,8 +726,6 @@ function PostTask() {
                     </svg>
                     Posting...
                   </>
-                ) : postingLimitReached ? (
-                  'Limit Reached'
                 ) : (
                   'Post Task Nearby'
                 )}

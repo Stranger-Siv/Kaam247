@@ -42,39 +42,9 @@ const createTask = async (req, res) => {
       })
     }
 
-    // ABUSE PREVENTION: Check daily task posting limit
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const lastPostDate = userExists.lastTaskPostDate ? new Date(userExists.lastTaskPostDate) : null
-    let lastPostDay = null
-    if (lastPostDate) {
-      lastPostDay = new Date(lastPostDate)
-      lastPostDay.setHours(0, 0, 0, 0)
-    }
-
-    // Reset counter if new day
-    if (!lastPostDay || lastPostDay.getTime() !== today.getTime()) {
-      if (userExists.dailyTaskPostCount > 0) {
-        userExists.dailyTaskPostCount = 0
-        userExists.lastTaskPostDate = today
-        await userExists.save()
-      }
-    }
-
-    // Count active tasks (OPEN, ACCEPTED, IN_PROGRESS) posted today
-    const activeTasksToday = await Task.countDocuments({
-      postedBy: postedBy,
-      status: { $in: ['OPEN', 'SEARCHING', 'ACCEPTED', 'IN_PROGRESS'] },
-      createdAt: { $gte: today }
-    })
-
-    // Check if limit reached (max 5 tasks per day)
-    if (activeTasksToday >= 5) {
-      return res.status(429).json({
-        error: 'Rate limit exceeded',
-        message: 'Daily task posting limit reached. Try again tomorrow.'
-      })
-    }
+    // NOTE: Daily task posting limit has been removed based on product decision.
+    // We keep the rapid action throttling below to avoid accidental double-submits,
+    // but there is no longer a hard per-day cap on how many tasks a user can post.
 
     // RAPID ACTION THROTTLING: Check if same action within 3 seconds
     const lastPostTimestamp = userExists.lastActionTimestamps?.get('createTask')
@@ -523,7 +493,7 @@ const getAvailableTasks = async (req, res) => {
 
     // Fetch tasks with status "OPEN" or "SEARCHING" and not hidden
     // Both statuses indicate tasks available for workers
-    let tasks = await Task.find({ 
+    let tasks = await Task.find({
       status: { $in: ['OPEN', 'SEARCHING'] }, // Include both OPEN and SEARCHING tasks
       isHidden: { $ne: true } // Exclude hidden tasks
     })
@@ -629,20 +599,20 @@ const getTaskById = async (req, res) => {
       .populate('postedBy', 'name email phone')
       .populate('acceptedBy', 'name email phone')
 
-        // If task not found, return 404
-        if (!task) {
-          return res.status(404).json({
-            error: 'Task not found',
-            message: 'Task not found'
-          })
-        }
+    // If task not found, return 404
+    if (!task) {
+      return res.status(404).json({
+        error: 'Task not found',
+        message: 'Task not found'
+      })
+    }
 
     // Get requester userId from query params (for authorization check)
     const requesterUserId = req.query.userId ? req.query.userId.toString() : null
 
     // Prepare response - conditionally include phone numbers
     const taskResponse = task.toObject()
-    
+
     // Calculate distance if worker location is provided
     if (workerLat !== null && workerLng !== null && !isNaN(workerLat) && !isNaN(workerLng)) {
       // Validate worker coordinates
@@ -667,32 +637,32 @@ const getTaskById = async (req, res) => {
     } else {
       taskResponse.distanceKm = null
     }
-    
+
     // SECURE PHONE NUMBER SHARING:
     // Only include phone numbers if:
     // 1. Task is ACCEPTED or later
     // 2. AND requester is authorized (either the assigned worker OR the poster)
-    
+
     const isTaskAccepted = task.status === 'ACCEPTED' || task.status === 'IN_PROGRESS' || task.status === 'COMPLETED'
     const isRequesterWorker = requesterUserId && task.acceptedBy && task.acceptedBy._id.toString() === requesterUserId
     const isRequesterPoster = requesterUserId && task.postedBy._id.toString() === requesterUserId
-    
+
     // Initialize phone number fields
     taskResponse.posterPhone = null
     taskResponse.workerPhone = null
-    
+
     if (isTaskAccepted) {
       // Worker can see poster's phone if they are the assigned worker
       if (isRequesterWorker && task.postedBy && task.postedBy.phone) {
         taskResponse.posterPhone = task.postedBy.phone
       }
-      
+
       // Poster can see worker's phone if they are the task creator
       if (isRequesterPoster && task.acceptedBy && task.acceptedBy.phone) {
         taskResponse.workerPhone = task.acceptedBy.phone
       }
     }
-    
+
     // Remove phone numbers from nested objects to prevent accidental exposure
     if (taskResponse.postedBy && taskResponse.postedBy.phone) {
       delete taskResponse.postedBy.phone
@@ -828,7 +798,7 @@ const cancelTask = async (req, res) => {
           try {
             const { notifyTaskCancelled } = require('../socket/socketHandler')
             notifyTaskCancelled(task.acceptedBy._id.toString(), taskId, 'poster')
-            
+
             // Emit taskUpdated event for state sync
             notifyTaskStatusChanged(task.acceptedBy._id.toString(), taskId, 'CANCELLED_BY_POSTER')
           } catch (socketError) {
@@ -839,7 +809,7 @@ const cancelTask = async (req, res) => {
         // Emit socket event to remove task from available tasks list
         try {
           notifyTaskRemoved(null, taskId) // Remove from all workers
-          
+
           // Emit taskUpdated event for state sync
           notifyTaskStatusChanged(task.postedBy._id.toString(), taskId, 'CANCELLED_BY_POSTER')
         } catch (socketError) {
@@ -932,7 +902,7 @@ const cancelTask = async (req, res) => {
         try {
           const { notifyTaskCancelled } = require('../socket/socketHandler')
           notifyTaskCancelled(task.postedBy._id.toString(), taskId, 'worker')
-          
+
           // Emit taskUpdated event for state sync
           notifyTaskStatusChanged(task.postedBy._id.toString(), taskId, 'CANCELLED_BY_WORKER')
           notifyTaskStatusChanged(userId, taskId, 'CANCELLED_BY_WORKER')
@@ -943,7 +913,7 @@ const cancelTask = async (req, res) => {
         // Increment daily cancellation count
         worker.dailyCancelCount += 1
         worker.lastCancelDate = new Date()
-        
+
         // Update last action timestamp
         if (!worker.lastActionTimestamps) {
           worker.lastActionTimestamps = new Map()
@@ -1054,7 +1024,7 @@ const startTask = async (req, res) => {
     if (updatedTask.acceptedBy) {
       notifyTaskStatusChanged(workerId.toString(), taskId, 'IN_PROGRESS')
     }
-    
+
     // Emit taskUpdated event for state sync
     try {
       notifyTaskUpdated(taskId, {
@@ -1167,7 +1137,7 @@ const markComplete = async (req, res) => {
     if (updatedTask.postedBy) {
       notifyTaskStatusChanged(updatedTask.postedBy.toString(), taskId, 'IN_PROGRESS')
     }
-    
+
     // Emit taskUpdated event for state sync
     try {
       notifyTaskUpdated(taskId, {
@@ -1284,11 +1254,11 @@ const confirmComplete = async (req, res) => {
         updatedTask.acceptedBy.toString(),
         taskId
       )
-      
+
       // Emit taskUpdated event for state sync
       notifyTaskStatusChanged(updatedTask.postedBy.toString(), taskId, 'COMPLETED')
       notifyTaskStatusChanged(updatedTask.acceptedBy.toString(), taskId, 'COMPLETED')
-      
+
       try {
         notifyTaskUpdated(taskId, {
           status: 'COMPLETED',
