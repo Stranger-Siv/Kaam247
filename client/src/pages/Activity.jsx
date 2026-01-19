@@ -44,18 +44,8 @@ function Activity() {
       const data = await response.json()
       const apiActivity = data.activity || { posted: [], accepted: [], completed: [], cancelled: [] }
 
-      // MODE FILTERING:
-      // - In poster mode: show only poster-side activity
-      // - In worker mode: show only worker-side activity
-      const modeRole = userMode === 'worker' ? 'Worker' : 'Poster'
-      const filteredActivity = {
-        posted: apiActivity.posted.filter(task => !task.role || task.role === modeRole),
-        accepted: apiActivity.accepted.filter(task => !task.role || task.role === modeRole),
-        completed: apiActivity.completed.filter(task => !task.role || task.role === modeRole),
-        cancelled: apiActivity.cancelled.filter(task => !task.role || task.role === modeRole)
-      }
-
-      setActivity(filteredActivity)
+      // Use backend data as-is - backend already categorizes and assigns roles correctly
+      setActivity(apiActivity)
     } catch (err) {
       console.error('Error fetching activity:', err)
       setError(err.message || 'Failed to load activity')
