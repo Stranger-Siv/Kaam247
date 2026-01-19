@@ -1,6 +1,16 @@
 // Shared status badge component for consistent status display
 export const getStatusBadge = (status) => {
-  const normalizedStatus = status === 'open' || status === 'SEARCHING' ? 'open' : status?.toLowerCase() || 'unknown'
+  const raw = status || ''
+  const upper = typeof raw === 'string' ? raw.toUpperCase() : ''
+  const lower = typeof raw === 'string' ? raw.toLowerCase() : ''
+
+  // Normalize backend variants to stable UI statuses
+  let normalizedStatus = lower || 'unknown'
+  if (upper === 'OPEN' || upper === 'SEARCHING' || lower === 'open' || lower === 'searching') normalizedStatus = 'open'
+  if (upper === 'ACCEPTED' || lower === 'accepted') normalizedStatus = 'accepted'
+  if (upper === 'IN_PROGRESS' || lower === 'in_progress' || lower === 'in progress') normalizedStatus = 'in_progress'
+  if (upper === 'COMPLETED' || lower === 'completed') normalizedStatus = 'completed'
+  if (upper === 'CANCELLED' || upper.startsWith('CANCELLED_BY_') || lower === 'cancelled') normalizedStatus = 'cancelled'
   
   const badges = {
     open: { text: 'Open', className: 'bg-blue-50 text-blue-700 border border-blue-200' },
