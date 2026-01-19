@@ -45,6 +45,7 @@ const createTask = async (req, res) => {
     // NOTE: Daily task posting limit has been removed based on product decision.
     // We keep the rapid action throttling below to avoid accidental double-submits,
     // but there is no longer a hard per-day cap on how many tasks a user can post.
+    // Variables like activeTasksToday / dailyTaskPostCount are no longer used as limits.
 
     // RAPID ACTION THROTTLING: Check if same action within 3 seconds
     const lastPostTimestamp = userExists.lastActionTimestamps?.get('createTask')
@@ -191,8 +192,6 @@ const createTask = async (req, res) => {
       userExists.lastActionTimestamps = new Map()
     }
     userExists.lastActionTimestamps.set('createTask', new Date())
-    userExists.dailyTaskPostCount = activeTasksToday + 1
-    userExists.lastTaskPostDate = today
     await userExists.save()
 
     // Broadcast new task to eligible online workers
