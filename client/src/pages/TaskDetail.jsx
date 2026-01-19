@@ -11,6 +11,7 @@ import TaskLocationMap from '../components/TaskLocationMap'
 import ReportModal from '../components/ReportModal'
 import EditTaskModal from '../components/EditTaskModal'
 import ConfirmationModal from '../components/ConfirmationModal'
+import IncreaseBudgetModal from '../components/IncreaseBudgetModal'
 
 function TaskDetail() {
   const navigate = useNavigate()
@@ -46,6 +47,7 @@ function TaskDetail() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showIncreaseBudgetModal, setShowIncreaseBudgetModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
   const fetchInFlightRef = useRef(false)
@@ -1335,7 +1337,16 @@ function TaskDetail() {
                 <p className="text-sm text-red-700">{deleteError}</p>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                onClick={() => setShowIncreaseBudgetModal(true)}
+                className="px-4 py-3 bg-emerald-600 text-white text-base font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Increase Budget
+              </button>
               <button
                 onClick={() => setShowEditModal(true)}
                 className="px-4 py-3 bg-blue-600 text-white text-base font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
@@ -2169,6 +2180,16 @@ function TaskDetail() {
           task={task}
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Increase Budget Modal */}
+      {showIncreaseBudgetModal && task && (
+        <IncreaseBudgetModal
+          task={task}
+          isOpen={showIncreaseBudgetModal}
+          onClose={() => setShowIncreaseBudgetModal(false)}
           onSuccess={handleEditSuccess}
         />
       )}
