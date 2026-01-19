@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
 import LocationPickerMap from '../components/LocationPickerMap'
 import { persistUserLocation } from '../utils/locationPersistence'
+import { reverseGeocode as reverseGeocodeViaApi } from '../utils/geocoding'
 
 function PostTask() {
   const navigate = useNavigate()
@@ -118,37 +119,12 @@ function PostTask() {
   }
 
   // Reverse geocoding function to convert lat/lng to area and city
+  // Uses backend proxy to avoid browser CORS + Nominatim 403 issues.
   const reverseGeocode = async (lat, lng) => {
     try {
-      // Using OpenStreetMap Nominatim API (free, no API key required)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-        {
-          headers: {
-            'User-Agent': 'Kaam247/1.0'
-          }
-        }
-      )
-      
-      if (!response.ok) {
-        throw new Error('Reverse geocoding failed')
-      }
-      
-      const data = await response.json()
-      const address = data.address || {}
-      
-      // Extract area and city from address components
-      const area = address.suburb || address.neighbourhood || address.road || address.locality || 'Unknown Area'
-      const city = address.city || address.town || address.county || address.state || 'Unknown City'
-      
-      return { area, city }
-    } catch (error) {
-      // Fallback: Use a simple mapping based on coordinates (for India)
-      // This is a basic fallback - in production, you might want a more sophisticated solution
-      if (lat >= 12.8 && lat <= 13.1 && lng >= 77.4 && lng <= 77.8) {
-        return { area: 'Bangalore', city: 'Bangalore' }
-      }
-      // Default fallback
+      return await reverseGeocodeViaApi(lat, lng)
+    } catch {
+      // Default fallback (keep UI functional even if geocoding is down)
       return { area: 'Unknown Area', city: 'Unknown City' }
     }
   }
@@ -504,11 +480,11 @@ function PostTask() {
               </div>
             </div>
 
-            <div className="mt-8 flex justify-end">
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:justify-end">
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] min-w-[100px]"
+                className="w-full sm:w-auto h-11 px-6 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
               >
                 Next
               </button>
@@ -670,18 +646,18 @@ function PostTask() {
               </div>
             </div>
 
-            <div className="mt-8 flex justify-between gap-4">
+            <div className="mt-8 flex justify-end gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={handleBack}
-                className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors min-h-[44px] min-w-[100px]"
+                className="h-11 px-6 bg-gray-100 text-gray-800 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors min-w-[110px]"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors min-h-[44px] min-w-[100px]"
+                className="h-11 px-6 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors min-w-[110px]"
               >
                 Next
               </button>
@@ -730,32 +706,33 @@ function PostTask() {
               </div>
             </div>
 
-            <div className="mt-8 flex justify-between gap-4">
+            {postingLimitReached && (
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-semibold text-yellow-900 mb-1">Daily Posting Limit Reached</p>
+                    <p className="text-sm text-yellow-700">You have reached the daily task posting limit (5 tasks). Try again tomorrow.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 flex justify-end gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={handleBack}
                 disabled={isSubmitting}
-                className="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[100px]"
+                className="h-11 px-6 bg-gray-100 text-gray-800 text-sm font-semibold rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[110px]"
               >
                 Back
               </button>
-              {postingLimitReached && (
-                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <div>
-                      <p className="text-sm font-semibold text-yellow-900 mb-1">Daily Posting Limit Reached</p>
-                      <p className="text-sm text-yellow-700">You have reached the daily task posting limit (5 tasks). Try again tomorrow.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
               <button
                 type="submit"
                 disabled={isSubmitting || postingLimitReached}
-                className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px] min-w-[120px]"
+                className="h-11 px-6 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 min-w-[135px]"
               >
                 {isSubmitting ? (
                   <>

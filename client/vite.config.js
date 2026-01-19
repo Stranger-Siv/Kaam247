@@ -9,6 +9,12 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo.svg', 'icons/*.png'],
       manifestFilename: 'manifest.json',
+      // Disable PWA service worker in development for cleaner console
+      // PWA will still work in production builds
+      devOptions: {
+        enabled: false, // Disable SW in dev to suppress Workbox logs
+        type: 'module',
+      },
       manifest: {
         name: 'Kaam247',
         short_name: 'Kaam247',
@@ -39,6 +45,9 @@ export default defineConfig({
         // Exclude API routes from precaching
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           // DO NOT cache API routes - use NetworkOnly (no timeout option)
           {

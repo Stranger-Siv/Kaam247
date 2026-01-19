@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { API_BASE_URL } from '../../config/env'
+import { useEffect, useRef, useState } from 'react'
+import { apiGet } from '../../utils/api'
 
 function AdminOverview() {
   const [stats, setStats] = useState({
@@ -12,28 +12,35 @@ function AdminOverview() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const stopPollingRef = useRef(false)
 
   useEffect(() => {
     const fetchStats = async () => {
+      if (stopPollingRef.current) return
       try {
         setLoading(true)
         setError(null)
 
         const token = localStorage.getItem('kaam247_token')
-        const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch stats')
+        if (!token) {
+          stopPollingRef.current = true
+          setError('Please login as admin to view stats.')
+          return
         }
 
-        const data = await response.json()
+        const { data, error: apiError } = await apiGet('/api/admin/stats')
+        if (apiError) {
+          // If auth fails, stop the 10s polling loop to prevent console/network spam.
+          if (apiError.includes('(401)') || apiError.includes('(403)')) {
+            stopPollingRef.current = true
+          }
+          setError(apiError || 'Failed to load stats')
+          return
+        }
+
         setStats(data)
       } catch (err) {
-        console.error('Error fetching admin stats:', err)
+        // Keep console clean in production; show error in UI instead.
         setError(err.message || 'Failed to load stats')
       } finally {
         setLoading(false)

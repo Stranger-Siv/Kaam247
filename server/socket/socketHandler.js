@@ -6,34 +6,20 @@ const { calculateDistance } = require('../utils/distance')
 let io = null
 
 const initializeSocket = (server) => {
-    // Socket.IO CORS configuration - match Express CORS
+    // Socket.IO CORS configuration - production-only origins
     const allowedSocketOrigins = [
-        'https://kaam247.in',                     // Custom domain (production)
-        'https://www.kaam247.in',                 // Custom domain with www (production)
-        'https://kaam247.netlify.app',           // Netlify frontend (production)
-        'https://kaam247.onrender.com',           // Render frontend (if deployed there)
-        'http://localhost:5173',                  // Vite dev server
-        'http://localhost:3000',                  // Alternative dev port
-        'http://localhost:3001',                  // Local backend (for testing)
-        'http://127.0.0.1:5173',                  // Alternative localhost format
-        'http://127.0.0.1:3000',                  // Alternative localhost format
+        'https://kaam247.in',
+        'https://www.kaam247.in'
     ]
 
     io = new Server(server, {
+        transports: ['websocket'],
+        allowEIO3: true,
         cors: {
             origin: function (origin, callback) {
-                // Allow requests with no origin
                 if (!origin) return callback(null, true)
-                
-                // Check if origin is allowed
-                const isAllowed = allowedSocketOrigins.some(allowedOrigin => {
-                    if (origin === allowedOrigin) return true
-                    if (allowedOrigin.includes('localhost') && origin.includes('localhost')) return true
-                    if (allowedOrigin.includes('127.0.0.1') && origin.includes('127.0.0.1')) return true
-                    return false
-                })
-
-                if (isAllowed || process.env.NODE_ENV !== 'production') {
+                const isAllowed = allowedSocketOrigins.includes(origin)
+                if (isAllowed) {
                     callback(null, true)
                 } else {
                     console.log('Socket.IO CORS: Blocked origin:', origin)

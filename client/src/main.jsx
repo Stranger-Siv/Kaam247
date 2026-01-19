@@ -19,6 +19,33 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon
 
+// Unregister service worker in development mode for cleaner console
+if (import.meta.env.DEV) {
+  if ('serviceWorker' in navigator) {
+    // Unregister all service workers
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => {
+        registration.unregister().catch(() => {
+          // Silent fail if already unregistered
+        })
+      })
+    }).catch(() => {
+      // Silent fail if no service workers
+    })
+    
+    // Also try to unregister by scope
+    navigator.serviceWorker.getRegistration().then((registration) => {
+      if (registration) {
+        registration.unregister().catch(() => {
+          // Silent fail
+        })
+      }
+    }).catch(() => {
+      // Silent fail
+    })
+  }
+}
+
 // Global error handler to suppress third-party errors (like browser extensions)
 window.addEventListener('error', (event) => {
   const errorMessage = event.message || event.error?.message || ''
@@ -31,11 +58,11 @@ window.addEventListener('error', (event) => {
     return false
   }
   
-  // Suppress WebSocket/Socket.IO connection errors (socket is disabled)
-  if (errorMessage.includes('WebSocket') || 
-      errorMessage.includes('socket.io') || 
-      errorMessage.includes('wss://') ||
-      errorMessage.includes('ws://')) {
+  // Suppress only DNS resolution errors for WebSocket (expected when backend is down)
+  // Allow Socket.IO to handle connection errors gracefully
+  if (errorMessage.includes('ERR_NAME_NOT_RESOLVED') && 
+      (errorMessage.includes('socket.io') || errorMessage.includes('wss://') || errorMessage.includes('ws://'))) {
+    // DNS errors are expected if backend is down - suppress to prevent spam
     event.preventDefault()
     event.stopPropagation()
     return false
@@ -56,12 +83,19 @@ window.addEventListener('unhandledrejection', (event) => {
     return false
   }
   
-  // Suppress WebSocket/Socket.IO connection errors (socket is disabled)
-  if (errorMessage.includes('WebSocket') || 
-      errorMessage.includes('socket.io') || 
-      errorMessage.includes('wss://') ||
-      errorMessage.includes('ws://') ||
-      errorMessage.includes('ERR_NAME_NOT_RESOLVED')) {
+  // Suppress only DNS resolution errors for WebSocket (expected when backend is down)
+  // Allow Socket.IO to handle connection errors gracefully
+  if (errorMessage.includes('ERR_NAME_NOT_RESOLVED') && 
+      (errorMessage.includes('socket.io') || errorMessage.includes('wss://') || errorMessage.includes('ws://'))) {
+    // DNS errors are expected if backend is down - suppress to prevent spam
+    event.preventDefault()
+    event.stopPropagation()
+    return false
+  }
+  
+  // Suppress Workbox no-response errors for API routes (expected behavior)
+  if (errorMessage.includes('no-response') && 
+      (errorMessage.includes('/api/') || errorMessage.includes('api.kaam247') || errorMessage.includes('kaam247.onrender.com'))) {
     event.preventDefault()
     event.stopPropagation()
     return false
@@ -69,6 +103,20 @@ window.addEventListener('unhandledrejection', (event) => {
   
   return true
 }, true) // Use capture phase to catch errors early
+
+// Suppress ALL Workbox debug logs (verbose router messages)
+const originalConsoleLog = console.log
+console.log = function(...args) {
+  const logString = args.join(' ')
+  
+  // Suppress ALL Workbox messages (router, cache, network, etc.)
+  if (logString.toLowerCase().includes('workbox')) {
+    return
+  }
+  
+  // Call original console.log for other messages
+  originalConsoleLog.apply(console, args)
+}
 
 // Additional console error suppression for checkout-related errors, Workbox, and Socket.IO
 const originalConsoleError = console.error
@@ -81,12 +129,10 @@ console.error = function(...args) {
     return
   }
   
-  // Suppress WebSocket/Socket.IO connection errors (socket is disabled)
-  if (errorString.includes('WebSocket') || 
-      errorString.includes('socket.io') || 
-      errorString.includes('wss://') ||
-      errorString.includes('ws://') ||
-      errorString.includes('ERR_NAME_NOT_RESOLVED')) {
+  // Suppress only DNS resolution errors for WebSocket (expected when backend is down)
+  // Allow Socket.IO to log connection errors for debugging
+  if (errorString.includes('ERR_NAME_NOT_RESOLVED') && 
+      (errorString.includes('socket.io') || errorString.includes('wss://') || errorString.includes('ws://'))) {
     return
   }
   
@@ -107,20 +153,27 @@ console.error = function(...args) {
   originalConsoleError.apply(console, args)
 }
 
-// Suppress Workbox unhandled promise rejections for API routes
-window.addEventListener('unhandledrejection', (event) => {
-  const errorMessage = event.reason?.message || event.reason?.toString() || ''
+// Suppress React DevTools suggestion message and React Router warnings
+const originalConsoleWarn = console.warn
+console.warn = function(...args) {
+  const warnString = args.join(' ')
   
-  // Suppress Workbox no-response errors
-  if (errorMessage.includes('no-response') && 
-      (errorMessage.includes('/api/') || errorMessage.includes('api.kaam247') || errorMessage.includes('kaam247.onrender.com'))) {
-    event.preventDefault()
-    event.stopPropagation()
-    return false
+  // Suppress React DevTools download suggestion
+  if (warnString.includes('Download the React DevTools') || 
+      warnString.includes('reactjs.org/link/react-devtools')) {
+    return
   }
   
-  return true
-}, true)
+  // Suppress React Router future flag warnings (we've already enabled the flags)
+  if (warnString.includes('React Router Future Flag Warning') ||
+      warnString.includes('v7_startTransition') ||
+      warnString.includes('v7_relativeSplatPath')) {
+    return
+  }
+  
+  // Call original console.warn for other warnings
+  originalConsoleWarn.apply(console, args)
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />

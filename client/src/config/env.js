@@ -64,10 +64,9 @@ const getSocketUrl = () => {
 export const API_BASE_URL = getApiBaseUrl()
 export const SOCKET_URL = getSocketUrl()
 
-// Socket.IO is currently DISABLED - app works fully with REST APIs only
-// TODO: Enable Socket.IO when backend supports it
-// TODO: Consider using Push Notifications API for PWA instead of Socket.IO
-export const SOCKET_ENABLED = false // Set to true when backend socket is ready
+// Socket.IO is ENABLED - real-time features are active
+// App uses Socket.IO for real-time updates and falls back to REST APIs if socket fails
+export const SOCKET_ENABLED = true
 
 // Log the final URLs for debugging (only in production)
 if (isProduction) {

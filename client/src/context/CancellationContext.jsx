@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
 import { useUserMode } from './UserModeContext'
-import { API_BASE_URL } from '../config/env'
+import { apiGet } from '../utils/api'
 
 const CancellationContext = createContext()
 
@@ -33,26 +33,26 @@ export const CancellationProvider = ({ children }) => {
 
     try {
       const token = localStorage.getItem('kaam247_token')
-      const response = await fetch(`${API_BASE_URL}/api/users/me/cancellation-status`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setCancellationStatus({
-          dailyCancelCount: data.dailyCancelCount || 0,
-          remainingCancellations: data.remainingCancellations || 2,
-          canAcceptTasks: data.canAcceptTasks !== false,
-          limitReached: data.limitReached === true,
-          loading: false
-        })
-      } else {
+      if (!token) {
         setCancellationStatus(prev => ({ ...prev, loading: false }))
+        return
       }
+
+      const { data, error } = await apiGet('/api/users/me/cancellation-status')
+      if (error) {
+        // Don’t spam console for expected auth errors in dev.
+        setCancellationStatus(prev => ({ ...prev, loading: false }))
+        return
+      }
+
+      setCancellationStatus({
+        dailyCancelCount: data.dailyCancelCount || 0,
+        remainingCancellations: data.remainingCancellations || 2,
+        canAcceptTasks: data.canAcceptTasks !== false,
+        limitReached: data.limitReached === true,
+        loading: false
+      })
     } catch (error) {
-      console.error('Error fetching cancellation status:', error)
       setCancellationStatus(prev => ({ ...prev, loading: false }))
     }
   }

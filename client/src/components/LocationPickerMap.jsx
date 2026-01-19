@@ -22,10 +22,22 @@ function MapSizeInvalidator() {
   const { userMode } = useUserMode()
 
   useEffect(() => {
-    // Invalidate size when mode changes
-    setTimeout(() => {
-      map.invalidateSize()
+    // Invalidate size when mode changes.
+    // Guard + cleanup to avoid calling into Leaflet after unmount (causes _leaflet_pos errors).
+    let cancelled = false
+    const t = setTimeout(() => {
+      if (cancelled) return
+      try {
+        map?.invalidateSize?.()
+      } catch {
+        // ignore
+      }
     }, 100)
+
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
   }, [userMode, map])
 
   return null

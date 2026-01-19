@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useUserMode } from '../context/UserModeContext'
 import { useSocket } from '../context/SocketContext'
@@ -41,6 +41,8 @@ function TaskDetail() {
   const [ratingError, setRatingError] = useState(null)
   const [ratingSuccess, setRatingSuccess] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const fetchInFlightRef = useRef(false)
+  const lastFetchAtRef = useRef(0)
 
   // Fetch task function (reusable) - using useCallback to avoid dependency issues
   const fetchTask = useCallback(async () => {
@@ -49,6 +51,13 @@ function TaskDetail() {
       setLoading(false)
       return
     }
+
+    // Prevent fetch storms (socket events + visibilitychange + recovery can all fire together)
+    const now = Date.now()
+    if (fetchInFlightRef.current) return
+    if (now - lastFetchAtRef.current < 500) return
+    fetchInFlightRef.current = true
+    lastFetchAtRef.current = now
 
     try {
       setLoading(true)
@@ -138,6 +147,7 @@ function TaskDetail() {
       setError(err.message || 'Failed to load task details. Please try again later.')
     } finally {
       setLoading(false)
+      fetchInFlightRef.current = false
     }
   }, [taskId, userMode, workerLocation, user])
 
@@ -933,7 +943,7 @@ function TaskDetail() {
   // Show loading state
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
+      <div className="max-w-5xl mx-auto w-full px-0 overflow-x-hidden">
         <button
           onClick={handleBack}
           className="mb-6 sm:mb-8 flex items-center text-gray-600 hover:text-gray-900 transition-colors py-2"
@@ -964,7 +974,7 @@ function TaskDetail() {
   // Show error state
   if (error || !task) {
     return (
-      <div className="max-w-4xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
+      <div className="max-w-5xl mx-auto w-full px-0 overflow-x-hidden">
         <button
           onClick={handleBack}
           className="mb-6 sm:mb-8 flex items-center text-gray-600 hover:text-gray-900 transition-colors py-2"
@@ -1447,11 +1457,12 @@ function TaskDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto px-0">
       {/* Back Button */}
+      {/* Back Button - show only on medium+ screens */}
       <button
         onClick={handleBack}
-        className="mb-6 sm:mb-8 flex items-center text-gray-600 hover:text-gray-900 transition-colors py-2"
+        className="hidden sm:flex mb-6 sm:mb-8 items-center text-gray-600 hover:text-gray-900 transition-colors py-2"
       >
         <svg
           className="w-5 h-5 mr-2"

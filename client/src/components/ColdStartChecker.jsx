@@ -16,10 +16,11 @@ function ColdStartChecker({ children }) {
     const isActiveRef = useRef(true) // Track if component is still active
 
     // Skip cold start check if explicitly disabled or in development
+    // In dev mode, always render immediately to avoid blocking
     const skipCheck = import.meta.env.DEV || localStorage.getItem('skipColdStartCheck') === 'true'
 
     useEffect(() => {
-        // Skip check entirely if disabled
+        // Skip check entirely if disabled - render immediately
         if (skipCheck) {
             setIsBackendReady(true)
             return

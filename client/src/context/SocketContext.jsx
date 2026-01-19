@@ -1,4 +1,7 @@
 import { createContext, useContext, useEffect, useRef } from 'react'
+// Socket.IO import - module is loaded but io() is NEVER called when SOCKET_ENABLED is false
+// CRITICAL: The import statement itself doesn't create WebSocket connections
+// Only calling io() creates connections, and that is prevented by SOCKET_ENABLED guard
 import { io } from 'socket.io-client'
 import { useAuth } from './AuthContext'
 import { useUserMode } from './UserModeContext'
@@ -9,12 +12,10 @@ import { SOCKET_URL, SOCKET_ENABLED } from '../config/env'
 const SocketContext = createContext()
 
 /**
- * SocketProvider - Provides Socket.IO connection (currently DISABLED)
+ * SocketProvider - Provides Socket.IO connection for real-time features
  * 
- * TODO: Enable Socket.IO when backend supports it
- * TODO: Consider using Push Notifications API for PWA instead of Socket.IO
- * 
- * The app works fully with REST APIs only. Socket.IO is optional and disabled by default.
+ * Socket.IO is ENABLED - connects to backend for real-time updates.
+ * App gracefully falls back to REST APIs if socket connection fails.
  */
 export function SocketProvider({ children }) {
   const { isAuthenticated, user } = useAuth()
@@ -24,8 +25,7 @@ export function SocketProvider({ children }) {
   const socketRef = useRef(null)
 
   useEffect(() => {
-    // Socket.IO is DISABLED - skip all socket initialization
-    // App works fully with REST APIs only
+    // Skip socket initialization if disabled
     if (!SOCKET_ENABLED) {
       return
     }
@@ -35,24 +35,19 @@ export function SocketProvider({ children }) {
     if (isAuthenticated && (userMode === 'worker' || userMode === 'poster')) {
       if (!socketRef.current) {
         try {
+          // Only call io() when socket is enabled and module is loaded
           socketRef.current = io(SOCKET_URL, {
             autoConnect: true,
             reconnection: true,
-            // Only use websocket and polling - explicitly disable any WebRTC or local network features
-            transports: ['websocket', 'polling'], // Restrict to only these two transports
-            // Allow upgrade from polling to websocket (but only within allowed transports)
-            upgrade: true,
-            // Force websocket first, fallback to polling
+            transports: ['websocket'], // Enforce websocket-only (Render + HTTPS)
             forceNew: false,
-            // Disable any local network discovery features
             rememberUpgrade: false,
-            // Additional options to prevent local network access
-            withCredentials: false, // Don't send credentials that might trigger network discovery
-            // Ensure we're only connecting to the specified URL, not discovering local services
-            reconnectionAttempts: 3, // Reduced from 5 to prevent spam
-            reconnectionDelay: 2000, // Increased delay to prevent spam
-            reconnectionDelayMax: 10000, // Max delay between reconnection attempts
-            timeout: 10000 // Connection timeout
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 10000,
+            withCredentials: true,
+            allowEIO3: true
           })
         } catch (error) {
           // Socket initialization failed - app continues without socket
@@ -109,16 +104,28 @@ export function SocketProvider({ children }) {
         })
 
         socketRef.current.on('connect_error', (error) => {
-          // Connection error handled silently - app continues without socket
-          // Suppress all connection errors to prevent console spam
-          // Socket is optional - app works without it
+          // Connection error - log once but don't spam console
+          // App continues without socket, will retry automatically
+          if (socketRef.current?.reconnecting === false) {
+            // Only log on first connection attempt, not on every retry
+            console.warn('Socket.IO connection failed, will retry:', error.message)
+          }
         })
-        
-        // Prevent infinite reconnection spam - disable after first failure
-        socketRef.current.on('reconnect_attempt', () => {
-          // Stop reconnecting immediately - socket is optional
-          socketRef.current?.disconnect()
-          socketRef.current = null
+
+        // Handle reconnection attempts gracefully
+        socketRef.current.on('reconnect_attempt', (attemptNumber) => {
+          // Log reconnection attempts (Socket.IO will stop automatically after max attempts)
+          if (attemptNumber <= 3) {
+            console.log('Socket.IO: Reconnection attempt', attemptNumber)
+          }
+        })
+
+        socketRef.current.on('reconnect', (attemptNumber) => {
+          console.log('Socket.IO: Successfully reconnected after', attemptNumber, 'attempts')
+        })
+
+        socketRef.current.on('reconnect_failed', () => {
+          console.warn('Socket.IO: All reconnection attempts failed, app will continue with REST APIs')
         })
       } else if (!socketRef.current.connected) {
         // Reconnect if disconnected (but don't crash if it fails)
@@ -176,6 +183,11 @@ export function SocketProvider({ children }) {
 
   // Handle online/offline toggle (only for workers)
   useEffect(() => {
+    // Socket.IO is DISABLED - skip all socket operations
+    if (!SOCKET_ENABLED) {
+      return
+    }
+
     if (!isAuthenticated || userMode !== 'worker' || !user?.id) {
       return
     }
@@ -223,6 +235,11 @@ export function SocketProvider({ children }) {
 
   // Listen for new_task events (only for online workers in PERFORM_TASKS mode)
   useEffect(() => {
+    // Socket.IO is DISABLED - skip all socket operations
+    if (!SOCKET_ENABLED) {
+      return
+    }
+
     // Only listen if: authenticated, worker mode, and online
     if (!isAuthenticated || userMode !== 'worker' || !isOnline) {
       return
@@ -269,8 +286,12 @@ export function SocketProvider({ children }) {
   }, [isAuthenticated, userMode, isOnline, showNotification])
 
   const getSocket = () => {
+    // Socket.IO is DISABLED - always return null
+    // Components should handle null socket gracefully and use REST APIs
+    if (!SOCKET_ENABLED) {
+      return null
+    }
     // Return socket if available and connected, otherwise null
-    // Components should handle null socket gracefully
     if (socketRef.current && socketRef.current.connected) {
       return socketRef.current
     }
@@ -279,6 +300,11 @@ export function SocketProvider({ children }) {
 
   // Listen for task completion and status changes (for all authenticated users)
   useEffect(() => {
+    // Socket.IO is DISABLED - skip all socket operations
+    if (!SOCKET_ENABLED) {
+      return
+    }
+
     if (!isAuthenticated || !user?.id) {
       return
     }
@@ -291,7 +317,7 @@ export function SocketProvider({ children }) {
     const handleTaskCompleted = (data) => {
       // STATE RECOVERY: Emit event AND trigger refetch after delay
       window.dispatchEvent(new CustomEvent('task_completed', { detail: data }))
-      
+
       // Silent refetch after 500ms to ensure fresh data
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('refetch_required', { detail: { type: 'task_completed', taskId: data.taskId } }))
@@ -301,7 +327,7 @@ export function SocketProvider({ children }) {
     const handleTaskStatusChanged = (data) => {
       // STATE RECOVERY: Emit event AND trigger refetch after delay
       window.dispatchEvent(new CustomEvent('task_status_changed', { detail: data }))
-      
+
       // Silent refetch after 500ms to ensure fresh data
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('refetch_required', { detail: { type: 'task_status_changed', taskId: data.taskId } }))
@@ -311,7 +337,7 @@ export function SocketProvider({ children }) {
     const handleTaskCancelled = (data) => {
       // STATE RECOVERY: Emit event AND trigger refetch after delay
       window.dispatchEvent(new CustomEvent('task_cancelled', { detail: data }))
-      
+
       // Silent refetch after 500ms to ensure fresh data
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('refetch_required', { detail: { type: 'task_cancelled', taskId: data.taskId } }))
@@ -326,7 +352,7 @@ export function SocketProvider({ children }) {
     const handleTaskUpdated = (data) => {
       // STATE RECOVERY: Emit event AND trigger refetch after delay
       window.dispatchEvent(new CustomEvent('task_updated', { detail: data }))
-      
+
       // Silent refetch after 500ms to ensure fresh data
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('refetch_required', { detail: { type: 'task_updated', taskId: data.taskId } }))

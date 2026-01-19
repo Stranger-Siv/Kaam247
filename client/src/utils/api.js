@@ -25,11 +25,15 @@ export async function safeFetch(endpoint, options = {}) {
     if (!response.ok) {
       // Handle 401 Unauthorized
       if (response.status === 401) {
-        // Clear auth and redirect to login
-        localStorage.removeItem('kaam247_token')
-        localStorage.removeItem('kaam247_user')
-        window.location.href = '/login'
-        return { data: null, error: 'Session expired. Please login again.' }
+        // Do NOT hard-redirect here.
+        // Some endpoints (e.g. /api/admin/*) can legitimately return 401/403 for non-admin users.
+        // Let callers decide whether to redirect, show UI, or stop polling.
+        return { data: null, error: 'Unauthorized (401). Please login.' }
+      }
+
+      // Handle 403 Forbidden
+      if (response.status === 403) {
+        return { data: null, error: 'Forbidden (403). You do not have access.' }
       }
 
       // Handle other HTTP errors
@@ -49,8 +53,15 @@ export async function safeFetch(endpoint, options = {}) {
     const data = await response.json()
     return { data, error: null }
   } catch (error) {
-    // Handle network failures, timeouts, etc.
+    // Handle network failures, timeouts, connection refused, etc.
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      // Check if it's a connection refused error (backend not running)
+      if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+        return { 
+          data: null, 
+          error: 'Backend server is not running. Please start the server on port 3001.' 
+        }
+      }
       return { 
         data: null, 
         error: 'Network error. Please check your connection and try again.' 

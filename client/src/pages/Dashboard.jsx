@@ -8,6 +8,7 @@ import { useCancellation } from '../context/CancellationContext'
 import StatusBadge from '../components/StatusBadge'
 import { API_BASE_URL } from '../config/env'
 import { performStateRecovery } from '../utils/stateRecovery'
+import { reverseGeocode } from '../utils/geocoding'
 
 function Dashboard() {
     const { userMode } = useUserMode()
@@ -555,31 +556,11 @@ function Dashboard() {
             // Update availability context by triggering a location update event
             window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
             
-            // Try to reverse geocode and persist location to user profile
+            // Reverse geocode via backend (avoids browser CORS + Nominatim 403) and persist location
             try {
-                const response = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-                    {
-                        headers: {
-                            'User-Agent': 'Kaam247/1.0'
-                        }
-                    }
-                )
-                
-                if (response.ok) {
-                    const data = await response.json()
-                    const address = data.address || {}
-                    const area = address.suburb || address.neighbourhood || address.road || address.locality || null
-                    const city = address.city || address.town || address.county || address.state || null
-                    
-                    // Persist location to user profile
-                    const { persistUserLocation } = await import('../utils/locationPersistence')
-                    await persistUserLocation(lat, lng, area, city)
-                } else {
-                    // Persist coordinates even without area/city
-                    const { persistUserLocation } = await import('../utils/locationPersistence')
-                    await persistUserLocation(lat, lng, null, null)
-                }
+                const { area, city } = await reverseGeocode(lat, lng)
+                const { persistUserLocation } = await import('../utils/locationPersistence')
+                await persistUserLocation(lat, lng, area, city)
             } catch (geocodeError) {
                 // Persist coordinates even if reverse geocoding fails
                 const { persistUserLocation } = await import('../utils/locationPersistence')
@@ -798,7 +779,7 @@ function Dashboard() {
     }, [isOnline, userMode, getSocket])
 
     return (
-        <div className="max-w-7xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
             {userMode === 'worker' ? (
                 <>
                     {/* Location Requirement Block */}

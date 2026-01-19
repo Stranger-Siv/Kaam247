@@ -386,7 +386,7 @@ function Tasks() {
   const filteredTasks = tasks // In real app, apply filters here
 
   return (
-    <div className="max-w-7xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
+    <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
       
       {/* Header */}
       <div className="mb-6 sm:mb-8 w-full">
@@ -395,15 +395,15 @@ function Tasks() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-none sm:rounded-xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6 border-0 sm:border border-gray-100 w-full overflow-x-hidden">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full">
+      <div className="bg-white rounded-2xl shadow-md p-4 sm:p-4 mb-4 sm:mb-6 border border-gray-100 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           {/* Category Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm sm:text-base font-medium text-gray-800">Category</span>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[44px] touch-manipulation"
+              className="h-11 w-full px-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm touch-manipulation"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -412,12 +412,12 @@ function Tasks() {
           </div>
 
           {/* Distance Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Distance</label>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm sm:text-base font-medium text-gray-800">Distance</span>
             <select
               value={selectedDistance}
               onChange={(e) => setSelectedDistance(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[44px] touch-manipulation"
+              className="h-11 w-full px-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm touch-manipulation"
             >
               {distances.map((dist) => (
                 <option key={dist} value={dist}>{dist}</option>
@@ -426,12 +426,12 @@ function Tasks() {
           </div>
 
           {/* Budget Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Budget</label>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm sm:text-base font-medium text-gray-800">Budget</span>
             <select
               value={selectedBudget}
               onChange={(e) => setSelectedBudget(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[44px] touch-manipulation"
+              className="h-11 w-full px-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm touch-manipulation"
             >
               {budgets.map((budget) => (
                 <option key={budget} value={budget}>{budget}</option>

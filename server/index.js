@@ -8,62 +8,42 @@ const userRoutes = require('./routes/userRoutes')
 const authRoutes = require('./routes/authRoutes')
 const adminRoutes = require('./routes/adminRoutes')
 const reportRoutes = require('./routes/reportRoutes')
+const geocodeRoutes = require('./routes/geocodeRoutes')
 const { initializeSocket } = require('./socket/socketHandler')
 
 const app = express()
 const server = http.createServer(app)
+// Trust proxy (Render / HTTPS) so secure cookies & protocol detection work correctly
+app.set('trust proxy', 1)
 const PORT = process.env.PORT || 3001
 
 // Initialize Socket.IO
 initializeSocket(server)
 
 // Middleware
-// CORS configuration - allow Netlify frontend, Render frontend, and local development
+// CORS configuration - production-safe, only allow required origins
+const allowedOrigins = [
+  'https://kaam247.in',
+  'https://www.kaam247.in'
+]
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
+    // Allow requests with no origin (mobile apps, Postman, server-to-server)
     if (!origin) return callback(null, true)
 
-    // List of allowed origins
-    const allowedOrigins = [
-      'https://kaam247.in',                     // Custom domain (production)
-      'https://www.kaam247.in',                 // Custom domain with www (production)
-      'https://kaam247.netlify.app',           // Netlify frontend (production)
-      'https://kaam247.onrender.com',           // Render frontend (if deployed there)
-      'http://localhost:5173',                  // Vite dev server
-      'http://localhost:3000',                  // Alternative dev port
-      'http://localhost:3001',                 // Local backend (for testing)
-      'http://127.0.0.1:5173',                  // Alternative localhost format
-      'http://127.0.0.1:3000',                  // Alternative localhost format
-    ]
-
-    // Check if origin is in allowed list
-    const isAllowed = allowedOrigins.some(allowedOrigin => {
-      // Exact match
-      if (origin === allowedOrigin) return true
-      // For localhost, also check if it starts with http://localhost or http://127.0.0.1
-      if (allowedOrigin.includes('localhost') && origin.includes('localhost')) return true
-      if (allowedOrigin.includes('127.0.0.1') && origin.includes('127.0.0.1')) return true
-      return false
-    })
+    const isAllowed = allowedOrigins.includes(origin)
 
     if (isAllowed) {
       callback(null, true)
     } else {
-      // Log blocked origin for debugging
       console.log('CORS: Blocked origin:', origin)
-      // In development, allow all origins for easier testing
-      if (process.env.NODE_ENV !== 'production') {
-        callback(null, true)
-      } else {
-        callback(new Error('Not allowed by CORS'))
-      }
+      callback(new Error('Not allowed by CORS'))
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }
 app.use(cors(corsOptions))
 app.use(express.json())
@@ -89,6 +69,7 @@ app.use('/api', authRoutes)
 app.use('/api', taskRoutes)
 app.use('/api', userRoutes)
 app.use('/api', reportRoutes)
+app.use('/api', geocodeRoutes)
 app.use('/api/admin', adminRoutes)
 
 // 404 handler
