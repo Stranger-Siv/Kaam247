@@ -13,7 +13,6 @@ function PostTask() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
-  const [customBudget, setCustomBudget] = useState('')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -53,15 +52,6 @@ function PostTask() {
     'Errands',
     'Event Help',
     'Custom Task'
-  ]
-
-  const budgetRanges = [
-    'Under ₹500',
-    '₹500 - ₹1000',
-    '₹1000 - ₹2000',
-    '₹2000 - ₹5000',
-    'Above ₹5000',
-    'Custom amount'
   ]
 
   const hoursOptions = [
@@ -206,6 +196,15 @@ function PostTask() {
       if (!formData.date) errors.date = 'Date is required'
       if (!formData.time) errors.time = 'Time is required'
       if (!formData.hours) errors.hours = 'Duration is required'
+
+      // Prevent selecting past date/time
+      if (formData.date && formData.time) {
+        const selected = new Date(`${formData.date}T${formData.time}:00`)
+        const now = new Date()
+        if (selected.getTime() < now.getTime()) {
+          errors.time = 'Time cannot be in the past'
+        }
+      }
     }
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
@@ -231,22 +230,9 @@ function PostTask() {
     }
   }
 
-  // Convert budget range to number
+  // Convert budget input to number
   const getBudgetAmount = () => {
-    if (formData.budget === 'Custom amount') {
-      return Number(customBudget) || 0
-    }
-    
-    // Extract number from range strings
-    const budgetMap = {
-      'Under ₹500': 400,
-      '₹500 - ₹1000': 750,
-      '₹1000 - ₹2000': 1500,
-      '₹2000 - ₹5000': 3500,
-      'Above ₹5000': 6000
-    }
-    
-    return budgetMap[formData.budget] || 0
+    return Number(formData.budget) || 0
   }
 
 
@@ -258,8 +244,10 @@ function PostTask() {
       return
     }
 
-    // Validate required fields
-    if (!formData.title || !formData.description || !formData.category || !formData.budget || !formData.date || !formData.time || !formData.hours) {
+    // Validate all steps before submit (includes date/time in future check)
+    const step1Valid = validateStep(1)
+    const step2Valid = validateStep(2)
+    if (!step1Valid || !step2Valid || !formData.budget) {
       setError('Please fill in all required fields')
       return
     }
@@ -605,6 +593,9 @@ function PostTask() {
                     handleInputChange('time', e.target.value)
                     if (fieldErrors.time) setFieldErrors(prev => ({ ...prev, time: null }))
                   }}
+                  min={formData.date === new Date().toISOString().split('T')[0]
+                    ? `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`
+                    : undefined}
                   className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
                     fieldErrors.time
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
@@ -676,37 +667,21 @@ function PostTask() {
             
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-3 sm:mb-4 uppercase tracking-wide">
-                  Budget Range <span className="text-red-500">*</span>
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 sm:mb-4 uppercase tracking-wide">
+                  Budget (₹) <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  {budgetRanges.map((range) => (
-                    <button
-                      key={range}
-                      type="button"
-                      onClick={() => handleInputChange('budget', range)}
-                      className={`px-4 sm:px-5 py-3 sm:py-3.5 border-2 rounded-xl text-sm sm:text-base font-semibold transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation ${
-                        formData.budget === range
-                          ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 shadow-sm'
-                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      {range}
-                    </button>
-                  ))}
-                </div>
-                {formData.budget === 'Custom amount' && (
-                  <input
-                    type="number"
-                    value={customBudget}
-                    onChange={(e) => setCustomBudget(e.target.value)}
-                    placeholder="Enter amount in ₹"
-                    className="w-full mt-4 px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px]"
-                    required={formData.budget === 'Custom amount'}
-                    min="1"
-                  />
-                )}
-                <p className="text-xs sm:text-sm text-gray-500 mt-3 leading-relaxed">You can negotiate with workers after they accept</p>
+                <input
+                  type="number"
+                  value={formData.budget}
+                  onChange={(e) => handleInputChange('budget', e.target.value)}
+                  placeholder="Enter amount in ₹"
+                  className="w-full px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px]"
+                  required
+                  min="1"
+                />
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
+                  Enter the amount you are willing to pay. You can still negotiate with workers after they accept.
+                </p>
               </div>
             </div>
 
