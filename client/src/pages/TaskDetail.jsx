@@ -1158,6 +1158,11 @@ function TaskDetail() {
     )
   }
 
+  // Determine current status for render logic
+  const renderStatus = task?.rawStatus || task?.status
+  const normalizedRenderStatus = renderStatus ? renderStatus.toString().toLowerCase() : ''
+  const isTaskCompleted = normalizedRenderStatus === 'completed'
+
   const statusBadge = getStatusBadge(task.status || task.rawStatus)
 
   const renderPrimaryAction = () => {
@@ -2099,8 +2104,8 @@ function TaskDetail() {
           </div>
         </div>
 
-        {/* Contact Information - Only show when task is ACCEPTED and phone is available */}
-        {(task.posterPhone || task.workerPhone) && (
+        {/* Contact Information - Only show when task is active (not completed) and phone is available */}
+        {!isTaskCompleted && (task.posterPhone || task.workerPhone) && (
           <div className="border-t border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/30 p-6">
             <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-4">Contact Information</h3>
             <div className="space-y-4">

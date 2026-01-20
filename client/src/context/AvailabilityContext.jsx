@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config/env'
 import { reverseGeocode } from '../utils/geocoding'
+import { persistUserLocation } from '../utils/locationPersistence'
 
 const AvailabilityContext = createContext()
 
@@ -87,12 +88,14 @@ export function AvailabilityProvider({ children }) {
       }
     }
 
-    // No active task or going online - proceed
-    setIsOnline(status)
-    localStorage.setItem('kaam247_isOnline', status.toString())
-    
-    // If going online, capture location
+    // Going online: require fresh location permission + coordinates
     if (status) {
+      // If browser doesn't support geolocation, block going online
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        console.warn('Geolocation not available: cannot go ON DUTY without location')
+        return false
+      }
+
       try {
         const position = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -101,19 +104,17 @@ export function AvailabilityProvider({ children }) {
             maximumAge: 0
           })
         })
-        
+
         const lat = position.coords.latitude
         const lng = position.coords.longitude
-        
-        const location = {
-          lat,
-          lng
-        }
-        
+
+        const location = { lat, lng }
+
+        // Save worker location locally
         setWorkerLocation(location)
         localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
-        
-        // Reverse geocode via backend (avoids browser CORS + Nominatim 403) and persist location
+
+        // Reverse geocode via backend and persist location in user profile
         try {
           const { area, city } = await reverseGeocode(lat, lng)
           await persistUserLocation(lat, lng, area, city)
@@ -121,14 +122,22 @@ export function AvailabilityProvider({ children }) {
           // Persist coordinates even if reverse geocoding fails
           await persistUserLocation(lat, lng, null, null)
         }
+
+        // Finally, mark user as online only after we have a location
+        setIsOnline(true)
+        localStorage.setItem('kaam247_isOnline', 'true')
+        return true
       } catch (error) {
-        // Continue without location - worker can still see tasks but without distance filtering
+        console.warn('Failed to get location for ON DUTY:', error)
+        return false
       }
-    } else {
-      // Clear location when going offline
-      setWorkerLocation(null)
-      localStorage.removeItem('kaam247_workerLocation')
     }
+
+    // Going offline (and no active task blocking): clear status + location
+    setIsOnline(false)
+    localStorage.setItem('kaam247_isOnline', 'false')
+    setWorkerLocation(null)
+    localStorage.removeItem('kaam247_workerLocation')
     return true // Indicate status change was successful
   }
 

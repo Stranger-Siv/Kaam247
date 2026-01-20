@@ -29,8 +29,13 @@ function AvailabilityToggle() {
         return
       }
     } else {
-      // Going online - no check needed
-      await setOnline(newStatus)
+      // Going online - require successful location capture
+      const success = await setOnline(newStatus)
+      if (!success) {
+        // Block going ON DUTY if we couldn't get location or permission
+        alert('Location permission is required to go ON DUTY. Please enable location access and try again.')
+        return
+      }
     }
   }
 
