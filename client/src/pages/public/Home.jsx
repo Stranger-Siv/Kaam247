@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { apiGet } from '../../utils/api'
 
 function Home() {
@@ -12,6 +12,15 @@ function Home() {
         averageRating: 0
     })
     const [statsLoading, setStatsLoading] = useState(true)
+
+    // Animated display values for stats (count-up effect)
+    const [displayStats, setDisplayStats] = useState({
+        totalUsers: 0,
+        totalCompletedTasks: 0,
+        categoryCount: 0,
+        averageRating: 0
+    })
+    const animationRef = useRef(null)
 
     const categories = [
         { name: 'Cleaning', icon: '🧹' },
@@ -50,6 +59,49 @@ function Home() {
         
         return () => clearInterval(intervalId)
     }, [])
+
+    // Smooth count-up animation whenever stats change
+    useEffect(() => {
+        // Skip animation while loading
+        if (statsLoading) return
+
+        // Cancel any previous animation
+        if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current)
+        }
+
+        const duration = 800 // ms
+        const startTime = performance.now()
+
+        const startValues = { ...displayStats }
+        const endValues = { ...stats }
+
+        const animate = (now) => {
+            const elapsed = now - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            // Ease-out curve
+            const eased = 1 - Math.pow(1 - progress, 3)
+
+            setDisplayStats({
+                totalUsers: startValues.totalUsers + (endValues.totalUsers - startValues.totalUsers) * eased,
+                totalCompletedTasks: startValues.totalCompletedTasks + (endValues.totalCompletedTasks - startValues.totalCompletedTasks) * eased,
+                categoryCount: startValues.categoryCount + (endValues.categoryCount - startValues.categoryCount) * eased,
+                averageRating: startValues.averageRating + (endValues.averageRating - startValues.averageRating) * eased
+            })
+
+            if (progress < 1) {
+                animationRef.current = requestAnimationFrame(animate)
+            }
+        }
+
+        animationRef.current = requestAnimationFrame(animate)
+
+        return () => {
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current)
+            }
+        }
+    }, [stats, statsLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <div className="bg-white dark:bg-gray-950">
@@ -331,8 +383,8 @@ function Home() {
                             {statsLoading ? (
                                 <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2 animate-pulse">...</div>
                             ) : (
-                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-                                    {stats.totalUsers > 0 ? `${stats.totalUsers}+` : '0'}
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2 transition-transform duration-200 will-change-transform">
+                                    {displayStats.totalUsers > 0 ? `${Math.round(displayStats.totalUsers)}+` : '0'}
                                 </div>
                             )}
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">Active Users</p>
@@ -341,8 +393,8 @@ function Home() {
                             {statsLoading ? (
                                 <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-green-600 dark:text-green-400 mb-2 animate-pulse">...</div>
                             ) : (
-                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-green-600 dark:text-green-400 mb-2">
-                                    {stats.totalCompletedTasks > 0 ? `${stats.totalCompletedTasks}+` : '0'}
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-green-600 dark:text-green-400 mb-2 transition-transform duration-200 will-change-transform">
+                                    {displayStats.totalCompletedTasks > 0 ? `${Math.round(displayStats.totalCompletedTasks)}+` : '0'}
                                 </div>
                             )}
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">Tasks Completed</p>
@@ -351,8 +403,8 @@ function Home() {
                             {statsLoading ? (
                                 <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2 animate-pulse">...</div>
                             ) : (
-                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2">
-                                    {stats.categoryCount > 0 ? `${stats.categoryCount}+` : '0'}
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2 transition-transform duration-200 will-change-transform">
+                                    {displayStats.categoryCount > 0 ? `${Math.round(displayStats.categoryCount)}+` : '0'}
                                 </div>
                             )}
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">Task Categories</p>
@@ -361,8 +413,8 @@ function Home() {
                             {statsLoading ? (
                                 <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-orange-600 dark:text-orange-400 mb-2 animate-pulse">...</div>
                             ) : (
-                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-orange-600 dark:text-orange-400 mb-2">
-                                    {stats.averageRating > 0 ? `${stats.averageRating.toFixed(1)}★` : '0★'}
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-orange-600 dark:text-orange-400 mb-2 transition-transform duration-200 will-change-transform">
+                                    {displayStats.averageRating > 0 ? `${displayStats.averageRating.toFixed(1)}★` : '0★'}
                                 </div>
                             )}
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">Average Rating</p>

@@ -42,6 +42,11 @@ const userSchema = new mongoose.Schema({
             type: String
         }
     },
+    locationUpdatedAt: {
+        type: Date,
+        required: false,
+        description: 'Last time user location was updated'
+    },
     role: {
         type: String,
         enum: ['user', 'admin'],

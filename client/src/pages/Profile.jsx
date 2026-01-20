@@ -53,7 +53,8 @@ function Profile() {
                         location: userData.location?.area
                             ? `${userData.location.area}${userData.location.city ? `, ${userData.location.city}` : ''}`
                             : 'Location not set',
-                        profilePhoto: userData.profilePhoto || null
+                        profilePhoto: userData.profilePhoto || null,
+                        locationUpdatedAt: userData.locationUpdatedAt || null
                     })
 
                     // Set stats based on mode
@@ -105,7 +106,8 @@ function Profile() {
                             ...prev,
                             location: userData.location?.area
                                 ? `${userData.location.area}${userData.location.city ? `, ${userData.location.city}` : ''}`
-                                : 'Location not set'
+                                : 'Location not set',
+                            locationUpdatedAt: userData.locationUpdatedAt || prev?.locationUpdatedAt || null
                         }))
                     }
                 } catch (err) {
@@ -464,6 +466,18 @@ function Profile() {
                         <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Location</label>
                         <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.location}</p>
                         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1.5 leading-relaxed">Location is read-only</p>
+                        {profile.locationUpdatedAt && (
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1 leading-relaxed">
+                                Last updated:{' '}
+                                {new Date(profile.locationUpdatedAt).toLocaleString('en-IN', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </p>
+                        )}
                     </div>
                     {saveError && (
                         <div className="p-4 sm:p-5 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">

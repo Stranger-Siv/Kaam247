@@ -72,7 +72,8 @@ const createUser = async (req, res) => {
       password: userPassword, // Will be hashed in production
       location: userLocation,
       role: role || 'user', // Default to 'user' (admin set manually in DB)
-      roleMode: roleMode || 'worker' // User mode: worker or poster
+      roleMode: roleMode || 'worker', // User mode: worker or poster
+      locationUpdatedAt: userLocation ? new Date() : null
     })
 
     const savedUser = await user.save()
@@ -173,6 +174,7 @@ const updateProfile = async (req, res) => {
       if (location === null) {
         // Clear location
         updateData.location = null
+        updateData.locationUpdatedAt = null
       } else if (location.lat !== undefined && location.lng !== undefined) {
         // Validate coordinates
         const lat = Number(location.lat)
@@ -199,6 +201,7 @@ const updateProfile = async (req, res) => {
           area: location.area || user.location?.area || null,
           city: location.city || user.location?.city || null
         }
+        updateData.locationUpdatedAt = new Date()
       } else {
         return res.status(400).json({
           error: 'Invalid location',
