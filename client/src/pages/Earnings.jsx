@@ -134,10 +134,10 @@ function Earnings() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
+      <div className="max-w-6xl mx-auto w-full px-2 sm:px-4 md:px-6 overflow-x-hidden">
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading earnings...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Loading earnings...</p>
         </div>
       </div>
     )
@@ -145,8 +145,8 @@ function Earnings() {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto w-full px-0 sm:px-6 overflow-x-hidden">
-        <div className="text-center py-12 text-red-600">
+      <div className="max-w-6xl mx-auto w-full px-2 sm:px-4 md:px-6 overflow-x-hidden">
+        <div className="text-center py-12 text-red-600 dark:text-red-400">
           <p>{error}</p>
         </div>
       </div>
@@ -154,44 +154,44 @@ function Earnings() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-0">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">Earnings</h1>
-        <p className="text-gray-600">View earnings and activity by date</p>
+        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Earnings</h1>
+        <p className="text-gray-600 dark:text-gray-400">View earnings and activity by date</p>
       </div>
 
       {/* Compact summary */}
       <div className="flex flex-wrap gap-3 sm:gap-4 mb-6 text-sm">
-        <span className="text-gray-600">
-          Today <span className="font-semibold text-gray-900">₹{earnings.today ?? 0}</span>
+        <span className="text-gray-600 dark:text-gray-400">
+          Today <span className="font-semibold text-gray-900 dark:text-gray-100">₹{earnings.today ?? 0}</span>
         </span>
-        <span className="text-gray-400">·</span>
-        <span className="text-gray-600">
-          This week <span className="font-semibold text-gray-900">₹{earnings.thisWeek ?? 0}</span>
+        <span className="text-gray-400 dark:text-gray-600">·</span>
+        <span className="text-gray-600 dark:text-gray-400">
+          This week <span className="font-semibold text-gray-900 dark:text-gray-100">₹{earnings.thisWeek ?? 0}</span>
         </span>
-        <span className="text-gray-400">·</span>
-        <span className="text-gray-600">
-          This month <span className="font-semibold text-gray-900">₹{earnings.thisMonth ?? 0}</span>
+        <span className="text-gray-400 dark:text-gray-600">·</span>
+        <span className="text-gray-600 dark:text-gray-400">
+          This month <span className="font-semibold text-gray-900 dark:text-gray-100">₹{earnings.thisMonth ?? 0}</span>
         </span>
-        <span className="text-gray-400">·</span>
-        <span className="text-gray-600">
-          Total <span className="font-semibold text-gray-900">₹{earnings.total ?? 0}</span>
+        <span className="text-gray-400 dark:text-gray-600">·</span>
+        <span className="text-gray-600 dark:text-gray-400">
+          Total <span className="font-semibold text-gray-900 dark:text-gray-100">₹{earnings.total ?? 0}</span>
         </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Calendar */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {viewMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
               </h2>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={goPrevMonth}
-                  className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+                  className="p-1.5 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   aria-label="Previous month"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,7 +201,7 @@ function Earnings() {
                 <button
                   type="button"
                   onClick={goNextMonth}
-                  className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
+                  className="p-1.5 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   aria-label="Next month"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,13 +213,13 @@ function Earnings() {
             <button
               type="button"
               onClick={goToday}
-              className="w-full py-2 mb-3 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+              className="w-full py-2 mb-3 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50"
             >
               Today
             </button>
             <div className="grid grid-cols-7 gap-0.5 mb-2">
               {WEEKDAYS.map((w) => (
-                <div key={w} className="text-center text-xs font-medium text-gray-500 py-1">
+                <div key={w} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-1">
                   {w}
                 </div>
               ))}
@@ -242,14 +242,14 @@ function Earnings() {
                     }}
                     className={`
                       aspect-square flex flex-col items-center justify-center rounded-lg text-sm
-                      ${cell.isNextMonth ? 'text-gray-400' : 'text-gray-900'}
-                      ${selected ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'}
+                      ${cell.isNextMonth ? 'text-gray-400 dark:text-gray-600' : 'text-gray-900 dark:text-gray-100'}
+                      ${selected ? 'bg-blue-600 dark:bg-blue-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}
                       ${hasEarnings && !selected ? 'font-semibold' : ''}
                     `}
                   >
                     {d.getDate()}
                     {hasEarnings && !selected && (
-                      <span className="w-1 h-1 rounded-full bg-green-500 -mt-0.5" />
+                      <span className="w-1 h-1 rounded-full bg-green-500 dark:bg-green-400 -mt-0.5" />
                     )}
                   </button>
                 )
@@ -260,49 +260,49 @@ function Earnings() {
 
         {/* Earnings & Activity for selected date */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <p className="text-sm text-gray-600 mb-1">Earnings on {formatDateLabel(selectedDate)}</p>
-            <p className="text-3xl font-bold text-green-600">₹{earningsForSelected}</p>
-            <p className="text-xs text-gray-500 mt-1">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Earnings on {formatDateLabel(selectedDate)}</p>
+            <p className="text-3xl font-bold text-green-600 dark:text-green-400">₹{earningsForSelected}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {activityForSelected.length} {activityForSelected.length === 1 ? 'task' : 'tasks'} completed
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Activity on {formatDateLabel(selectedDate)}</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Activity on {formatDateLabel(selectedDate)}</h2>
             </div>
             {activityForSelected.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 No tasks completed on this day.
               </div>
             ) : (
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
                 {activityForSelected.map((task) => (
                   <Link
                     key={task.id}
                     to={`/tasks/${task.id}`}
-                    className="block p-4 hover:bg-gray-50 transition-colors"
+                    className="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-base font-semibold text-gray-900 truncate">{task.title}</h3>
-                          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-700 shrink-0">
+                          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{task.title}</h3>
+                          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 shrink-0">
                             {task.category}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-500">{formatTime(task.completedAt)} · {task.postedBy}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{formatTime(task.completedAt)} · {task.postedBy}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-lg font-bold text-green-600">₹{task.budget}</p>
+                        <p className="text-lg font-bold text-green-600 dark:text-green-400">₹{task.budget}</p>
                         {task.rating && (
-                          <p className="text-xs text-gray-500 flex items-center justify-end gap-0.5">
-                            <span className="text-yellow-500">★</span> {task.rating}/5
+                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-end gap-0.5">
+                            <span className="text-yellow-500 dark:text-yellow-400">★</span> {task.rating}/5
                           </p>
                         )}
                       </div>
-                      <svg className="w-5 h-5 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
