@@ -216,23 +216,23 @@ function ColdStartChecker({ children }) {
         const currentFeature = features[currentFeatureIndex]
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-[3px] sm:px-4 md:px-6 py-4 sm:py-6 relative overflow-hidden">
                 {/* Animated Background Elements */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-blue-200 dark:bg-blue-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-30 animate-blob"></div>
-                    <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-purple-200 dark:bg-purple-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
-                    <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-pink-200 dark:pink-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
+                    <div className="absolute top-1/4 left-1/4 w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 bg-blue-200 dark:bg-blue-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-30 animate-blob"></div>
+                    <div className="absolute top-1/3 right-1/4 w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 bg-purple-200 dark:bg-purple-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+                    <div className="absolute bottom-1/4 left-1/3 w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 bg-pink-200 dark:pink-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
                 </div>
 
                 <div className="max-w-2xl w-full relative z-10">
                     {/* Main Card */}
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl dark:shadow-gray-900/50 p-8 sm:p-10 lg:p-12 text-center border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl dark:shadow-gray-900/50 p-6 sm:p-8 md:p-10 lg:p-12 text-center border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
                         {/* Logo/Icon with Animation */}
-                        <div className="mb-8">
-                            <div className="w-24 h-24 sm:w-28 sm:h-28 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-3xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
+                        <div className="mb-6 sm:mb-8">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
                                 <div className="relative">
                                     <svg
-                                        className="w-12 h-12 sm:w-14 sm:h-14 text-white animate-pulse"
+                                        className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 text-white animate-pulse"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -251,80 +251,80 @@ function ColdStartChecker({ children }) {
                         </div>
 
                         {/* Title */}
-                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent leading-tight">
                             Kaam247
                         </h1>
-                        <h2 className="text-xl sm:text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-6">
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-4 sm:mb-6 leading-tight">
                             Server Starting Up...
                         </h2>
 
                         {/* Progress Bar */}
-                        <div className="mb-8">
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-2 overflow-hidden">
+                        <div className="mb-6 sm:mb-8">
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-2.5 mb-2 overflow-hidden">
                                 <div 
-                                    className="bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-400 dark:to-purple-500 h-2.5 rounded-full transition-all duration-500 ease-out shadow-lg"
+                                    className="bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-400 dark:to-purple-500 h-2 sm:h-2.5 rounded-full transition-all duration-500 ease-out shadow-lg"
                                     style={{ width: `${progress}%` }}
                                 >
                                     <div className="h-full w-full bg-white/30 animate-shimmer"></div>
                                 </div>
                             </div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-tight">
                                 {progress < 50 ? 'Waking up the server...' : progress < 80 ? 'Almost there...' : 'Final touches...'}
                             </p>
                         </div>
 
                         {/* Feature Card with Animation */}
-                        <div className="mb-8">
+                        <div className="mb-6 sm:mb-8">
                             <div 
                                 key={currentFeatureIndex}
-                                className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 sm:p-8 border border-blue-100 dark:border-gray-600 shadow-lg transform transition-all duration-500 ease-in-out animate-fade-in"
+                                className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 border border-blue-100 dark:border-gray-600 shadow-lg transform transition-all duration-500 ease-in-out animate-fade-in"
                             >
-                                <div className="text-5xl sm:text-6xl mb-4 animate-bounce">
+                                <div className="text-4xl sm:text-5xl md:text-6xl mb-3 sm:mb-4 animate-bounce">
                                     {currentFeature.icon}
                                 </div>
-                                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">
                                     {currentFeature.title}
                                 </h3>
-                                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
+                                <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300 leading-relaxed">
                                     {currentFeature.description}
                                 </p>
                             </div>
                         </div>
 
                         {/* Loading Animation */}
-                        <div className="flex justify-center items-center space-x-2 mb-6">
-                            <div className="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-3 h-3 bg-purple-500 dark:bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-3 h-3 bg-pink-500 dark:bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        <div className="flex justify-center items-center space-x-2 mb-4 sm:mb-6">
+                            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-blue-500 dark:bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-purple-500 dark:bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-pink-500 dark:bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
 
                         {/* Retry Count */}
                         {retryCount > 0 && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3 sm:mb-4 leading-tight">
                                 Checking connection... ({retryCount}/15)
                             </p>
                         )}
 
                         {/* Helpful Note */}
-                        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <div className="flex items-start sm:items-center justify-center gap-2 text-[10px] sm:text-xs md:text-sm text-gray-500 dark:text-gray-400 leading-relaxed px-2">
+                                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 mt-0.5 sm:mt-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span>Free tier services pause after inactivity. First request may take 30-60 seconds.</span>
+                                <span className="text-left sm:text-center">Free tier services pause after inactivity. First request may take 30-60 seconds.</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Feature Dots Indicator */}
-                    <div className="flex justify-center gap-2 mt-6">
+                    <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6">
                         {features.map((_, index) => (
                             <div
                                 key={index}
-                                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
                                     index === currentFeatureIndex
-                                        ? 'bg-blue-500 dark:bg-blue-400 w-6'
-                                        : 'bg-gray-300 dark:bg-gray-600'
+                                        ? 'bg-blue-500 dark:bg-blue-400 w-5 sm:w-6'
+                                        : 'bg-gray-300 dark:bg-gray-600 w-1.5 sm:w-2'
                                 }`}
                             />
                         ))}
