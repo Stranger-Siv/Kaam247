@@ -423,7 +423,7 @@ function PostTask() {
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                   Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -434,20 +434,22 @@ function PostTask() {
                   }}
                   placeholder="Describe your task in detail. Include any specific requirements or instructions."
                   rows={5}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors leading-relaxed ${
-                    fieldErrors.description ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors leading-relaxed ${
+                    fieldErrors.description
+                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                   }`}
                   required
                 />
                 {fieldErrors.description ? (
-                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.description}</p>
+                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1.5 leading-relaxed">{fieldErrors.description}</p>
                 ) : (
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">More details help workers understand your needs</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">More details help workers understand your needs</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                   Category <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -456,8 +458,10 @@ function PostTask() {
                     handleInputChange('category', e.target.value)
                     if (fieldErrors.category) setFieldErrors(prev => ({ ...prev, category: null }))
                   }}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
-                    fieldErrors.category ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
+                    fieldErrors.category
+                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                   }`}
                   required
                 >
@@ -491,7 +495,7 @@ function PostTask() {
             
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                   Location <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -502,13 +506,15 @@ function PostTask() {
                     if (fieldErrors.location) setFieldErrors(prev => ({ ...prev, location: null }))
                   }}
                   placeholder="e.g., Koramangala, Bangalore"
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${
-                    fieldErrors.location ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${
+                    fieldErrors.location
+                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                   }`}
                   required
                 />
                 {fieldErrors.location && (
-                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.location}</p>
+                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1.5 leading-relaxed">{fieldErrors.location}</p>
                 )}
                 <button
                   type="button"
@@ -558,7 +564,7 @@ function PostTask() {
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                   Date <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -574,20 +580,22 @@ function PostTask() {
                     maxDate.setDate(maxDate.getDate() + 2)
                     return maxDate.toISOString().split('T')[0]
                   })()}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
-                    fieldErrors.date ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
+                    fieldErrors.date
+                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                   }`}
                   required
                 />
                 {fieldErrors.date ? (
-                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.date}</p>
+                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1.5 leading-relaxed">{fieldErrors.date}</p>
                 ) : (
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">Select a date within the next 2 days</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">Select a date within the next 2 days</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                   Time <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -597,20 +605,22 @@ function PostTask() {
                     handleInputChange('time', e.target.value)
                     if (fieldErrors.time) setFieldErrors(prev => ({ ...prev, time: null }))
                   }}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
-                    fieldErrors.time ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
+                    fieldErrors.time
+                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                   }`}
                   required
                 />
                 {fieldErrors.time ? (
-                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.time}</p>
+                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1.5 leading-relaxed">{fieldErrors.time}</p>
                 ) : (
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">Select the preferred time</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">Select the preferred time</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                   Expected Duration (Hours) <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -619,8 +629,10 @@ function PostTask() {
                     handleInputChange('hours', e.target.value)
                     if (fieldErrors.hours) setFieldErrors(prev => ({ ...prev, hours: null }))
                   }}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:border-blue-500 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
-                    fieldErrors.hours ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
+                    fieldErrors.hours
+                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                   }`}
                   required
                 >
@@ -631,9 +643,9 @@ function PostTask() {
                   ))}
                 </select>
                 {fieldErrors.hours ? (
-                  <p className="text-xs sm:text-sm text-red-600 mt-1.5 leading-relaxed">{fieldErrors.hours}</p>
+                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1.5 leading-relaxed">{fieldErrors.hours}</p>
                 ) : (
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1.5 leading-relaxed">How long do you expect this task to take?</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">How long do you expect this task to take?</p>
                 )}
               </div>
             </div>
