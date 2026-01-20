@@ -4,9 +4,9 @@ import Footer from './Footer'
 function PublicLayout({ children }) {
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
             {/* Header */}
-            <header className="bg-white shadow-sm sticky top-0 z-50">
+            <header className="bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-900/50 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo + Brand Name */}
@@ -16,7 +16,7 @@ function PublicLayout({ children }) {
                                 alt="Kaam247"
                                 className="h-8 sm:h-10 max-h-12 w-auto object-contain"
                             />
-                            <span className="text-base sm:text-lg font-medium text-gray-900 whitespace-nowrap">
+                            <span className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
                                 Kaam247
                             </span>
                         </Link>

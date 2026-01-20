@@ -1,8 +1,17 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useEffect, useState } from 'react'
+import { apiGet } from '../../utils/api'
 
 function Home() {
     const { isAuthenticated } = useAuth()
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        totalCompletedTasks: 0,
+        categoryCount: 0,
+        averageRating: 0
+    })
+    const [statsLoading, setStatsLoading] = useState(true)
 
     const categories = [
         { name: 'Cleaning', icon: '🧹' },
@@ -14,6 +23,33 @@ function Home() {
         { name: 'Event Help', icon: '🎉' },
         { name: 'Custom Task', icon: '✨' },
     ]
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const { data, error } = await apiGet('/api/stats')
+                if (!error && data) {
+                    setStats({
+                        totalUsers: data.totalUsers || 0,
+                        totalCompletedTasks: data.totalCompletedTasks || 0,
+                        categoryCount: data.categoryCount || 0,
+                        averageRating: data.averageRating || 0
+                    })
+                }
+            } catch (err) {
+                console.error('Error fetching stats:', err)
+            } finally {
+                setStatsLoading(false)
+            }
+        }
+
+        fetchStats()
+        
+        // Refresh stats every 30 seconds
+        const intervalId = setInterval(fetchStats, 30000)
+        
+        return () => clearInterval(intervalId)
+    }, [])
 
     return (
         <div className="bg-white dark:bg-gray-950">
@@ -292,47 +328,45 @@ function Home() {
                 <div className="max-w-5xl mx-auto">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
                         <div className="text-center">
-                            <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2">100+</div>
+                            {statsLoading ? (
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2 animate-pulse">...</div>
+                            ) : (
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                                    {stats.totalUsers > 0 ? `${stats.totalUsers}+` : '0'}
+                                </div>
+                            )}
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">Active Users</p>
                         </div>
                         <div className="text-center">
-                            <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-green-600 dark:text-green-400 mb-2">500+</div>
+                            {statsLoading ? (
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-green-600 dark:text-green-400 mb-2 animate-pulse">...</div>
+                            ) : (
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-green-600 dark:text-green-400 mb-2">
+                                    {stats.totalCompletedTasks > 0 ? `${stats.totalCompletedTasks}+` : '0'}
+                                </div>
+                            )}
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">Tasks Completed</p>
                         </div>
                         <div className="text-center">
-                            <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2">8+</div>
+                            {statsLoading ? (
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2 animate-pulse">...</div>
+                            ) : (
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2">
+                                    {stats.categoryCount > 0 ? `${stats.categoryCount}+` : '0'}
+                                </div>
+                            )}
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">Task Categories</p>
                         </div>
                         <div className="text-center">
-                            <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-orange-600 dark:text-orange-400 mb-2">4.8★</div>
+                            {statsLoading ? (
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-orange-600 dark:text-orange-400 mb-2 animate-pulse">...</div>
+                            ) : (
+                                <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-orange-600 dark:text-orange-400 mb-2">
+                                    {stats.averageRating > 0 ? `${stats.averageRating.toFixed(1)}★` : '0★'}
+                                </div>
+                            )}
                             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium">Average Rating</p>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* CTA SECTION */}
-            <section className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-5 leading-tight">
-                        Ready to get started?
-                    </h2>
-                    <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed">
-                        Join thousands of people using Kaam247 to get things done and earn extra income.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
-                        <Link
-                            to={isAuthenticated ? "/post-task" : "/register"}
-                            className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 lg:py-4.5 bg-white text-blue-600 text-base sm:text-lg font-semibold rounded-xl shadow-lg hover:bg-blue-50 hover:shadow-xl transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center touch-manipulation"
-                        >
-                            Get Started Now
-                        </Link>
-                        <Link
-                            to={isAuthenticated ? "/tasks" : "/login"}
-                            className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 lg:py-4.5 bg-blue-500 text-white text-base sm:text-lg font-semibold rounded-xl border-2 border-blue-400 shadow-lg hover:bg-blue-600 hover:shadow-xl transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center touch-manipulation"
-                        >
-                            Browse Tasks
-                        </Link>
                     </div>
                 </div>
             </section>

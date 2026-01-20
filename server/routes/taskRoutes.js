@@ -1,11 +1,15 @@
 const express = require('express')
 const router = express.Router()
 const { createTask, acceptTask, getAvailableTasks, getTaskById, getTasksByUser, cancelTask, startTask, markComplete, confirmComplete, rateTask, editTask, deleteTask } = require('../controllers/taskController')
+const { getPublicStats } = require('../controllers/adminController')
 
 // Test route to verify router is working
 router.get('/test', (req, res) => {
   res.json({ message: 'Task routes are working!' })
 })
+
+// GET /api/stats - Get public stats (no auth required)
+router.get('/stats', getPublicStats)
 
 // GET /api/tasks/user/:userId - Fetch tasks posted by a user (MUST come before /tasks/:taskId)
 router.get('/tasks/user/:userId', getTasksByUser)

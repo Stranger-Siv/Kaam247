@@ -913,6 +913,46 @@ const getAbuseMetrics = async () => {
   }
 }
 
+// Public stats endpoint (no auth required)
+const getPublicStats = async (req, res) => {
+  try {
+    // Total active users
+    const totalUsers = await User.countDocuments({ role: 'user', isBlocked: { $ne: true }, isBanned: { $ne: true } })
+    
+    // Total completed tasks (all time)
+    const totalCompletedTasks = await Task.countDocuments({ status: 'COMPLETED' })
+    
+    // Distinct task categories count
+    const categories = await Task.distinct('category')
+    const categoryCount = categories.length
+    
+    // Average rating from all completed tasks with ratings
+    const completedTasksWithRatings = await Task.find({
+      status: 'COMPLETED',
+      rating: { $exists: true, $ne: null }
+    }).select('rating')
+    
+    let averageRating = 0
+    if (completedTasksWithRatings.length > 0) {
+      const sumRatings = completedTasksWithRatings.reduce((sum, task) => sum + (task.rating || 0), 0)
+      averageRating = sumRatings / completedTasksWithRatings.length
+    }
+
+    res.json({
+      totalUsers,
+      totalCompletedTasks,
+      categoryCount,
+      averageRating: averageRating > 0 ? parseFloat(averageRating.toFixed(1)) : 0
+    })
+  } catch (error) {
+    console.error('Error fetching public stats:', error)
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch public stats'
+    })
+  }
+}
+
 const getStats = async (req, res) => {
   try {
     const today = new Date()
@@ -974,6 +1014,8 @@ const getStats = async (req, res) => {
 }
 
 module.exports = {
+  // Public stats
+  getPublicStats,
   // User management
   getUsers,
   getUserById,
