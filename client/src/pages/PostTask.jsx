@@ -383,7 +383,7 @@ function PostTask() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto w-full overflow-x-hidden px-[3px] sm:px-4 md:px-6">
+    <div className="max-w-3xl mx-auto w-full overflow-x-hidden px-4 sm:px-6">
       <form onSubmit={handleSubmit}>
         {/* Error Display */}
         {error && (

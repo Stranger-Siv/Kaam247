@@ -1086,7 +1086,7 @@ function TaskDetail() {
   // Show loading state
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto w-full px-[3px] sm:px-4 overflow-x-hidden">
+      <div className="max-w-5xl mx-auto w-full px-0 overflow-x-hidden">
         <button
           onClick={handleBack}
           className="mb-6 sm:mb-8 flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors py-2"
@@ -1118,7 +1118,7 @@ function TaskDetail() {
   if (error || !task) {
     return (
       <>
-      <div className="max-w-5xl mx-auto w-full px-[3px] sm:px-4 overflow-x-hidden">
+      <div className="max-w-5xl mx-auto w-full px-0 overflow-x-hidden">
         <button
           onClick={handleBack}
           className="mb-6 sm:mb-8 flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors py-2"
@@ -1809,7 +1809,7 @@ function TaskDetail() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-[3px] sm:px-4 md:px-6 overflow-x-hidden">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 overflow-x-hidden">
       {/* Back Button */}
       {/* Back Button - show only on medium+ screens */}
       <button

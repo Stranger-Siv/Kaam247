@@ -277,7 +277,7 @@ function Profile() {
 
     if (loading || !profile) {
         return (
-            <div className="max-w-4xl mx-auto px-[3px] sm:px-4">
+            <div className="max-w-4xl mx-auto">
                 <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
                     <p className="text-gray-600 dark:text-gray-400">Loading profile...</p>
@@ -287,7 +287,7 @@ function Profile() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto w-full px-[3px] sm:px-4 md:px-6 overflow-x-hidden">
+        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
             <div className="hidden sm:block mb-6 sm:mb-8">
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">Profile</h1>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed">Manage your account and view your activity</p>

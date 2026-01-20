@@ -57,7 +57,7 @@ function TaskLocationMap({
   const position = [lat, lng]
 
   return (
-    <div className="map-wrapper relative w-full rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 h-[350px] sm:h-[260px]" style={{ zIndex: 1 }}>
+    <div className="map-wrapper relative w-full rounded-lg overflow-hidden border border-gray-200 h-[350px] sm:h-[260px]" style={{ zIndex: 1 }}>
       <MapContainer
         center={position}
         zoom={15}

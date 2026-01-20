@@ -424,7 +424,7 @@ function Tasks() {
   // Worker OFF DUTY: hide task feed completely
   if (userMode === 'worker' && !isOnline) {
     return (
-      <div className="max-w-7xl mx-auto w-full px-[3px] sm:px-4 md:px-6 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
         <div className="mb-6 sm:mb-8 lg:mb-10 w-full">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight break-words">Available Tasks</h1>
           <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-relaxed break-words">Go online (ON DUTY) to see tasks near you</p>

@@ -87,12 +87,12 @@ function LocationPickerMap({
     : [12.9716, 77.5946] // Default to Bangalore
 
   return (
-    <div className="map-wrapper relative w-full rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 h-[250px] sm:h-[350px]" style={{ zIndex: 1 }}>
+    <div className="map-wrapper relative w-full rounded-lg overflow-hidden border border-gray-300 h-[250px] sm:h-[350px]" style={{ zIndex: 1 }}>
       {isGettingLocation && (
-        <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-[1000]">
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[1000]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-2"></div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Getting your location...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-sm text-gray-600">Getting your location...</p>
           </div>
         </div>
       )}

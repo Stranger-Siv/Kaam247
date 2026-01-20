@@ -166,13 +166,13 @@ function ColdStartChecker({ children }) {
     // Show cold start waiting page only if backend didn't respond immediately
     if (showWaitingPage && !isBackendReady) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-gray-900/50 p-8 text-center">
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
                     {/* Logo/Icon */}
                     <div className="mb-6">
-                        <div className="w-20 h-20 mx-auto bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                        <div className="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
                             <svg
-                                className="w-12 h-12 text-blue-600 dark:text-blue-400 animate-pulse"
+                                className="w-12 h-12 text-blue-600 animate-pulse"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -188,32 +188,32 @@ function ColdStartChecker({ children }) {
                     </div>
 
                     {/* Title */}
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-3">
                         Service Starting Soon
                     </h1>
 
                     {/* Message */}
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    <p className="text-gray-600 mb-6">
                         Our service is waking up from sleep mode. This usually takes 30-60 seconds.
                     </p>
 
                     {/* Loading Animation */}
                     <div className="flex justify-center items-center space-x-2 mb-4">
-                        <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                     </div>
 
                     {/* Retry Count (optional feedback) */}
                     {retryCount > 0 && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm text-gray-500">
                             Checking... ({retryCount}/{30})
                         </p>
                     )}
 
                     {/* Helpful Note */}
-                    <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                        <p className="text-xs text-gray-500">
                             💡 Tip: Free tier services pause after inactivity. First request may take a moment.
                         </p>
                     </div>
