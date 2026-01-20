@@ -149,12 +149,25 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
 
   const validateForm = () => {
     const errors = {}
-    
+
     if (!formData.title.trim()) errors.title = 'Title is required'
     if (!formData.description.trim()) errors.description = 'Description is required'
     if (!formData.category) errors.category = 'Category is required'
     if (!formData.budget || Number(formData.budget) <= 0) errors.budget = 'Budget must be greater than 0'
     if (!locationData.coordinates) errors.location = 'Location is required'
+
+    // If a date is provided, it cannot be in the past
+    if (formData.date) {
+      const selectedDate = new Date(formData.date)
+      const today = new Date()
+      // Normalize both to midnight so we only compare calendar dates
+      selectedDate.setHours(0, 0, 0, 0)
+      today.setHours(0, 0, 0, 0)
+
+      if (selectedDate < today) {
+        errors.date = 'Date cannot be in the past'
+      }
+    }
 
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
@@ -245,6 +258,9 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   }
 
   if (!isOpen) return null
+
+  // Today's date in YYYY-MM-DD format for the date input min attribute
+  const todayStr = new Date().toISOString().split('T')[0]
 
   return (
     <div className="fixed inset-0 z-[2000] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
@@ -389,8 +405,12 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
                 type="date"
                 value={formData.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
+                min={todayStr}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
+              {fieldErrors.date && (
+                <p className="mt-1 text-sm text-red-600">{fieldErrors.date}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
