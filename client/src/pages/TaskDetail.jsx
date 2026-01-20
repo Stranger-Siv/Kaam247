@@ -1297,7 +1297,7 @@ function TaskDetail() {
                 </button>
               </>
             ) : (
-              <div className="w-full px-6 py-3 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm rounded-lg text-center">
+              <div className="w-full px-6 py-3 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-lg text-center">
                 Waiting for worker to mark task as completed
               </div>
             )}
@@ -1547,7 +1547,7 @@ function TaskDetail() {
                 </div>
               </>
             ) : (
-              <div className="w-full px-6 py-3 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm rounded-lg text-center">
+              <div className="w-full px-6 py-3 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-lg text-center">
                 Waiting for worker to mark task as completed
               </div>
             )}
@@ -1713,7 +1713,7 @@ function TaskDetail() {
       } else if (currentStatus === 'SEARCHING' || task.status === 'open') {
         return (
           <div className="space-y-3">
-            <div className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-base rounded-lg text-center">
+            <div className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-base rounded-lg text-center">
               Waiting for workers to accept
             </div>
             {cancelError && (
@@ -1785,7 +1785,7 @@ function TaskDetail() {
                 </button>
               </>
             ) : (
-              <div className="w-full px-6 py-3 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm rounded-lg text-center">
+              <div className="w-full px-6 py-3 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm rounded-lg text-center">
                 Waiting for worker to mark task as completed
               </div>
             )}
@@ -1890,7 +1890,7 @@ function TaskDetail() {
                   <p className="text-base sm:text-lg font-bold text-gray-900 leading-tight">{task.location}</p>
                   <p className="text-sm sm:text-base text-gray-600 mt-1 leading-relaxed">{task.city}</p>
                   {userMode === 'worker' && (
-                    <p className="text-xs sm:text-sm text-gray-500 mt-2 flex items-center gap-1.5">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1.5">
                       <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
@@ -1971,7 +1971,7 @@ function TaskDetail() {
                   <div className="flex-1 pt-1">
                     <div className="flex items-center justify-between">
                       <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">Task Posted</h4>
-                      <span className="text-xs text-gray-500 dark:text-gray-500">{task.postedTime}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{task.postedTime}</span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Task was created and is now searching for workers</p>
                   </div>
@@ -2018,7 +2018,7 @@ function TaskDetail() {
                         <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">Current Step</span>
                       )}
                       {task.startedAt && (
-                        <span className="text-xs text-gray-500 dark:text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(task.startedAt).toLocaleString('en-IN', {
                             hour: 'numeric',
                             minute: '2-digit',
@@ -2077,7 +2077,7 @@ function TaskDetail() {
                       <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">Task Completed</h4>
                       <span className="text-xs text-green-600 dark:text-green-400 font-medium">Completed</span>
                       {task.completedAt && (
-                        <span className="text-xs text-gray-500 dark:text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(task.completedAt).toLocaleString('en-IN', {
                             hour: 'numeric',
                             minute: '2-digit',
