@@ -138,7 +138,7 @@ function Activity() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto w-full px-[3px] sm:px-4 md:px-6">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading activity...</p>
