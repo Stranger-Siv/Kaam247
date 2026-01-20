@@ -12,12 +12,12 @@ function AdminToast({ message, type = 'success', isVisible, onClose }) {
 
     if (!isVisible) return null
 
-    const bgColor = type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
-        type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
-            'bg-blue-50 border-blue-200 text-blue-800'
+    const bgColor = type === 'success' ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-800 dark:text-green-400' :
+        type === 'error' ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-800 dark:text-red-400' :
+            'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-400'
 
     return (
-        <div className={`fixed top-20 right-6 z-[1500] max-w-md w-full p-4 rounded-lg border-2 shadow-lg ${bgColor}`}>
+        <div className={`fixed top-20 right-6 z-[1500] max-w-md w-full p-4 rounded-lg border-2 shadow-lg dark:shadow-gray-900/50 ${bgColor}`}>
             <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{message}</p>
                 <button
