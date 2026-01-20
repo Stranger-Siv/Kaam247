@@ -75,9 +75,9 @@ function AdminUserDetail() {
 
   const getStatusBadge = (status) => {
     const badges = {
-      active: 'bg-green-50 text-green-700 border-green-200',
-      blocked: 'bg-red-50 text-red-700 border-red-200',
-      banned: 'bg-gray-50 text-gray-700 border-gray-200'
+      active: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800',
+      blocked: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
+      banned: 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600'
     }
     return badges[status] || badges.active
   }
@@ -279,8 +279,8 @@ function AdminUserDetail() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading user details...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">Loading user details...</p>
       </div>
     )
   }
@@ -288,10 +288,10 @@ function AdminUserDetail() {
   if (error || !user) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600">{error || 'User not found'}</p>
+        <p className="text-red-600 dark:text-red-400">{error || 'User not found'}</p>
         <Link
           to="/admin/users"
-          className="mt-4 inline-block text-blue-600 hover:text-blue-700"
+          className="mt-4 inline-block text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
         >
           ← Back to Users
         </Link>
@@ -304,63 +304,63 @@ function AdminUserDetail() {
       <div className="mb-6">
         <Link
           to="/admin/users"
-          className="text-blue-600 hover:text-blue-700 text-sm font-medium mb-4 inline-block"
+          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium mb-4 inline-block"
         >
           ← Back to Users
         </Link>
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">{user.name}</h1>
-        <p className="text-gray-600">User profile and activity details</p>
+        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{user.name}</h1>
+        <p className="text-gray-600 dark:text-gray-400">User profile and activity details</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Info */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Profile</h2>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p className="text-sm font-medium text-gray-900">{user.email}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.email}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p className="text-sm font-medium text-gray-900">{user.phone}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Phone</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.phone}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Status</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mt-1 ${getStatusBadge(user.status)}`}>
                   {user.status || 'active'}
                 </span>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Role</p>
-                <p className="text-sm font-medium text-gray-900">{user.role || 'user'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.role || 'user'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Joined</p>
-                <p className="text-sm font-medium text-gray-900">{formatDate(user.createdAt)}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Joined</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(user.createdAt)}</p>
               </div>
               {user.lastOnlineAt && (
                 <div>
-                  <p className="text-sm text-gray-500">Last Online</p>
-                  <p className="text-sm font-medium text-gray-900">{formatDate(user.lastOnlineAt)}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Last Online</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(user.lastOnlineAt)}</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Admin Actions */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Admin Actions</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Admin Actions</h2>
             {!user ? (
-              <p className="text-sm text-gray-500">Loading user data...</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Loading user data...</p>
             ) : (
               <div className="space-y-3">
                 {user.status === 'active' ? (
                   <button
                     onClick={() => setModalState({ isOpen: true, type: 'block' })}
                     disabled={actionLoading}
-                    className="w-full px-4 py-2.5 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                    className="w-full px-4 py-2.5 bg-orange-600 dark:bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                   >
                     Block User
                   </button>
@@ -368,7 +368,7 @@ function AdminUserDetail() {
                   <button
                     onClick={() => setModalState({ isOpen: true, type: 'unblock' })}
                     disabled={actionLoading}
-                    className="w-full px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                    className="w-full px-4 py-2.5 bg-green-600 dark:bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                   >
                     Unblock User
                   </button>
@@ -376,7 +376,7 @@ function AdminUserDetail() {
                   <button
                     onClick={() => setModalState({ isOpen: true, type: 'unban' })}
                     disabled={actionLoading}
-                    className="w-full px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                    className="w-full px-4 py-2.5 bg-green-600 dark:bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                   >
                     Unban User
                   </button>
@@ -384,7 +384,7 @@ function AdminUserDetail() {
                   <button
                     onClick={() => setModalState({ isOpen: true, type: 'block' })}
                     disabled={actionLoading}
-                    className="w-full px-4 py-2.5 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                    className="w-full px-4 py-2.5 bg-orange-600 dark:bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                   >
                     Block User
                   </button>
@@ -394,7 +394,7 @@ function AdminUserDetail() {
                   <button
                     onClick={() => setModalState({ isOpen: true, type: 'ban' })}
                     disabled={actionLoading}
-                    className="w-full px-4 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                    className="w-full px-4 py-2.5 bg-red-600 dark:bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                   >
                     Ban User
                   </button>
@@ -403,7 +403,7 @@ function AdminUserDetail() {
                 <button
                   onClick={() => setModalState({ isOpen: true, type: 'reset' })}
                   disabled={actionLoading}
-                  className="w-full px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                  className="w-full px-4 py-2.5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                 >
                   Reset Cancellation Count
                 </button>
@@ -414,7 +414,7 @@ function AdminUserDetail() {
                     setShowEditLimitModal(true)
                   }}
                   disabled={actionLoading}
-                  className="w-full px-4 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                  className="w-full px-4 py-2.5 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                 >
                   Edit Cancellation Limit
                 </button>
@@ -426,62 +426,62 @@ function AdminUserDetail() {
         {/* Activity */}
         <div className="lg:col-span-2 space-y-6">
           {/* Stats */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Statistics</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Statistics</h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Tasks Posted</p>
-                <p className="text-2xl font-bold text-gray-900">{activity?.tasksPosted?.length || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Tasks Posted</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{activity?.tasksPosted?.length || 0}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Tasks Accepted</p>
-                <p className="text-2xl font-bold text-gray-900">{activity?.tasksAccepted?.length || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Tasks Accepted</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{activity?.tasksAccepted?.length || 0}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Tasks Completed</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Tasks Completed</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {activity?.tasksAccepted?.filter(t => t.status === 'COMPLETED').length || 0}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Cancellations Today</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Cancellations Today</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {user?.dailyCancelCount !== undefined && user?.dailyCancelCount !== null
                     ? user.dailyCancelCount
                     : 0}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                   Limit: {user?.totalCancelLimit ?? 2}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Cancellations</p>
-                <p className="text-2xl font-bold text-gray-900">{activity?.cancellationHistory?.length || 0}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Cancellations</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{activity?.cancellationHistory?.length || 0}</p>
               </div>
             </div>
           </div>
 
           {/* Recent Tasks Posted */}
           {activity?.tasksPosted && activity.tasksPosted.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Tasks Posted</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Recent Tasks Posted</h2>
               <div className="space-y-3">
                 {activity.tasksPosted.slice(0, 5).map((task) => (
                   <Link
                     key={task._id}
                     to={`/admin/tasks/${task._id}`}
-                    className="block p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="block p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{task.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{task.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           ₹{task.budget} • {formatDate(task.createdAt)}
                         </p>
                       </div>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${task.status === 'COMPLETED' ? 'bg-green-50 text-green-700 border-green-200' :
-                        task.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border-red-200' :
-                          'bg-blue-50 text-blue-700 border-blue-200'
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${task.status === 'COMPLETED' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' :
+                        task.status === 'CANCELLED' ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800' :
+                          'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'
                         }`}>
                         {task.status}
                       </span>
@@ -494,16 +494,16 @@ function AdminUserDetail() {
 
           {/* Cancellation History */}
           {activity?.cancellationHistory && activity.cancellationHistory.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Cancellation History</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Cancellation History</h2>
               <div className="space-y-3">
                 {activity.cancellationHistory.slice(0, 10).map((task) => (
                   <div
                     key={task._id}
-                    className="p-3 border border-gray-200 rounded-lg"
+                    className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
                   >
-                    <p className="text-sm font-medium text-gray-900">{task.title}</p>
-                    <p className="text-xs text-gray-500 mt-1">{formatDate(task.createdAt)}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{task.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatDate(task.createdAt)}</p>
                   </div>
                 ))}
               </div>
@@ -571,14 +571,14 @@ function AdminUserDetail() {
 
       {/* Edit Cancellation Limit Modal */}
       {showEditLimitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Cancellation Limit</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Set the maximum number of tasks this user can cancel per day. Current limit: <strong>{user?.totalCancelLimit ?? 2}</strong>
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900/50 max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Edit Cancellation Limit</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Set the maximum number of tasks this user can cancel per day. Current limit: <strong className="text-gray-900 dark:text-gray-100">{user?.totalCancelLimit ?? 2}</strong>
             </p>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 New Limit (0-10)
               </label>
               <input
@@ -592,10 +592,10 @@ function AdminUserDetail() {
                     setNewCancelLimit(value)
                   }
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-purple-500 dark:focus:border-purple-400"
                 disabled={isUpdatingLimit}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Current cancellations today: {user?.dailyCancelCount ?? 0}
               </p>
             </div>
@@ -603,14 +603,14 @@ function AdminUserDetail() {
               <button
                 onClick={() => setShowEditLimitModal(false)}
                 disabled={isUpdatingLimit}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateCancelLimit}
                 disabled={isUpdatingLimit || newCancelLimit === (user?.totalCancelLimit ?? 2)}
-                className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-purple-600 dark:bg-purple-500 text-white rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUpdatingLimit ? 'Updating...' : 'Update Limit'}
               </button>
