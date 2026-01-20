@@ -57,7 +57,10 @@ export default defineConfig({
             urlPattern: /^https?:\/\/.*\/api\/.*/,
             handler: 'NetworkOnly',
             options: {
-              cacheName: 'api-requests'
+              cacheName: 'api-requests',
+              fetchOptions: {
+                cache: 'no-store'
+              }
             }
           },
           // DO NOT cache Socket.IO connections
@@ -66,6 +69,22 @@ export default defineConfig({
             handler: 'NetworkOnly',
             options: {
               cacheName: 'socket-requests'
+            }
+          },
+          // Use NetworkFirst for JS modules to always get latest version
+          {
+            urlPattern: /\.(?:js|mjs)$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'js-modules',
+              networkTimeoutSeconds: 5,
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 1 day - shorter cache for modules
+              }
             }
           },
           // Cache geocoding API (read-only, safe to cache)
@@ -80,9 +99,9 @@ export default defineConfig({
               }
             }
           },
-          // Cache static assets
+          // Cache other static assets
           {
-            urlPattern: /\.(?:js|css|html|ico|png|svg|woff2|jpg|jpeg|gif)$/,
+            urlPattern: /\.(?:css|html|ico|png|svg|woff2|jpg|jpeg|gif)$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'static-assets',

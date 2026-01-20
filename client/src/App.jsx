@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
@@ -15,24 +15,25 @@ import ProtectedRoute from './components/ProtectedRoute'
 import ModeProtectedRoute from './components/ModeProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import AdminLayout from './components/layout/AdminLayout'
+import { lazyWithRetry } from './utils/lazyWithRetry'
 
-// Lazy load page components for code splitting
-const Home = lazy(() => import('./pages/public/Home'))
-const Login = lazy(() => import('./pages/public/Login'))
-const Register = lazy(() => import('./pages/public/Register'))
-const Dashboard = lazy(() => import('./pages/Dashboard'))
-const Tasks = lazy(() => import('./pages/Tasks'))
-const TaskDetail = lazy(() => import('./pages/TaskDetail'))
-const PostTask = lazy(() => import('./pages/PostTask'))
-const Profile = lazy(() => import('./pages/Profile'))
-const Activity = lazy(() => import('./pages/Activity'))
-const Earnings = lazy(() => import('./pages/Earnings'))
-const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'))
-const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'))
-const AdminUserDetail = lazy(() => import('./pages/admin/AdminUserDetail'))
-const AdminTasks = lazy(() => import('./pages/admin/AdminTasks'))
-const AdminTaskDetail = lazy(() => import('./pages/admin/AdminTaskDetail'))
-const AdminReports = lazy(() => import('./pages/admin/AdminReports'))
+// Lazy load page components for code splitting with retry logic
+const Home = lazyWithRetry(() => import('./pages/public/Home'))
+const Login = lazyWithRetry(() => import('./pages/public/Login'))
+const Register = lazyWithRetry(() => import('./pages/public/Register'))
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'))
+const Tasks = lazyWithRetry(() => import('./pages/Tasks'))
+const TaskDetail = lazyWithRetry(() => import('./pages/TaskDetail'))
+const PostTask = lazyWithRetry(() => import('./pages/PostTask'))
+const Profile = lazyWithRetry(() => import('./pages/Profile'))
+const Activity = lazyWithRetry(() => import('./pages/Activity'))
+const Earnings = lazyWithRetry(() => import('./pages/Earnings'))
+const AdminOverview = lazyWithRetry(() => import('./pages/admin/AdminOverview'))
+const AdminUsers = lazyWithRetry(() => import('./pages/admin/AdminUsers'))
+const AdminUserDetail = lazyWithRetry(() => import('./pages/admin/AdminUserDetail'))
+const AdminTasks = lazyWithRetry(() => import('./pages/admin/AdminTasks'))
+const AdminTaskDetail = lazyWithRetry(() => import('./pages/admin/AdminTaskDetail'))
+const AdminReports = lazyWithRetry(() => import('./pages/admin/AdminReports'))
 
 // Loading component for Suspense fallback
 const PageLoader = () => (

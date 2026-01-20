@@ -49,6 +49,43 @@ if (import.meta.env.DEV) {
 // Global error handler to suppress third-party errors (like browser extensions)
 window.addEventListener('error', (event) => {
   const errorMessage = event.message || event.error?.message || ''
+  const errorSource = event.filename || ''
+  
+  // Handle chunk/module loading errors - reload page to get fresh assets
+  if (
+    errorMessage.includes('Failed to fetch dynamically imported module') ||
+    errorMessage.includes('Failed to load module script') ||
+    errorMessage.includes('MIME type') ||
+    errorSource.includes('.js') && errorMessage.includes('Failed to fetch')
+  ) {
+    console.error('Chunk loading error detected, clearing cache and reloading...', {
+      message: errorMessage,
+      source: errorSource
+    })
+    
+    // Clear caches and reload
+    if ('caches' in window) {
+      caches.keys().then(cacheNames => {
+        return Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)))
+      }).then(() => {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(registration => registration.unregister())
+            setTimeout(() => window.location.reload(), 1000)
+          })
+        } else {
+          setTimeout(() => window.location.reload(), 1000)
+        }
+      }).catch(() => {
+        window.location.reload()
+      })
+    } else {
+      window.location.reload()
+    }
+    
+    event.preventDefault()
+    return false
+  }
   
   // Suppress checkout popup errors from browser extensions
   if (errorMessage.includes('checkout popup config') || 
@@ -74,6 +111,39 @@ window.addEventListener('error', (event) => {
 // Suppress unhandled promise rejections from third-party scripts
 window.addEventListener('unhandledrejection', (event) => {
   const errorMessage = event.reason?.message || event.reason?.toString() || ''
+  
+  // Handle chunk/module loading errors in promise rejections
+  if (
+    errorMessage.includes('Failed to fetch dynamically imported module') ||
+    errorMessage.includes('Failed to load module script') ||
+    errorMessage.includes('MIME type') ||
+    errorMessage.includes('ChunkLoadError')
+  ) {
+    console.error('Chunk loading error in promise rejection, clearing cache and reloading...', errorMessage)
+    
+    // Clear caches and reload
+    if ('caches' in window) {
+      caches.keys().then(cacheNames => {
+        return Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)))
+      }).then(() => {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(registration => registration.unregister())
+            setTimeout(() => window.location.reload(), 1000)
+          })
+        } else {
+          setTimeout(() => window.location.reload(), 1000)
+        }
+      }).catch(() => {
+        window.location.reload()
+      })
+    } else {
+      window.location.reload()
+    }
+    
+    event.preventDefault()
+    return false
+  }
   
   // Suppress checkout popup errors from browser extensions
   if (errorMessage.includes('checkout popup config') || 
