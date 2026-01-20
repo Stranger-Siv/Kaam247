@@ -13,7 +13,7 @@ function AdminRoute({ children }) {
     }
 
     if (!isAuthenticated) {
-        return <Navigate to="/login" replace />
+        return <Navigate to="/" replace />
     }
 
     // Check if user is admin

@@ -15,7 +15,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/" replace />
   }
 
   // Redirect admin users away from regular dashboard to admin dashboard
