@@ -76,8 +76,6 @@ function AdminLayout() {
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Admin</p>
               </div>
-            </div>
-            <div className="mb-3">
               <ThemeToggle />
             </div>
             <button
@@ -173,8 +171,6 @@ function AdminLayout() {
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Admin</p>
                       </div>
-                    </div>
-                    <div className="mb-3">
                       <ThemeToggle />
                     </div>
                     <button

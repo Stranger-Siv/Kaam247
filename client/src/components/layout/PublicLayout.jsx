@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Footer from './Footer'
+import ThemeToggle from '../ThemeToggle'
 
 function PublicLayout({ children }) {
 
@@ -21,7 +22,8 @@ function PublicLayout({ children }) {
                             </span>
                         </Link>
 
-                        {/* Navigation removed - only logo visible */}
+                        {/* Theme Toggle */}
+                        <ThemeToggle />
                     </div>
                 </div>
 
