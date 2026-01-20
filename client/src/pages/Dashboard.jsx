@@ -358,7 +358,7 @@ function Dashboard() {
             const response = await fetch(`${API_BASE_URL}/api/tasks`)
             if (response.ok) {
                 const data = await response.json()
-                const workerTasks = data.tasks
+                const workerTasks = (data.tasks || [])
                     .filter(task => {
                         // Handle both ObjectId and populated object
                         const acceptedById = task.acceptedBy?._id ? task.acceptedBy._id.toString() : task.acceptedBy?.toString()
@@ -447,7 +447,7 @@ function Dashboard() {
             })
             if (response.ok) {
                 const data = await response.json()
-                const transformedTasks = data.tasks.map((task) => ({
+                const transformedTasks = (data.tasks || []).map((task) => ({
                     id: task._id,
                     title: task.title,
                     description: task.description,
@@ -656,7 +656,7 @@ function Dashboard() {
 
             if (response.ok) {
                 const data = await response.json()
-                const transformedTasks = data.tasks
+                const transformedTasks = (data.tasks || [])
                     // Hide tasks posted by the current user (don't show your own tasks in worker list)
                     .filter(task => {
                         if (!user?.id) return true
@@ -985,8 +985,8 @@ function Dashboard() {
                         <div className="mb-10 sm:mb-12 lg:mb-14">
                             <div className="flex items-center justify-between mb-5 sm:mb-6">
                                 <div>
-                                    <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1.5 sm:mb-2 leading-tight">Pending Confirmations</h2>
-                                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Tasks you posted that need your confirmation</p>
+                                    <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">Pending Confirmations</h2>
+                                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Tasks you posted that need your confirmation</p>
                                 </div>
                             </div>
 
@@ -995,17 +995,17 @@ function Dashboard() {
                                     <Link
                                         key={task.id || task._id}
                                         to={`/tasks/${task.id || task._id}`}
-                                        className="group bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border border-green-200"
+                                        className="group bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm dark:shadow-gray-900/50 hover:shadow-md transition-all duration-200 border border-green-200 dark:border-green-800"
                                     >
                                         <div className="flex items-start justify-between gap-3 mb-2">
-                                            <h3 className="text-base font-semibold text-gray-900 group-hover:text-green-700 transition-colors flex-1 min-w-0 break-words">
+                                            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors flex-1 min-w-0 break-words">
                                                 {task.title}
                                             </h3>
-                                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-700 border border-green-200 whitespace-nowrap">
+                                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 whitespace-nowrap">
                                                 Confirm
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-600 line-clamp-2">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                                             Worker marked complete — open to confirm.
                                         </p>
                                     </Link>

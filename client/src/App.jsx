@@ -8,6 +8,7 @@ import { SocketProvider } from './context/SocketContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { CancellationProvider } from './context/CancellationContext'
 import ColdStartChecker from './components/ColdStartChecker'
+import ErrorBoundary from './components/ErrorBoundary'
 import PublicLayout from './components/layout/PublicLayout'
 import MainLayout from './components/layout/MainLayout'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -46,21 +47,23 @@ const PageLoader = () => (
 function App() {
   return (
     <ThemeProvider>
-      <ColdStartChecker>
-        <AuthProvider>
-        <UserModeProvider>
-          <AvailabilityProvider>
-            <NotificationProvider>
-              <CancellationProvider>
-                <SocketProvider>
-              <Router
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true
-                }}
-              >
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
+      <ErrorBoundary>
+        <ColdStartChecker>
+          <AuthProvider>
+          <UserModeProvider>
+            <AvailabilityProvider>
+              <NotificationProvider>
+                <CancellationProvider>
+                  <SocketProvider>
+                    <Router
+                      future={{
+                        v7_startTransition: true,
+                        v7_relativeSplatPath: true
+                      }}
+                    >
+                      <ErrorBoundary>
+                        <Suspense fallback={<PageLoader />}>
+                          <Routes>
                     {/* Public Routes */}
                     <Route
                       path="/"
@@ -140,16 +143,18 @@ function App() {
                       <Route path="/admin/tasks/:taskId" element={<AdminTaskDetail />} />
                       <Route path="/admin/reports" element={<AdminReports />} />
                     </Route>
-                  </Routes>
-                </Suspense>
-              </Router>
-                </SocketProvider>
-              </CancellationProvider>
-            </NotificationProvider>
-          </AvailabilityProvider>
-        </UserModeProvider>
-      </AuthProvider>
-      </ColdStartChecker>
+                          </Routes>
+                        </Suspense>
+                      </ErrorBoundary>
+                    </Router>
+                  </SocketProvider>
+                </CancellationProvider>
+              </NotificationProvider>
+            </AvailabilityProvider>
+          </UserModeProvider>
+        </AuthProvider>
+        </ColdStartChecker>
+      </ErrorBoundary>
     </ThemeProvider>
   )
 }

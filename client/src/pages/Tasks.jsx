@@ -62,7 +62,7 @@ function Tasks() {
 
         // Transform backend task format to frontend format
         // Filter to only show tasks within 5km and sort by distance
-        const transformedTasks = data.tasks
+        const transformedTasks = (data.tasks || [])
           // Hide tasks posted by the current user (don't show your own tasks in worker list)
           .filter(task => {
             if (!user?.id) return true
@@ -198,7 +198,7 @@ function Tasks() {
         const response = await fetch(url)
         if (response.ok) {
           const data = await response.json()
-          const transformedTasks = data.tasks
+          const transformedTasks = (data.tasks || [])
             // Hide tasks posted by the current user (don't show your own tasks in worker list)
             .filter(task => {
               if (!user?.id) return true
@@ -331,7 +331,7 @@ function Tasks() {
           const response = await fetch(url)
           if (response.ok) {
             const data = await response.json()
-            const transformedTasks = data.tasks.map((task) => ({
+            const transformedTasks = (data.tasks || []).map((task) => ({
               id: task._id,
               title: task.title,
               description: task.description,
@@ -383,7 +383,7 @@ function Tasks() {
           const response = await fetch(url)
           if (response.ok) {
             const data = await response.json()
-            const transformedTasks = data.tasks.map((task) => ({
+            const transformedTasks = (data.tasks || []).map((task) => ({
               id: task._id,
               title: task.title,
               description: task.description,
