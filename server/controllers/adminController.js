@@ -166,13 +166,51 @@ const getUserById = async (req, res) => {
       .select('rating review ratedAt')
       .sort({ ratedAt: -1 })
 
+    // Earnings / spend analytics
+    const now = new Date()
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const completedAsWorker = await Task.find({
+      acceptedBy: userId,
+      status: 'COMPLETED'
+    }).select('budget completedAt')
+
+    const completedAsPoster = await Task.find({
+      postedBy: userId,
+      status: 'COMPLETED'
+    }).select('budget completedAt')
+
+    const sumBudgets = (tasks = []) =>
+      tasks.reduce((sum, t) => sum + (t.budget || 0), 0)
+
+    const earningsAsWorkerTotal = sumBudgets(completedAsWorker)
+    const earningsAsWorkerLast30Days = sumBudgets(
+      completedAsWorker.filter(
+        (t) => t.completedAt && t.completedAt >= thirtyDaysAgo && t.completedAt <= now
+      )
+    )
+
+    const spentAsPosterTotal = sumBudgets(completedAsPoster)
+    const spentAsPosterLast30Days = sumBudgets(
+      completedAsPoster.filter(
+        (t) => t.completedAt && t.completedAt >= thirtyDaysAgo && t.completedAt <= now
+      )
+    )
+
     res.json({
       user: userObject,
       activity: {
         tasksPosted,
         tasksAccepted,
         cancellationHistory,
-        ratingsReceived
+        ratingsReceived,
+        earnings: {
+          earningsAsWorkerTotal,
+          earningsAsWorkerLast30Days,
+          spentAsPosterTotal,
+          spentAsPosterLast30Days
+        }
       }
     })
   } catch (error) {
@@ -206,17 +244,17 @@ const blockUser = async (req, res) => {
 
     // Block user
     user.status = 'blocked'
-    
+
     // Ensure role is valid (fix any legacy 'worker'/'poster' values)
     if (user.role && !['user', 'admin'].includes(user.role)) {
       user.role = 'user' // Default to 'user' if invalid
     }
-    
+
     await user.save()
 
     // Notify user via socket
     notifyUserUpdated(userId, { status: 'blocked' })
-    
+
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
 
@@ -260,17 +298,17 @@ const unblockUser = async (req, res) => {
 
     // Unblock user
     user.status = 'active'
-    
+
     // Ensure role is valid (fix any legacy 'worker'/'poster' values)
     if (user.role && !['user', 'admin'].includes(user.role)) {
       user.role = 'user' // Default to 'user' if invalid
     }
-    
+
     await user.save()
 
     // Notify user via socket
     notifyUserUpdated(userId, { status: 'active' })
-    
+
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
 
@@ -314,17 +352,17 @@ const banUser = async (req, res) => {
 
     // Ban user
     user.status = 'banned'
-    
+
     // Ensure role is valid (fix any legacy 'worker'/'poster' values)
     if (user.role && !['user', 'admin'].includes(user.role)) {
       user.role = 'user' // Default to 'user' if invalid
     }
-    
+
     await user.save()
 
     // Notify user via socket
     notifyUserUpdated(userId, { status: 'banned' })
-    
+
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
 
@@ -369,20 +407,20 @@ const resetCancellations = async (req, res) => {
     // Reset cancellation count
     user.dailyCancelCount = 0
     user.lastCancelDate = null
-    
+
     // Ensure role is valid (fix any legacy 'worker'/'poster' values)
     if (user.role && !['user', 'admin'].includes(user.role)) {
       user.role = 'user' // Default to 'user' if invalid
     }
-    
+
     await user.save()
 
     // Reload user to ensure we have the latest data
     const updatedUser = await User.findById(userId).select('-password')
-    
+
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
-    
+
     res.json({
       message: 'Cancellation count reset successfully',
       user: {
@@ -440,23 +478,23 @@ const updateCancelLimit = async (req, res) => {
 
     // Update cancellation limit
     user.totalCancelLimit = limitNum
-    
+
     // Ensure role is valid (fix any legacy 'worker'/'poster' values)
     if (user.role && !['user', 'admin'].includes(user.role)) {
       user.role = 'user' // Default to 'user' if invalid
     }
-    
+
     await user.save()
 
     // Reload user to ensure we have the latest data
     const updatedUser = await User.findById(userId).select('-password')
-    
+
     // Notify user via socket
     notifyUserUpdated(userId, { totalCancelLimit: limitNum })
-    
+
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
-    
+
     res.json({
       message: 'Cancellation limit updated successfully',
       user: {
@@ -644,7 +682,7 @@ const cancelTask = async (req, res) => {
       notifyTaskCancelled(task.acceptedBy.toString(), task._id.toString(), 'admin')
     }
     notifyTaskUpdated(task._id.toString(), { status: 'CANCELLED_BY_ADMIN', postedBy: task.postedBy, acceptedBy: task.acceptedBy })
-    
+
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
 
@@ -696,7 +734,7 @@ const unassignTask = async (req, res) => {
     if (previousWorkerId) {
       notifyTaskUpdated(task._id.toString(), { status: 'SEARCHING', acceptedBy: null, postedBy: task.postedBy })
     }
-    
+
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
 
@@ -918,20 +956,20 @@ const getPublicStats = async (req, res) => {
   try {
     // Total active users
     const totalUsers = await User.countDocuments({ role: 'user', isBlocked: { $ne: true }, isBanned: { $ne: true } })
-    
+
     // Total completed tasks (all time)
     const totalCompletedTasks = await Task.countDocuments({ status: 'COMPLETED' })
-    
+
     // Distinct task categories count
     const categories = await Task.distinct('category')
     const categoryCount = categories.length
-    
+
     // Average rating from all completed tasks with ratings
     const completedTasksWithRatings = await Task.find({
       status: 'COMPLETED',
       rating: { $exists: true, $ne: null }
     }).select('rating')
-    
+
     let averageRating = 0
     if (completedTasksWithRatings.length > 0) {
       const sumRatings = completedTasksWithRatings.reduce((sum, task) => sum + (task.rating || 0), 0)

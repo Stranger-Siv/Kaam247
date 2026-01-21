@@ -320,21 +320,35 @@ function AdminUserDetail() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.email}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">{user.email}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Phone</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.phone}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">{user.phone}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mt-1 ${getStatusBadge(user.status)}`}>
-                  {user.status || 'active'}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.role || 'user'}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mt-1 ${getStatusBadge(user.status)}`}>
+                    {user.status || 'active'}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">{user.role || 'user'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Mode</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">
+                    {user.roleMode || 'worker'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Account Active</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {user.isActive ? 'Yes' : 'No'}
+                  </p>
+                </div>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Joined</p>
@@ -344,6 +358,34 @@ function AdminUserDetail() {
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Last Online</p>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(user.lastOnlineAt)}</p>
+                </div>
+              )}
+              {/* Location details */}
+              {(user.location || user.locationUpdatedAt) && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-2">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Location</p>
+                  {user.location?.city && (
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-gray-500 dark:text-gray-400">City:</span>{' '}
+                      {user.location.city}
+                    </p>
+                  )}
+                  {user.location?.area && (
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-gray-500 dark:text-gray-400">Area:</span>{' '}
+                      {user.location.area}
+                    </p>
+                  )}
+                  {Array.isArray(user.location?.coordinates) && user.location.coordinates.length === 2 && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Coords: {user.location.coordinates[1].toFixed(5)}, {user.location.coordinates[0].toFixed(5)}
+                    </p>
+                  )}
+                  {user.locationUpdatedAt && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      Last location update: {formatDate(user.locationUpdatedAt)}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -428,7 +470,7 @@ function AdminUserDetail() {
           {/* Stats */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Statistics</h2>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Tasks Posted</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{activity?.tasksPosted?.length || 0}</p>
@@ -459,6 +501,45 @@ function AdminUserDetail() {
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{activity?.cancellationHistory?.length || 0}</p>
               </div>
             </div>
+            {/* Earnings & spend summary */}
+            {activity?.earnings && (
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+                  <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">
+                    Worker Earnings
+                  </p>
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                    Lifetime:{' '}
+                    <span className="font-bold text-gray-900 dark:text-gray-100">
+                      ₹{(activity.earnings.earningsAsWorkerTotal || 0).toLocaleString('en-IN')}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Last 30 days:{' '}
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      ₹{(activity.earnings.earningsAsWorkerLast30Days || 0).toLocaleString('en-IN')}
+                    </span>
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
+                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">
+                    Poster Spend
+                  </p>
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                    Lifetime:{' '}
+                    <span className="font-bold text-gray-900 dark:text-gray-100">
+                      ₹{(activity.earnings.spentAsPosterTotal || 0).toLocaleString('en-IN')}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Last 30 days:{' '}
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      ₹{(activity.earnings.spentAsPosterLast30Days || 0).toLocaleString('en-IN')}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Recent Tasks Posted */}
