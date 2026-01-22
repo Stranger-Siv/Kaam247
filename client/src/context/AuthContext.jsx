@@ -27,12 +27,19 @@ export function AuthProvider({ children }) {
           
           // Check URL for redirect indicators
           const urlParams = new URLSearchParams(window.location.search)
-          const hasAuthParams = urlParams.has('apiKey') || urlParams.has('mode') || urlParams.has('__firebase_request_key') || window.location.hash.includes('auth')
+          const hashParams = new URLSearchParams(window.location.hash.substring(1))
+          const hasAuthParams = urlParams.has('apiKey') || urlParams.has('mode') || urlParams.has('__firebase_request_key') || 
+                                hashParams.has('apiKey') || hashParams.has('mode') || 
+                                window.location.hash.includes('auth') || window.location.hash.includes('credential')
+          const isRedirectReturn = hasAuthParams || sessionStorage.getItem('googleSignInRedirect')
+          
           console.log('🔍 [AuthContext] Checking redirect result. URL params:', {
             search: window.location.search,
             hash: window.location.hash,
             hasAuthParams,
-            fullUrl: window.location.href
+            isRedirectReturn,
+            fullUrl: window.location.href,
+            storedRedirect: sessionStorage.getItem('googleSignInRedirect')
           })
           
           // Check current user first
@@ -201,6 +208,9 @@ export function AuthProvider({ children }) {
                 }))
               }, 200)
               
+              // Clear redirect indicator
+              sessionStorage.removeItem('googleSignInRedirect')
+              
               // Set loading to false AFTER authentication is complete
               setLoading(false)
               console.log('✅ [AuthContext] Authentication complete, loading set to false')
@@ -279,8 +289,14 @@ export function AuthProvider({ children }) {
                     }))
                   }, 200)
                   
+                  // Clear redirect indicator
+                  sessionStorage.removeItem('googleSignInRedirect')
+                  
                   setLoading(false)
                   return
+                } else {
+                  const errorData = await response.json().catch(() => ({ message: 'Verification failed' }))
+                  console.error('❌ [AuthContext] Backend verification failed (from currentUser):', errorData)
                 }
               } catch (error) {
                 console.error('❌ [AuthContext] Error verifying currentUser:', error)
@@ -383,6 +399,9 @@ export function AuthProvider({ children }) {
               profileSetupCompleted: data.user.profileSetupCompleted
             })
             setIsAuthenticated(true)
+            
+            // Clear redirect indicator
+            sessionStorage.removeItem('googleSignInRedirect')
             
             setTimeout(() => {
               window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
