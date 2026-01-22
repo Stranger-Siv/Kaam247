@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
         unique: true,
         sparse: true,
         trim: true,
-        description: 'Firebase Authentication UID for phone OTP users'
+        description: 'Firebase Authentication UID (reserved for future use)'
     },
     googleId: {
         type: String,

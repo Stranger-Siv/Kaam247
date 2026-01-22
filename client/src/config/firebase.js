@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, RecaptchaVerifier, GoogleAuthProvider } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 
 // Firebase configuration
 const firebaseConfig = {
@@ -21,39 +21,10 @@ try {
         auth = getAuth(app)
         console.log('✅ Firebase initialized successfully')
     } else {
-        console.warn('⚠️  Firebase configuration missing. Phone OTP authentication will be disabled.')
+        console.warn('⚠️  Firebase configuration missing. Google authentication will be disabled.')
     }
 } catch (error) {
     console.error('❌ Error initializing Firebase:', error.message)
-}
-
-// Initialize reCAPTCHA verifier for phone authentication
-export const initializeRecaptcha = (elementId = 'recaptcha-container') => {
-    if (!auth) {
-        throw new Error('Firebase Auth not initialized')
-    }
-
-    // Remove existing verifier if any
-    const existingVerifier = window.recaptchaVerifier
-    if (existingVerifier) {
-        existingVerifier.clear()
-    }
-
-    // Create new reCAPTCHA verifier
-    const recaptchaVerifier = new RecaptchaVerifier(auth, elementId, {
-        size: 'invisible', // or 'normal' for visible reCAPTCHA
-        callback: () => {
-            // reCAPTCHA solved
-            console.log('reCAPTCHA verified')
-        },
-        'expired-callback': () => {
-            // Response expired
-            console.log('reCAPTCHA expired')
-        }
-    })
-
-    window.recaptchaVerifier = recaptchaVerifier
-    return recaptchaVerifier
 }
 
 // Google Auth Provider

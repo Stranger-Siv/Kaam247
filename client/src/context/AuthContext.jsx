@@ -2,8 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config/env'
 import { persistUserLocation } from '../utils/locationPersistence'
 import { reverseGeocode } from '../utils/geocoding'
-import { auth, initializeRecaptcha, googleProvider } from '../config/firebase'
-import { signInWithPhoneNumber, PhoneAuthProvider, signInWithCredential, signInWithRedirect, getRedirectResult } from 'firebase/auth'
+import { auth, googleProvider } from '../config/firebase'
+import { signInWithRedirect, getRedirectResult } from 'firebase/auth'
 
 const AuthContext = createContext()
 
@@ -286,134 +286,6 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Firebase Phone Authentication
-  const loginWithPhone = async (phoneNumber) => {
-    try {
-      if (!auth) {
-        throw new Error('Firebase is not configured. Please contact support.')
-      }
-
-      // Format phone number (ensure it starts with +)
-      const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`
-
-      // Initialize reCAPTCHA
-      const recaptchaVerifier = initializeRecaptcha('recaptcha-container')
-
-      // Send OTP
-      const confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier)
-
-      // Store confirmation result for OTP verification
-      return {
-        success: true,
-        confirmationResult,
-        phoneNumber: formattedPhone
-      }
-    } catch (error) {
-      console.error('Error sending OTP:', error)
-      return {
-        success: false,
-        error: error.message || 'Failed to send OTP. Please try again.'
-      }
-    }
-  }
-
-  // Verify OTP and complete authentication
-  const verifyPhoneOTP = async (confirmationResult, otp, phoneNumber) => {
-    try {
-      if (!auth) {
-        throw new Error('Firebase is not configured.')
-      }
-
-      // Verify OTP
-      const result = await confirmationResult.confirm(otp)
-      const userCredential = result.user
-      const idToken = await userCredential.getIdToken()
-
-      // Send ID token to backend for verification and user creation/login
-      const response = await fetch(`${API_BASE_URL}/api/auth/phone/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          idToken,
-          phoneNumber: userCredential.phoneNumber
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Authentication failed')
-      }
-
-      const data = await response.json()
-
-      // Store token and user info
-      localStorage.setItem('kaam247_token', data.token)
-      localStorage.setItem('kaam247_user', JSON.stringify({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode,
-        profileSetupCompleted: data.user.profileSetupCompleted
-      }))
-
-      setUser({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode,
-        profileSetupCompleted: data.user.profileSetupCompleted
-      })
-      setIsAuthenticated(true)
-
-      // Capture location if available
-      try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          })
-        })
-
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
-
-        const location = {
-          lat,
-          lng
-        }
-
-        try {
-          const { area, city } = await reverseGeocode(lat, lng)
-          await persistUserLocation(lat, lng, area, city)
-        } catch {
-          await persistUserLocation(lat, lng, null, null)
-        }
-        
-        localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
-        window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
-      } catch (locationError) {
-        // Location capture failed - non-fatal
-      }
-
-      return {
-        success: true,
-        requiresProfileSetup: data.requiresProfileSetup || false,
-        user: data.user
-      }
-    } catch (error) {
-      console.error('Error verifying OTP:', error)
-      return {
-        success: false,
-        error: error.message || 'Failed to verify OTP. Please try again.'
-      }
-    }
-  }
-
   // Google Sign-In Authentication (using redirect instead of popup to avoid COOP issues)
   const loginWithGoogle = async () => {
     try {
@@ -510,11 +382,6 @@ export function AuthProvider({ children }) {
     // Clean up temporary user IDs
     localStorage.removeItem('kaam247_userId')
     localStorage.removeItem('kaam247_workerId')
-    // Clear Firebase reCAPTCHA if exists
-    if (window.recaptchaVerifier) {
-      window.recaptchaVerifier.clear()
-      window.recaptchaVerifier = null
-    }
   }
 
   return (
@@ -525,8 +392,6 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
-      loginWithPhone,
-      verifyPhoneOTP,
       loginWithGoogle,
       completeProfileSetup
     }}>

@@ -25,12 +25,12 @@ try {
         })
         console.log('✅ Firebase Admin SDK initialized from service account file')
     } else {
-        console.warn('⚠️  Firebase credentials not found. Phone OTP authentication will be disabled.')
+        console.warn('⚠️  Firebase credentials not found. Google authentication will be disabled.')
         console.warn('   Set FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL in .env')
     }
 } catch (error) {
     console.error('❌ Error initializing Firebase Admin SDK:', error.message)
-    console.warn('⚠️  Phone OTP authentication will be disabled.')
+    console.warn('⚠️  Google authentication will be disabled.')
 }
 
 module.exports = firebaseAdmin
