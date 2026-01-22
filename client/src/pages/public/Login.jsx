@@ -6,7 +6,7 @@ import GoogleSignIn from '../../components/GoogleSignIn'
 
 function Login() {
     const navigate = useNavigate()
-    const { login, isAuthenticated, user } = useAuth()
+    const { login, isAuthenticated, user, loading } = useAuth()
     const [showProfileSetup, setShowProfileSetup] = useState(false)
 
     // Handle Google sign-in success event
