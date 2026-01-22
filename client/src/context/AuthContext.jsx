@@ -20,12 +20,39 @@ export function AuthProvider({ children }) {
       // Check for Google redirect result FIRST (before checking existing tokens)
       if (auth && googleProvider) {
         try {
+          // Check URL for redirect indicators
+          const urlParams = new URLSearchParams(window.location.search)
+          const hasAuthParams = urlParams.has('apiKey') || urlParams.has('mode') || window.location.hash.includes('auth')
+          console.log('🔍 [AuthContext] Checking redirect result. URL params:', {
+            search: window.location.search,
+            hash: window.location.hash,
+            hasAuthParams
+          })
+          
+          // Wait a bit for Firebase to process the redirect
+          await new Promise(resolve => setTimeout(resolve, 100))
+          
           const result = await getRedirectResult(auth)
+          console.log('📋 [AuthContext] getRedirectResult returned:', result ? 'Result found' : 'No result')
+          if (result) {
+            console.log('✅ [AuthContext] Redirect result details:', {
+              user: result.user?.email,
+              providerId: result.providerId,
+              operationType: result.operationType
+            })
+          }
+          
           if (result) {
             redirectHandled = true
             // User just returned from Google sign-in redirect
             const userCredential = result.user
+            console.log('👤 [AuthContext] User credential from redirect:', {
+              uid: userCredential.uid,
+              email: userCredential.email,
+              displayName: userCredential.displayName
+            })
             const idToken = await userCredential.getIdToken()
+            console.log('🔑 [AuthContext] Got Firebase ID token (length:', idToken.length, ')')
 
             // Send ID token to backend
             const response = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
@@ -331,6 +358,13 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = async () => {
     try {
       console.log('🔵 [AuthContext] loginWithGoogle called')
+      console.log('🔍 [AuthContext] Firebase check:', {
+        hasAuth: !!auth,
+        hasGoogleProvider: !!googleProvider,
+        authDomain: auth?.config?.authDomain,
+        currentUrl: window.location.href
+      })
+      
       if (!auth || !googleProvider) {
         console.error('❌ [AuthContext] Firebase not configured')
         throw new Error('Firebase is not configured. Please contact support.')
@@ -343,6 +377,8 @@ export function AuthProvider({ children }) {
 
       // Sign in with Google redirect (works better with COOP policies)
       console.log('🔄 [AuthContext] Initiating signInWithRedirect...')
+      console.log('🔍 [AuthContext] Redirect will go to:', window.location.origin)
+      
       await signInWithRedirect(auth, googleProvider)
       
       // This function will return immediately - the actual auth happens after redirect
@@ -354,6 +390,11 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error('❌ [AuthContext] Error initiating Google sign-in:', error)
+      console.error('❌ [AuthContext] Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      })
       return {
         success: false,
         error: error.message || 'Failed to sign in with Google. Please try again.'
