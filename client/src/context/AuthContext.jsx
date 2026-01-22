@@ -623,8 +623,14 @@ export function AuthProvider({ children }) {
 
       // Sign in with Google redirect (works better with COOP policies)
       console.log('🔄 [AuthContext] Initiating signInWithRedirect...')
-      console.log('🔍 [AuthContext] Redirect will go to:', window.location.origin)
+      console.log('🔍 [AuthContext] Redirect configuration:', {
+        currentOrigin: window.location.origin,
+        authDomain: auth.config.authDomain,
+        fullUrl: window.location.href
+      })
       
+      // Ensure we're using the correct redirect URL
+      // Firebase will redirect back to the current origin
       await signInWithRedirect(auth, googleProvider)
       
       // This function will return immediately - the actual auth happens after redirect

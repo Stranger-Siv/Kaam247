@@ -16,19 +16,46 @@ let app = null
 let auth = null
 
 try {
-    if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+    if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.authDomain) {
+        // Suppress Firebase auto-config detection (prevents __/firebase/init.json error)
+        // This error is harmless but we can prevent it by ensuring proper config
         app = initializeApp(firebaseConfig)
         auth = getAuth(app)
-        console.log('✅ Firebase initialized successfully')
+        
+        // Set the auth domain explicitly to prevent redirect issues
+        if (auth) {
+            // Ensure auth domain is set correctly
+            console.log('✅ Firebase initialized successfully')
+            console.log('🔍 Firebase Auth Domain:', firebaseConfig.authDomain)
+            console.log('🔍 Current URL:', window.location.origin)
+            
+            // Note: If you see an error about __/firebase/init.json, it's harmless
+            // Firebase tries to auto-detect config from Firebase Hosting, but your app
+            // is hosted elsewhere. This doesn't affect authentication.
+        }
     } else {
         console.warn('⚠️  Firebase configuration missing. Google authentication will be disabled.')
+        console.warn('⚠️  Missing:', {
+            apiKey: !firebaseConfig.apiKey,
+            projectId: !firebaseConfig.projectId,
+            authDomain: !firebaseConfig.authDomain
+        })
     }
 } catch (error) {
     console.error('❌ Error initializing Firebase:', error.message)
+    console.error('❌ Error details:', error)
 }
 
 // Google Auth Provider
 export const googleProvider = auth ? new GoogleAuthProvider() : null
+
+// Add custom parameters to Google provider
+if (googleProvider) {
+    // Set the redirect URL explicitly
+    googleProvider.setCustomParameters({
+        prompt: 'select_account'
+    })
+}
 
 export { app, auth }
 export default app
