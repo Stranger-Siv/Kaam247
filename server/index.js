@@ -1,6 +1,7 @@
 const express = require('express')
 const http = require('http')
 const cors = require('cors')
+const cookieParser = require('cookie-parser')
 require('dotenv').config({ silent: true })
 const connectDB = require('./config/db')
 // Initialize Firebase Admin SDK
@@ -43,12 +44,14 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'))
     }
   },
-  credentials: true,
+  credentials: true, // Required for cookies in cross-origin requests
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Set-Cookie'] // Expose Set-Cookie header
 }
 app.use(cors(corsOptions))
 app.use(express.json())
+app.use(cookieParser())
 
 // Request logging middleware (only log in development)
 if (process.env.NODE_ENV !== 'production') {

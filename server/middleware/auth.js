@@ -4,16 +4,23 @@ const User = require('../models/User')
 // Middleware to verify JWT token
 const authenticate = async (req, res, next) => {
   try {
-    // Get token from Authorization header
-    const authHeader = req.headers.authorization
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Get token from cookie first, then fall back to Authorization header
+    let token = req.cookies?.token || null
+    
+    // If no cookie, check Authorization header (for backward compatibility)
+    if (!token) {
+      const authHeader = req.headers.authorization
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7) // Remove 'Bearer ' prefix
+      }
+    }
+    
+    if (!token) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'No token provided. Please login first.'
       })
     }
-
-    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'kaam247_secret_key_change_in_production')

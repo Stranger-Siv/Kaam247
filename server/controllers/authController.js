@@ -64,10 +64,18 @@ const register = async (req, res) => {
     // Generate token
     const token = generateToken(savedUser._id)
 
+    // Set JWT token in HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true, // Only send over HTTPS
+      sameSite: 'none', // Required for cross-origin requests
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    })
+
     // Return user data (without password) and token
     return res.status(201).json({
       message: 'User registered successfully',
-      token,
+      token, // Also return in response for backward compatibility
       user: {
         _id: savedUser._id,
         id: savedUser._id,
@@ -158,10 +166,18 @@ const login = async (req, res) => {
     // Generate token
     const token = generateToken(user._id)
 
+    // Set JWT token in HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true, // Only send over HTTPS
+      sameSite: 'none', // Required for cross-origin requests
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    })
+
     // Return user data (without password) and token
     return res.status(200).json({
       message: 'Login successful',
-      token,
+      token, // Also return in response for backward compatibility
       user: {
         _id: user._id,
         id: user._id,
@@ -235,9 +251,17 @@ const completeProfileSetup = async (req, res) => {
     // Generate new token with updated user info
     const token = generateToken(user._id)
 
+    // Set JWT token in HTTP-only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true, // Only send over HTTPS
+      sameSite: 'none', // Required for cross-origin requests
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    })
+
     return res.status(200).json({
       message: 'Profile setup completed successfully',
-      token,
+      token, // Also return in response for backward compatibility
       user: {
         _id: user._id,
         id: user._id,
@@ -378,9 +402,17 @@ const verifyGoogleAuth = async (req, res) => {
       // Generate JWT token
       const token = generateToken(user._id)
 
+      // Set JWT token in HTTP-only cookie
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: true, // Only send over HTTPS
+        sameSite: 'none', // Required for cross-origin requests
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      })
+
       return res.status(200).json({
         message: 'Login successful',
-        token,
+        token, // Also return in response for backward compatibility
         user: {
           _id: user._id,
           id: user._id,
@@ -401,9 +433,18 @@ const verifyGoogleAuth = async (req, res) => {
       if (existingGoogleUser) {
         // This user already exists with this Google ID - log them in instead
         const token = generateToken(existingGoogleUser._id)
+        
+        // Set JWT token in HTTP-only cookie
+        res.cookie('token', token, {
+          httpOnly: true,
+          secure: true, // Only send over HTTPS
+          sameSite: 'none', // Required for cross-origin requests
+          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        })
+        
         return res.status(200).json({
           message: 'Login successful',
-          token,
+          token, // Also return in response for backward compatibility
           user: {
             _id: existingGoogleUser._id,
             id: existingGoogleUser._id,
@@ -438,9 +479,17 @@ const verifyGoogleAuth = async (req, res) => {
         // Generate JWT token
         const token = generateToken(savedUser._id)
 
+        // Set JWT token in HTTP-only cookie
+        res.cookie('token', token, {
+          httpOnly: true,
+          secure: true, // Only send over HTTPS
+          sameSite: 'none', // Required for cross-origin requests
+          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        })
+
         return res.status(201).json({
           message: 'Account created successfully.',
-          token,
+          token, // Also return in response for backward compatibility
           user: {
             _id: savedUser._id,
             id: savedUser._id,
@@ -462,9 +511,18 @@ const verifyGoogleAuth = async (req, res) => {
             const existingUser = await User.findOne({ googleId })
             if (existingUser) {
               const token = generateToken(existingUser._id)
+              
+              // Set JWT token in HTTP-only cookie
+              res.cookie('token', token, {
+                httpOnly: true,
+                secure: true, // Only send over HTTPS
+                sameSite: 'none', // Required for cross-origin requests
+                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+              })
+              
               return res.status(200).json({
                 message: 'Login successful',
-                token,
+                token, // Also return in response for backward compatibility
                 user: {
                   _id: existingUser._id,
                   id: existingUser._id,
@@ -507,9 +565,32 @@ const verifyGoogleAuth = async (req, res) => {
   }
 }
 
+// Logout user - clear cookie
+const logout = async (req, res) => {
+  try {
+    // Clear the token cookie
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
+    })
+    
+    return res.status(200).json({
+      message: 'Logout successful'
+    })
+  } catch (error) {
+    console.error('Error logging out user:', error)
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while logging out'
+    })
+  }
+}
+
 module.exports = {
   register,
   login,
+  logout,
   verifyGoogleAuth,
   completeProfileSetup
 }

@@ -60,6 +60,7 @@ export function AuthProvider({ children }) {
                 headers: {
                   'Content-Type': 'application/json'
                 },
+                credentials: 'include', // Send cookies with cross-origin requests
                 body: JSON.stringify({
                   idToken
                 })
@@ -248,6 +249,7 @@ export function AuthProvider({ children }) {
                   headers: {
                     'Content-Type': 'application/json'
                   },
+                  credentials: 'include', // Send cookies with cross-origin requests
                   body: JSON.stringify({
                     idToken
                   })
@@ -367,6 +369,7 @@ export function AuthProvider({ children }) {
             headers: {
               'Content-Type': 'application/json'
             },
+            credentials: 'include', // Send cookies with cross-origin requests
             body: JSON.stringify({
               idToken
             })
@@ -438,6 +441,7 @@ export function AuthProvider({ children }) {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // Send cookies with cross-origin requests
         body: JSON.stringify({
           identifier, // email or phone
           password
@@ -519,6 +523,7 @@ export function AuthProvider({ children }) {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // Send cookies with cross-origin requests
         body: JSON.stringify({
           name,
           email,
@@ -657,6 +662,7 @@ export function AuthProvider({ children }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
+        credentials: 'include', // Send cookies with cross-origin requests
         body: JSON.stringify({
           name,
           email
@@ -700,7 +706,17 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // Call backend logout endpoint to clear cookie
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include' // Send cookies with cross-origin requests
+      })
+    } catch (error) {
+      console.error('Error calling logout endpoint:', error)
+    }
+    
     setIsAuthenticated(false)
     setUser(null)
     localStorage.removeItem('kaam247_token')

@@ -18,7 +18,8 @@ export async function safeFetch(endpoint, options = {}) {
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers: defaultHeaders
+      headers: defaultHeaders,
+      credentials: 'include' // Send cookies with cross-origin requests
     })
 
     // Handle network errors
