@@ -3,10 +3,10 @@ import { createContext, useContext, useState, useEffect } from 'react'
 const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
-  // Check localStorage for saved theme preference, default to 'light'
+  // Check localStorage for saved theme preference, default to 'dark'
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('kaam247_theme')
-    return savedTheme || 'light'
+    return savedTheme || 'dark'
   })
 
   useEffect(() => {

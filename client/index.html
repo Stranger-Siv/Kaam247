@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 
 <head>
   <meta charset="UTF-8" />
@@ -11,6 +11,17 @@
   <!-- This prevents the "Look for and connect to any device on your local network" prompt -->
   <meta http-equiv="Permissions-Policy" content="local-network-access=()" />
   <title>Kaam247 - Hyperlocal Task Marketplace</title>
+  <!-- Apply theme immediately to prevent flash -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('kaam247_theme') || 'dark';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    })();
+  </script>
   <!-- Unregister service worker in development immediately -->
   <script>
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
