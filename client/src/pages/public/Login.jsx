@@ -53,11 +53,14 @@ function Login() {
 
     // Redirect if already authenticated (check both state and localStorage as fallback)
     useEffect(() => {
+        // Don't redirect if we're still loading or showing profile setup
+        if (showProfileSetup) return
+        
         const token = localStorage.getItem('kaam247_token')
         const userInfo = localStorage.getItem('kaam247_user')
         
-        // Only navigate if we have authentication AND we're not showing profile setup
-        if ((isAuthenticated || token) && !showProfileSetup) {
+        // Only navigate if we have authentication
+        if (isAuthenticated || token) {
             if (userInfo) {
                 try {
                     const parsedUser = JSON.parse(userInfo)

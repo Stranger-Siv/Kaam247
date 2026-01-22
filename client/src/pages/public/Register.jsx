@@ -5,7 +5,7 @@ import GoogleSignIn from '../../components/GoogleSignIn'
 
 function Register() {
     const navigate = useNavigate()
-    const { register, isAuthenticated } = useAuth()
+    const { register, isAuthenticated, loading } = useAuth()
 
     // Handle Google sign-in success event
     useEffect(() => {
@@ -45,10 +45,12 @@ function Register() {
 
     // Redirect if already authenticated (check both state and localStorage as fallback)
     useEffect(() => {
+        if (loading) return
+        
         const token = localStorage.getItem('kaam247_token')
         const userInfo = localStorage.getItem('kaam247_user')
         
-        if (isAuthenticated || token) {
+        if (isAuthenticated || (token && userInfo)) {
             if (userInfo) {
                 try {
                     const parsedUser = JSON.parse(userInfo)
@@ -65,7 +67,7 @@ function Register() {
                 navigate('/dashboard', { replace: true })
             }
         }
-    }, [isAuthenticated, navigate])
+    }, [isAuthenticated, loading, navigate])
 
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)

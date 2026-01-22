@@ -15,11 +15,14 @@ export function AuthProvider({ children }) {
   // Check localStorage on mount for existing token
   useEffect(() => {
     const initializeAuth = async () => {
-      // Check for Google redirect result
+      let redirectHandled = false
+      
+      // Check for Google redirect result FIRST (before checking existing tokens)
       if (auth && googleProvider) {
         try {
           const result = await getRedirectResult(auth)
           if (result) {
+            redirectHandled = true
             // User just returned from Google sign-in redirect
             const userCredential = result.user
             const idToken = await userCredential.getIdToken()
@@ -59,12 +62,12 @@ export function AuthProvider({ children }) {
               })
               setIsAuthenticated(true)
 
-              // Capture location if available
+              // Capture location if available (non-blocking)
               try {
                 const position = await new Promise((resolve, reject) => {
                   navigator.geolocation.getCurrentPosition(resolve, reject, {
                     enableHighAccuracy: true,
-                    timeout: 10000,
+                    timeout: 5000,
                     maximumAge: 0
                   })
                 })
@@ -83,11 +86,10 @@ export function AuthProvider({ children }) {
                 localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
                 window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
               } catch (locationError) {
-                // Location capture failed - non-fatal
+                // Location capture failed - non-fatal, continue
               }
 
-              // Trigger navigation event - components will handle navigation
-              // Use setTimeout to ensure state is updated before event fires
+              // Trigger navigation event AFTER state is set
               setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
                   detail: { 
@@ -95,7 +97,11 @@ export function AuthProvider({ children }) {
                     user: data.user 
                   } 
                 }))
-              }, 100)
+              }, 200)
+              
+              // Set loading to false AFTER authentication is complete
+              setLoading(false)
+              return
             } else {
               // Handle error response
               const errorData = await response.json().catch(() => ({ message: 'Authentication failed' }))
@@ -105,28 +111,34 @@ export function AuthProvider({ children }) {
                   error: errorData.message || 'Failed to authenticate with Google'
                 } 
               }))
+              setLoading(false)
+              return
             }
           }
         } catch (error) {
           console.error('Error handling redirect result:', error)
+          // Continue to check for existing tokens even if redirect fails
         }
       }
 
-      // Check for existing token
-      const token = localStorage.getItem('kaam247_token')
-      const userInfo = localStorage.getItem('kaam247_user')
+      // Only check for existing token if redirect was not handled
+      if (!redirectHandled) {
+        const token = localStorage.getItem('kaam247_token')
+        const userInfo = localStorage.getItem('kaam247_user')
 
-      if (token && userInfo) {
-        try {
-          const parsedUser = JSON.parse(userInfo)
-          setUser(parsedUser)
-          setIsAuthenticated(true)
-        } catch (error) {
-          // Clear invalid data
-          localStorage.removeItem('kaam247_token')
-          localStorage.removeItem('kaam247_user')
+        if (token && userInfo) {
+          try {
+            const parsedUser = JSON.parse(userInfo)
+            setUser(parsedUser)
+            setIsAuthenticated(true)
+          } catch (error) {
+            // Clear invalid data
+            localStorage.removeItem('kaam247_token')
+            localStorage.removeItem('kaam247_user')
+          }
         }
       }
+      
       setLoading(false)
     }
 

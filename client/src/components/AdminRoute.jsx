@@ -12,12 +12,27 @@ function AdminRoute({ children }) {
         )
     }
 
-    if (!isAuthenticated) {
+    // Check both state and localStorage as fallback (for Google redirect cases)
+    const token = localStorage.getItem('kaam247_token')
+    const userInfo = localStorage.getItem('kaam247_user')
+    const hasAuth = isAuthenticated || (token && userInfo)
+    
+    // Parse user from localStorage if state doesn't have it yet
+    let currentUser = user
+    if (!currentUser && userInfo) {
+        try {
+            currentUser = JSON.parse(userInfo)
+        } catch {
+            // Invalid user info
+        }
+    }
+
+    if (!hasAuth) {
         return <Navigate to="/" replace />
     }
 
     // Check if user is admin
-    if (user?.role !== 'admin') {
+    if (currentUser?.role !== 'admin') {
         return <Navigate to="/dashboard" replace />
     }
 
