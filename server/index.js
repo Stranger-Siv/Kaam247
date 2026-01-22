@@ -3,6 +3,8 @@ const http = require('http')
 const cors = require('cors')
 require('dotenv').config({ silent: true })
 const connectDB = require('./config/db')
+// Initialize Firebase Admin SDK
+require('./config/firebase')
 const taskRoutes = require('./routes/taskRoutes')
 const userRoutes = require('./routes/userRoutes')
 const authRoutes = require('./routes/authRoutes')

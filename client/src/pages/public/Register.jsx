@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import GoogleSignIn from '../../components/GoogleSignIn'
 
 function Register() {
     const navigate = useNavigate()
@@ -157,6 +158,42 @@ function Register() {
                                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                                     Create Account
                                 </h1>
+                            </div>
+                        </div>
+
+                        {/* Google Sign-In Button */}
+                        <div className="mb-6">
+                            <GoogleSignIn
+                                onSuccess={(result) => {
+                                    const userInfo = localStorage.getItem('kaam247_user')
+                                    if (userInfo) {
+                                        try {
+                                            const parsedUser = JSON.parse(userInfo)
+                                            if (parsedUser.role === 'admin') {
+                                                navigate('/admin')
+                                            } else {
+                                                navigate('/dashboard')
+                                            }
+                                        } catch {
+                                            navigate('/dashboard')
+                                        }
+                                    } else {
+                                        navigate('/dashboard')
+                                    }
+                                }}
+                                onError={(error) => setError(error)}
+                            />
+                        </div>
+
+                        {/* Divider */}
+                        <div className="relative mb-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                    Or create account with
+                                </span>
                             </div>
                         </div>
 

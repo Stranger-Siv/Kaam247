@@ -7,22 +7,50 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
+        required: false, // Optional for Firebase phone auth users
         unique: true,
+        sparse: true, // Allows multiple null values
         lowercase: true,
         trim: true
     },
     phone: {
         type: String,
-        required: true,
+        required: false, // Optional for Google auth users
         unique: true,
+        sparse: true, // Allows multiple null values
         trim: true
     },
     password: {
         type: String,
-        required: true,
+        required: false, // Optional for Firebase phone auth users
         select: false,
         description: 'hashed password only'
+    },
+    firebaseUID: {
+        type: String,
+        required: false,
+        unique: true,
+        sparse: true,
+        trim: true,
+        description: 'Firebase Authentication UID for phone OTP users'
+    },
+    googleId: {
+        type: String,
+        required: false,
+        unique: true,
+        sparse: true,
+        trim: true,
+        description: 'Google OAuth ID for Google sign-in users'
+    },
+    phoneVerified: {
+        type: Boolean,
+        default: false,
+        description: 'Whether phone number is verified via Firebase'
+    },
+    profileSetupCompleted: {
+        type: Boolean,
+        default: false,
+        description: 'Whether user has completed initial profile setup after Firebase auth'
     },
     location: {
         type: {

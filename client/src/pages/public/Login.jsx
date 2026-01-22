@@ -1,10 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import PhoneLogin from '../../components/PhoneLogin'
+import ProfileSetup from '../../components/ProfileSetup'
+import GoogleSignIn from '../../components/GoogleSignIn'
 
 function Login() {
     const navigate = useNavigate()
-    const { login, isAuthenticated } = useAuth()
+    const { login, isAuthenticated, user } = useAuth()
+    const [loginMethod, setLoginMethod] = useState('phone') // 'phone' or 'email'
+    const [showProfileSetup, setShowProfileSetup] = useState(false)
 
     // Redirect if already authenticated
     useEffect(() => {
@@ -73,6 +78,33 @@ function Login() {
         }
 
         setIsLoading(false)
+    }
+
+    // Show profile setup if needed
+    if (showProfileSetup) {
+        return (
+            <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16 w-full overflow-x-hidden">
+                <ProfileSetup
+                    onComplete={() => {
+                        const userInfo = localStorage.getItem('kaam247_user')
+                        if (userInfo) {
+                            try {
+                                const parsedUser = JSON.parse(userInfo)
+                                if (parsedUser.role === 'admin') {
+                                    navigate('/admin')
+                                } else {
+                                    navigate('/dashboard')
+                                }
+                            } catch {
+                                navigate('/dashboard')
+                            }
+                        } else {
+                            navigate('/dashboard')
+                        }
+                    }}
+                />
+            </div>
+        )
     }
 
     return (
@@ -148,7 +180,101 @@ function Login() {
                             </div>
                         </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Google Sign-In Button */}
+                        <div className="mb-6">
+                            <GoogleSignIn
+                                onSuccess={(result) => {
+                                    if (result.requiresProfileSetup) {
+                                        setShowProfileSetup(true)
+                                    } else {
+                                        const userInfo = localStorage.getItem('kaam247_user')
+                                        if (userInfo) {
+                                            try {
+                                                const parsedUser = JSON.parse(userInfo)
+                                                if (parsedUser.role === 'admin') {
+                                                    navigate('/admin')
+                                                } else {
+                                                    navigate('/dashboard')
+                                                }
+                                            } catch {
+                                                navigate('/dashboard')
+                                            }
+                                        } else {
+                                            navigate('/dashboard')
+                                        }
+                                    }
+                                }}
+                                onError={(error) => setError(error)}
+                            />
+                        </div>
+
+                        {/* Divider */}
+                        <div className="relative mb-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                                    Or continue with
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Login Method Tabs */}
+                        <div className="flex gap-2 mb-6 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                            <button
+                                type="button"
+                                onClick={() => setLoginMethod('phone')}
+                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                                    loginMethod === 'phone'
+                                        ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                                }`}
+                            >
+                                Phone OTP
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLoginMethod('email')}
+                                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                                    loginMethod === 'email'
+                                        ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm'
+                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                                }`}
+                            >
+                                Email/Password
+                            </button>
+                        </div>
+
+                        {/* Phone OTP Login */}
+                        {loginMethod === 'phone' ? (
+                            <PhoneLogin
+                                onSuccess={(result) => {
+                                    if (result.requiresProfileSetup) {
+                                        setShowProfileSetup(true)
+                                    } else {
+                                        const userInfo = localStorage.getItem('kaam247_user')
+                                        if (userInfo) {
+                                            try {
+                                                const parsedUser = JSON.parse(userInfo)
+                                                if (parsedUser.role === 'admin') {
+                                                    navigate('/admin')
+                                                } else {
+                                                    navigate('/dashboard')
+                                                }
+                                            } catch {
+                                                navigate('/dashboard')
+                                            }
+                                        } else {
+                                            navigate('/dashboard')
+                                        }
+                                    }
+                                }}
+                                onCancel={() => setLoginMethod('email')}
+                            />
+                        ) : (
+                            /* Email/Password Login */
+                            <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Email / Phone
@@ -202,6 +328,7 @@ function Login() {
                         )}
                     </button>
                 </form>
+                        )}
 
                         <div className="mt-6 text-center">
                             <p className="text-sm text-gray-600 dark:text-gray-400">
