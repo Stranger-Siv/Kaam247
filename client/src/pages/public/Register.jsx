@@ -7,10 +7,48 @@ function Register() {
     const navigate = useNavigate()
     const { register, isAuthenticated } = useAuth()
 
-    // Redirect if already authenticated
+    // Handle Google sign-in success event
     useEffect(() => {
-        if (isAuthenticated) {
-            const userInfo = localStorage.getItem('kaam247_user')
+        const handleGoogleSignInSuccess = (event) => {
+            // Small delay to ensure state is updated
+            setTimeout(() => {
+                const userInfo = localStorage.getItem('kaam247_user')
+                if (userInfo) {
+                    try {
+                        const parsedUser = JSON.parse(userInfo)
+                        if (parsedUser.role === 'admin') {
+                            navigate('/admin', { replace: true })
+                        } else {
+                            navigate('/dashboard', { replace: true })
+                        }
+                    } catch {
+                        navigate('/dashboard', { replace: true })
+                    }
+                } else {
+                    navigate('/dashboard', { replace: true })
+                }
+            }, 100)
+        }
+
+        const handleGoogleSignInError = (event) => {
+            const { error } = event.detail || {}
+            setError(error || 'Failed to sign in with Google')
+        }
+
+        window.addEventListener('googleSignInSuccess', handleGoogleSignInSuccess)
+        window.addEventListener('googleSignInError', handleGoogleSignInError)
+        return () => {
+            window.removeEventListener('googleSignInSuccess', handleGoogleSignInSuccess)
+            window.removeEventListener('googleSignInError', handleGoogleSignInError)
+        }
+    }, [navigate])
+
+    // Redirect if already authenticated (check both state and localStorage as fallback)
+    useEffect(() => {
+        const token = localStorage.getItem('kaam247_token')
+        const userInfo = localStorage.getItem('kaam247_user')
+        
+        if (isAuthenticated || token) {
             if (userInfo) {
                 try {
                     const parsedUser = JSON.parse(userInfo)
@@ -22,7 +60,8 @@ function Register() {
                 } catch {
                     navigate('/dashboard', { replace: true })
                 }
-            } else {
+            } else if (token) {
+                // Has token but no user info - navigate anyway
                 navigate('/dashboard', { replace: true })
             }
         }

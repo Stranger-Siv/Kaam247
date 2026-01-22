@@ -87,11 +87,22 @@ export function AuthProvider({ children }) {
               }
 
               // Trigger navigation event - components will handle navigation
-              // The Login/Register component's useEffect will detect isAuthenticated and navigate
-              window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
+              // Use setTimeout to ensure state is updated before event fires
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
+                  detail: { 
+                    requiresProfileSetup: data.requiresProfileSetup || false,
+                    user: data.user 
+                  } 
+                }))
+              }, 100)
+            } else {
+              // Handle error response
+              const errorData = await response.json().catch(() => ({ message: 'Authentication failed' }))
+              console.error('Google authentication failed:', errorData)
+              window.dispatchEvent(new CustomEvent('googleSignInError', { 
                 detail: { 
-                  requiresProfileSetup: data.requiresProfileSetup,
-                  user: data.user 
+                  error: errorData.message || 'Failed to authenticate with Google'
                 } 
               }))
             }
