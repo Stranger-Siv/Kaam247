@@ -3,7 +3,7 @@ import { API_BASE_URL } from '../config/env'
 import { persistUserLocation } from '../utils/locationPersistence'
 import { reverseGeocode } from '../utils/geocoding'
 import { auth, googleProvider } from '../config/firebase'
-import { signInWithRedirect, getRedirectResult, onAuthStateChanged } from 'firebase/auth'
+import { signInWithRedirect, getRedirectResult, onAuthStateChanged, authStateReady } from 'firebase/auth'
 
 const AuthContext = createContext()
 
@@ -20,17 +20,91 @@ export function AuthProvider({ children }) {
       // Check for Google redirect result FIRST (before checking existing tokens)
       if (auth && googleProvider) {
         try {
+          // Wait for auth state to be ready
+          console.log('⏳ [AuthContext] Waiting for auth state to be ready...')
+          await authStateReady(auth)
+          console.log('✅ [AuthContext] Auth state is ready')
+          
           // Check URL for redirect indicators
           const urlParams = new URLSearchParams(window.location.search)
-          const hasAuthParams = urlParams.has('apiKey') || urlParams.has('mode') || window.location.hash.includes('auth')
+          const hasAuthParams = urlParams.has('apiKey') || urlParams.has('mode') || urlParams.has('__firebase_request_key') || window.location.hash.includes('auth')
           console.log('🔍 [AuthContext] Checking redirect result. URL params:', {
             search: window.location.search,
             hash: window.location.hash,
-            hasAuthParams
+            hasAuthParams,
+            fullUrl: window.location.href
           })
           
+          // Check current user first
+          console.log('👤 [AuthContext] Checking auth.currentUser:', auth.currentUser ? {
+            email: auth.currentUser.email,
+            uid: auth.currentUser.uid
+          } : 'null')
+          
+          // If user is already signed in to Firebase, verify with backend
+          if (auth.currentUser && !isAuthenticated) {
+            console.log('✅ [AuthContext] Found Firebase currentUser, verifying with backend...')
+            try {
+              const idToken = await auth.currentUser.getIdToken()
+              console.log('🔑 [AuthContext] Got ID token from currentUser')
+              
+              const response = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  idToken
+                })
+              })
+              
+              console.log('📡 [AuthContext] Backend response status (from currentUser):', response.status)
+              
+              if (response.ok) {
+                const data = await response.json()
+                console.log('✅ [AuthContext] Backend verification successful via currentUser')
+                
+                localStorage.setItem('kaam247_token', data.token)
+                localStorage.setItem('kaam247_user', JSON.stringify({
+                  id: data.user._id || data.user.id,
+                  name: data.user.name,
+                  email: data.user.email,
+                  phone: data.user.phone,
+                  role: data.user.role || data.user.roleMode,
+                  profilePhoto: data.user.profilePhoto,
+                  profileSetupCompleted: data.user.profileSetupCompleted
+                }))
+                
+                setUser({
+                  id: data.user._id || data.user.id,
+                  name: data.user.name,
+                  email: data.user.email,
+                  phone: data.user.phone,
+                  role: data.user.role || data.user.roleMode,
+                  profilePhoto: data.user.profilePhoto,
+                  profileSetupCompleted: data.user.profileSetupCompleted
+                })
+                setIsAuthenticated(true)
+                
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
+                    detail: { 
+                      requiresProfileSetup: data.requiresProfileSetup || false,
+                      user: data.user 
+                    } 
+                  }))
+                }, 200)
+                
+                setLoading(false)
+                return
+              }
+            } catch (error) {
+              console.error('❌ [AuthContext] Error verifying currentUser:', error)
+            }
+          }
+          
           // Wait a bit for Firebase to process the redirect
-          await new Promise(resolve => setTimeout(resolve, 100))
+          await new Promise(resolve => setTimeout(resolve, 500))
           
           const result = await getRedirectResult(auth)
           console.log('📋 [AuthContext] getRedirectResult returned:', result ? 'Result found' : 'No result')
