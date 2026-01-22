@@ -3,7 +3,7 @@ import { API_BASE_URL } from '../config/env'
 import { persistUserLocation } from '../utils/locationPersistence'
 import { reverseGeocode } from '../utils/geocoding'
 import { auth, initializeRecaptcha, googleProvider } from '../config/firebase'
-import { signInWithPhoneNumber, PhoneAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth'
+import { signInWithPhoneNumber, PhoneAuthProvider, signInWithCredential, signInWithRedirect, getRedirectResult } from 'firebase/auth'
 
 const AuthContext = createContext()
 
@@ -14,22 +14,112 @@ export function AuthProvider({ children }) {
 
   // Check localStorage on mount for existing token
   useEffect(() => {
-    const token = localStorage.getItem('kaam247_token')
-    const userInfo = localStorage.getItem('kaam247_user')
+    const initializeAuth = async () => {
+      // Check for Google redirect result
+      if (auth && googleProvider) {
+        try {
+          const result = await getRedirectResult(auth)
+          if (result) {
+            // User just returned from Google sign-in redirect
+            const userCredential = result.user
+            const idToken = await userCredential.getIdToken()
 
-    if (token && userInfo) {
-      try {
-        const parsedUser = JSON.parse(userInfo)
-        setUser(parsedUser)
-        setIsAuthenticated(true)
-      } catch (error) {
-        // console.error('Error parsing user info:', error)
-        // Clear invalid data
-        localStorage.removeItem('kaam247_token')
-        localStorage.removeItem('kaam247_user')
+            // Send ID token to backend
+            const response = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                idToken
+              })
+            })
+
+            if (response.ok) {
+              const data = await response.json()
+              localStorage.setItem('kaam247_token', data.token)
+              localStorage.setItem('kaam247_user', JSON.stringify({
+                id: data.user._id || data.user.id,
+                name: data.user.name,
+                email: data.user.email,
+                phone: data.user.phone,
+                role: data.user.role || data.user.roleMode,
+                profilePhoto: data.user.profilePhoto,
+                profileSetupCompleted: data.user.profileSetupCompleted
+              }))
+
+              setUser({
+                id: data.user._id || data.user.id,
+                name: data.user.name,
+                email: data.user.email,
+                phone: data.user.phone,
+                role: data.user.role || data.user.roleMode,
+                profilePhoto: data.user.profilePhoto,
+                profileSetupCompleted: data.user.profileSetupCompleted
+              })
+              setIsAuthenticated(true)
+
+              // Capture location if available
+              try {
+                const position = await new Promise((resolve, reject) => {
+                  navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                  })
+                })
+
+                const lat = position.coords.latitude
+                const lng = position.coords.longitude
+                const location = { lat, lng }
+
+                try {
+                  const { area, city } = await reverseGeocode(lat, lng)
+                  await persistUserLocation(lat, lng, area, city)
+                } catch {
+                  await persistUserLocation(lat, lng, null, null)
+                }
+                
+                localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
+                window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
+              } catch (locationError) {
+                // Location capture failed - non-fatal
+              }
+
+              // Trigger navigation event - components will handle navigation
+              // The Login/Register component's useEffect will detect isAuthenticated and navigate
+              window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
+                detail: { 
+                  requiresProfileSetup: data.requiresProfileSetup,
+                  user: data.user 
+                } 
+              }))
+            }
+          }
+        } catch (error) {
+          console.error('Error handling redirect result:', error)
+        }
       }
+
+      // Check for existing token
+      const token = localStorage.getItem('kaam247_token')
+      const userInfo = localStorage.getItem('kaam247_user')
+
+      if (token && userInfo) {
+        try {
+          const parsedUser = JSON.parse(userInfo)
+          setUser(parsedUser)
+          setIsAuthenticated(true)
+        } catch (error) {
+          // Clear invalid data
+          localStorage.removeItem('kaam247_token')
+          localStorage.removeItem('kaam247_user')
+        }
+      }
+      setLoading(false)
     }
-    setLoading(false)
+
+    initializeAuth()
   }, [])
 
   const login = async (identifier, password) => {
@@ -324,97 +414,28 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Google Sign-In Authentication
+  // Google Sign-In Authentication (using redirect instead of popup to avoid COOP issues)
   const loginWithGoogle = async () => {
     try {
       if (!auth || !googleProvider) {
         throw new Error('Firebase is not configured. Please contact support.')
       }
 
-      // Sign in with Google popup
-      const result = await signInWithPopup(auth, googleProvider)
-      const userCredential = result.user
-      const idToken = await userCredential.getIdToken()
+      // Store current URL to redirect back after Google sign-in
+      const currentPath = window.location.pathname + window.location.search
+      sessionStorage.setItem('googleSignInRedirect', currentPath)
 
-      // Send ID token to backend for verification and user creation/login
-      const response = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          idToken
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Authentication failed')
-      }
-
-      const data = await response.json()
-
-      // Store token and user info
-      localStorage.setItem('kaam247_token', data.token)
-      localStorage.setItem('kaam247_user', JSON.stringify({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode,
-        profilePhoto: data.user.profilePhoto,
-        profileSetupCompleted: data.user.profileSetupCompleted
-      }))
-
-      setUser({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode,
-        profilePhoto: data.user.profilePhoto,
-        profileSetupCompleted: data.user.profileSetupCompleted
-      })
-      setIsAuthenticated(true)
-
-      // Capture location if available
-      try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          })
-        })
-
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
-
-        const location = {
-          lat,
-          lng
-        }
-
-        try {
-          const { area, city } = await reverseGeocode(lat, lng)
-          await persistUserLocation(lat, lng, area, city)
-        } catch {
-          await persistUserLocation(lat, lng, null, null)
-        }
-        
-        localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
-        window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
-      } catch (locationError) {
-        // Location capture failed - non-fatal
-      }
-
+      // Sign in with Google redirect (works better with COOP policies)
+      await signInWithRedirect(auth, googleProvider)
+      
+      // This function will return immediately - the actual auth happens after redirect
+      // The redirect result will be handled in the useEffect hook above
       return {
         success: true,
-        requiresProfileSetup: data.requiresProfileSetup || false,
-        user: data.user
+        redirecting: true
       }
     } catch (error) {
-      console.error('Error with Google sign-in:', error)
+      console.error('Error initiating Google sign-in:', error)
       return {
         success: false,
         error: error.message || 'Failed to sign in with Google. Please try again.'

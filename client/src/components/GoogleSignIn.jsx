@@ -12,20 +12,26 @@ function GoogleSignIn({ onSuccess, onError }) {
             const result = await loginWithGoogle()
             
             if (result.success) {
-                if (onSuccess) {
+                if (result.redirecting) {
+                    // User is being redirected to Google - show message
+                    // The redirect will happen automatically
+                    // onSuccess will be called after redirect when user returns
+                } else if (onSuccess) {
                     onSuccess(result)
                 }
             } else {
+                setIsLoading(false)
                 if (onError) {
                     onError(result.error)
                 }
             }
+            // Note: If redirecting, setIsLoading(false) won't be called
+            // because the page will redirect to Google
         } catch (error) {
+            setIsLoading(false)
             if (onError) {
                 onError(error.message || 'Failed to sign in with Google')
             }
-        } finally {
-            setIsLoading(false)
         }
     }
 

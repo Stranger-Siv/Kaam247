@@ -439,25 +439,68 @@ const verifyGoogleAuth = async (req, res) => {
     const name = decodedToken.name || decodedToken.email?.split('@')[0] || 'User'
     const profilePhoto = decodedToken.picture || null
 
-    // Check if user already exists (by Google ID or email)
-    let user = await User.findOne({
-      $or: [
-        { googleId },
-        { email: email?.toLowerCase().trim() }
-      ]
-    })
+    // Check if user already exists - first by Google ID (most reliable)
+    let user = await User.findOne({ googleId })
+
+    // If not found by Google ID, check by email
+    if (!user && email) {
+      user = await User.findOne({ email: email.toLowerCase().trim() })
+    }
 
     if (user) {
-      // Existing user - update Google ID if not set
+      // Existing user - link Google ID if not already linked
+      let needsSave = false
+      
       if (!user.googleId) {
+        // Check if another user already has this googleId (shouldn't happen, but safety check)
+        const existingGoogleUser = await User.findOne({ googleId })
+        if (existingGoogleUser && existingGoogleUser._id.toString() !== user._id.toString()) {
+          return res.status(400).json({
+            error: 'Account conflict',
+            message: 'This Google account is already linked to another account. Please contact support.'
+          })
+        }
         user.googleId = googleId
-        await user.save()
+        needsSave = true
+      } else if (user.googleId !== googleId) {
+        // User has a different Google ID - this shouldn't happen, but handle it
+        return res.status(400).json({
+          error: 'Account mismatch',
+          message: 'This account is linked to a different Google account. Please use the correct Google account.'
+        })
       }
 
       // Update profile photo if available and not set
       if (profilePhoto && !user.profilePhoto) {
         user.profilePhoto = profilePhoto
-        await user.save()
+        needsSave = true
+      }
+
+      // Update email if not set and Google provides one
+      if (email && !user.email) {
+        user.email = email.toLowerCase().trim()
+        needsSave = true
+      }
+
+      // Update name if it's still a temporary name
+      if (user.name && user.name.startsWith('User_') && name) {
+        user.name = name.trim()
+        needsSave = true
+      }
+
+      if (needsSave) {
+        try {
+          await user.save()
+        } catch (saveError) {
+          // If save fails due to duplicate, handle gracefully
+          if (saveError.code === 11000) {
+            return res.status(400).json({
+              error: 'Account conflict',
+              message: 'Unable to link Google account. Please contact support.'
+            })
+          }
+          throw saveError
+        }
       }
 
       // Check if user is active
@@ -489,7 +532,30 @@ const verifyGoogleAuth = async (req, res) => {
       })
     } else {
       // New user - create account with Google info
-      // If email exists, use it; otherwise phone will be required later
+      // Check if googleId already exists (shouldn't happen, but safety check)
+      const existingGoogleUser = await User.findOne({ googleId })
+      if (existingGoogleUser) {
+        // This user already exists with this Google ID - log them in instead
+        const token = generateToken(existingGoogleUser._id)
+        return res.status(200).json({
+          message: 'Login successful',
+          token,
+          user: {
+            _id: existingGoogleUser._id,
+            id: existingGoogleUser._id,
+            name: existingGoogleUser.name,
+            email: existingGoogleUser.email,
+            phone: existingGoogleUser.phone,
+            role: existingGoogleUser.role,
+            roleMode: existingGoogleUser.roleMode,
+            profilePhoto: existingGoogleUser.profilePhoto,
+            profileSetupCompleted: existingGoogleUser.profileSetupCompleted
+          },
+          requiresProfileSetup: !existingGoogleUser.profileSetupCompleted && !existingGoogleUser.phone
+        })
+      }
+
+      // Create new user
       const newUser = new User({
         googleId,
         email: email?.toLowerCase().trim() || null,
@@ -497,41 +563,76 @@ const verifyGoogleAuth = async (req, res) => {
         profilePhoto,
         phone: null, // Phone can be added later
         phoneVerified: false,
-        profileSetupCompleted: !email, // If no email, needs setup; if email exists, profile is mostly complete
+        profileSetupCompleted: !!email, // If email exists, profile is mostly complete
         role: 'user',
         roleMode: 'worker'
       })
 
-      const savedUser = await newUser.save()
+      try {
+        const savedUser = await newUser.save()
 
-      // Generate JWT token
-      const token = generateToken(savedUser._id)
+        // Generate JWT token
+        const token = generateToken(savedUser._id)
 
-      return res.status(201).json({
-        message: 'Account created successfully.',
-        token,
-        user: {
-          _id: savedUser._id,
-          id: savedUser._id,
-          name: savedUser.name,
-          email: savedUser.email,
-          phone: savedUser.phone,
-          role: savedUser.role,
-          roleMode: savedUser.roleMode,
-          profilePhoto: savedUser.profilePhoto,
-          profileSetupCompleted: savedUser.profileSetupCompleted
-        },
-        requiresProfileSetup: !savedUser.phone // Need phone for full functionality
-      })
+        return res.status(201).json({
+          message: 'Account created successfully.',
+          token,
+          user: {
+            _id: savedUser._id,
+            id: savedUser._id,
+            name: savedUser.name,
+            email: savedUser.email,
+            phone: savedUser.phone,
+            role: savedUser.role,
+            roleMode: savedUser.roleMode,
+            profilePhoto: savedUser.profilePhoto,
+            profileSetupCompleted: savedUser.profileSetupCompleted
+          },
+          requiresProfileSetup: !savedUser.phone // Need phone for full functionality
+        })
+      } catch (saveError) {
+        // If duplicate key error, try to find the existing user
+        if (saveError.code === 11000) {
+          // Try to find user by the duplicate field
+          if (saveError.keyPattern?.googleId) {
+            const existingUser = await User.findOne({ googleId })
+            if (existingUser) {
+              const token = generateToken(existingUser._id)
+              return res.status(200).json({
+                message: 'Login successful',
+                token,
+                user: {
+                  _id: existingUser._id,
+                  id: existingUser._id,
+                  name: existingUser.name,
+                  email: existingUser.email,
+                  phone: existingUser.phone,
+                  role: existingUser.role,
+                  roleMode: existingUser.roleMode,
+                  profilePhoto: existingUser.profilePhoto,
+                  profileSetupCompleted: existingUser.profileSetupCompleted
+                },
+                requiresProfileSetup: !existingUser.profileSetupCompleted && !existingUser.phone
+              })
+            }
+          }
+          
+          return res.status(400).json({
+            error: 'User already exists',
+            message: 'An account with this information already exists. Please try logging in instead.'
+          })
+        }
+        throw saveError
+      }
     }
   } catch (error) {
     console.error('Error verifying Google auth:', error)
 
+    // Duplicate key errors are already handled above
     if (error.code === 11000) {
-      // Duplicate key error
       return res.status(400).json({
-        error: 'User already exists',
-        message: 'A user with this Google account already exists'
+        error: 'Account conflict',
+        message: 'An account with this information already exists. Please try logging in with your existing account.'
       })
     }
 
