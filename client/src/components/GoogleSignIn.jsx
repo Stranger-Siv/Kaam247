@@ -6,20 +6,25 @@ function GoogleSignIn({ onSuccess, onError }) {
     const [isLoading, setIsLoading] = useState(false)
 
     const handleGoogleSignIn = async () => {
+        console.log('🔵 [GoogleSignIn] Button clicked, initiating Google sign-in...')
         setIsLoading(true)
         
         try {
             const result = await loginWithGoogle()
+            console.log('📥 [GoogleSignIn] Result from loginWithGoogle:', result)
             
             if (result.success) {
                 if (result.redirecting) {
+                    console.log('🔄 [GoogleSignIn] Redirecting to Google...')
                     // User is being redirected to Google - show message
                     // The redirect will happen automatically
                     // onSuccess will be called after redirect when user returns
                 } else if (onSuccess) {
+                    console.log('✅ [GoogleSignIn] Calling onSuccess callback')
                     onSuccess(result)
                 }
             } else {
+                console.error('❌ [GoogleSignIn] Sign-in failed:', result.error)
                 setIsLoading(false)
                 if (onError) {
                     onError(result.error)
@@ -28,6 +33,7 @@ function GoogleSignIn({ onSuccess, onError }) {
             // Note: If redirecting, setIsLoading(false) won't be called
             // because the page will redirect to Google
         } catch (error) {
+            console.error('❌ [GoogleSignIn] Error during sign-in:', error)
             setIsLoading(false)
             if (onError) {
                 onError(error.message || 'Failed to sign in with Google')

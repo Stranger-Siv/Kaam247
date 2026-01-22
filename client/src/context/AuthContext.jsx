@@ -91,6 +91,7 @@ export function AuthProvider({ children }) {
 
               // Trigger navigation event AFTER state is set
               setTimeout(() => {
+                console.log('📢 [AuthContext] Dispatching googleSignInSuccess event')
                 window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
                   detail: { 
                     requiresProfileSetup: data.requiresProfileSetup || false,
@@ -101,11 +102,12 @@ export function AuthProvider({ children }) {
               
               // Set loading to false AFTER authentication is complete
               setLoading(false)
+              console.log('✅ [AuthContext] Authentication complete, loading set to false')
               return
             } else {
               // Handle error response
               const errorData = await response.json().catch(() => ({ message: 'Authentication failed' }))
-              console.error('Google authentication failed:', errorData)
+              console.error('❌ [AuthContext] Google authentication failed:', errorData)
               window.dispatchEvent(new CustomEvent('googleSignInError', { 
                 detail: { 
                   error: errorData.message || 'Failed to authenticate with Google'
@@ -114,32 +116,48 @@ export function AuthProvider({ children }) {
               setLoading(false)
               return
             }
+          } else {
+            console.log('ℹ️ [AuthContext] No Google redirect result found')
           }
         } catch (error) {
-          console.error('Error handling redirect result:', error)
+          console.error('❌ [AuthContext] Error handling redirect result:', error)
           // Continue to check for existing tokens even if redirect fails
         }
+      } else {
+        console.log('⚠️ [AuthContext] Firebase auth or googleProvider not available')
       }
 
       // Only check for existing token if redirect was not handled
       if (!redirectHandled) {
+        console.log('🔍 [AuthContext] Checking for existing token in localStorage...')
         const token = localStorage.getItem('kaam247_token')
         const userInfo = localStorage.getItem('kaam247_user')
 
         if (token && userInfo) {
+          console.log('✅ [AuthContext] Found existing token and user info')
           try {
             const parsedUser = JSON.parse(userInfo)
+            console.log('👤 [AuthContext] Restoring user from localStorage:', {
+              id: parsedUser.id,
+              email: parsedUser.email,
+              role: parsedUser.role
+            })
             setUser(parsedUser)
             setIsAuthenticated(true)
+            console.log('✅ [AuthContext] Restored authentication state, isAuthenticated = true')
           } catch (error) {
+            console.error('❌ [AuthContext] Error parsing user info:', error)
             // Clear invalid data
             localStorage.removeItem('kaam247_token')
             localStorage.removeItem('kaam247_user')
           }
+        } else {
+          console.log('ℹ️ [AuthContext] No existing token found, user not authenticated')
         }
       }
       
       setLoading(false)
+      console.log('🏁 [AuthContext] Initialization complete, loading = false')
     }
 
     initializeAuth()
@@ -312,25 +330,30 @@ export function AuthProvider({ children }) {
   // Google Sign-In Authentication (using redirect instead of popup to avoid COOP issues)
   const loginWithGoogle = async () => {
     try {
+      console.log('🔵 [AuthContext] loginWithGoogle called')
       if (!auth || !googleProvider) {
+        console.error('❌ [AuthContext] Firebase not configured')
         throw new Error('Firebase is not configured. Please contact support.')
       }
 
       // Store current URL to redirect back after Google sign-in
       const currentPath = window.location.pathname + window.location.search
       sessionStorage.setItem('googleSignInRedirect', currentPath)
+      console.log('💾 [AuthContext] Stored redirect path:', currentPath)
 
       // Sign in with Google redirect (works better with COOP policies)
+      console.log('🔄 [AuthContext] Initiating signInWithRedirect...')
       await signInWithRedirect(auth, googleProvider)
       
       // This function will return immediately - the actual auth happens after redirect
       // The redirect result will be handled in the useEffect hook above
+      console.log('✅ [AuthContext] signInWithRedirect initiated, redirecting to Google...')
       return {
         success: true,
         redirecting: true
       }
     } catch (error) {
-      console.error('Error initiating Google sign-in:', error)
+      console.error('❌ [AuthContext] Error initiating Google sign-in:', error)
       return {
         success: false,
         error: error.message || 'Failed to sign in with Google. Please try again.'

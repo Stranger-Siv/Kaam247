@@ -12,25 +12,36 @@ function Login() {
     // Handle Google sign-in success event
     useEffect(() => {
         const handleGoogleSignInSuccess = (event) => {
+            console.log('🎉 [Login] Received googleSignInSuccess event:', event.detail)
             const { requiresProfileSetup } = event.detail || {}
             if (requiresProfileSetup) {
+                console.log('📝 [Login] Profile setup required')
                 setShowProfileSetup(true)
             } else {
                 // Navigate after a short delay to ensure state is updated
                 setTimeout(() => {
+                    console.log('🚀 [Login] Attempting navigation after Google sign-in...')
                     const userInfo = localStorage.getItem('kaam247_user')
                     if (userInfo) {
                         try {
                             const parsedUser = JSON.parse(userInfo)
+                            console.log('👤 [Login] User info found:', {
+                                role: parsedUser.role,
+                                email: parsedUser.email
+                            })
                             if (parsedUser.role === 'admin') {
+                                console.log('➡️ [Login] Navigating to /admin')
                                 navigate('/admin', { replace: true })
                             } else {
+                                console.log('➡️ [Login] Navigating to /dashboard')
                                 navigate('/dashboard', { replace: true })
                             }
-                        } catch {
+                        } catch (error) {
+                            console.error('❌ [Login] Error parsing user info:', error)
                             navigate('/dashboard', { replace: true })
                         }
                     } else {
+                        console.log('⚠️ [Login] No user info found, navigating to dashboard anyway')
                         navigate('/dashboard', { replace: true })
                     }
                 }, 300)
@@ -38,10 +49,12 @@ function Login() {
         }
 
         const handleGoogleSignInError = (event) => {
+            console.error('❌ [Login] Google sign-in error:', event.detail)
             const { error } = event.detail || {}
             setError(error || 'Failed to sign in with Google')
         }
 
+        console.log('👂 [Login] Setting up event listeners for Google sign-in')
         window.addEventListener('googleSignInSuccess', handleGoogleSignInSuccess)
         window.addEventListener('googleSignInError', handleGoogleSignInError)
         
@@ -53,37 +66,69 @@ function Login() {
 
     // Redirect if already authenticated (check both state and localStorage as fallback)
     useEffect(() => {
+        console.log('🔍 [Login] Checking authentication state:', {
+            loading,
+            isAuthenticated,
+            showProfileSetup
+        })
+        
         // Don't redirect if we're still loading or showing profile setup
-        if (showProfileSetup) return
+        if (loading) {
+            console.log('⏳ [Login] Still loading, waiting...')
+            return
+        }
+        if (showProfileSetup) {
+            console.log('📝 [Login] Profile setup in progress, not redirecting')
+            return
+        }
         
         const token = localStorage.getItem('kaam247_token')
         const userInfo = localStorage.getItem('kaam247_user')
         
+        console.log('🔐 [Login] Authentication check:', {
+            isAuthenticated,
+            hasToken: !!token,
+            hasUserInfo: !!userInfo
+        })
+        
         // Only navigate if we have authentication
         if (isAuthenticated || token) {
+            console.log('✅ [Login] User is authenticated, checking navigation...')
             if (userInfo) {
                 try {
                     const parsedUser = JSON.parse(userInfo)
+                    console.log('👤 [Login] Parsed user:', {
+                        role: parsedUser.role,
+                        email: parsedUser.email,
+                        profileSetupCompleted: parsedUser.profileSetupCompleted
+                    })
                     // Check if profile setup is needed
                     if (parsedUser.profileSetupCompleted === false) {
+                        console.log('📝 [Login] Profile setup needed')
                         setShowProfileSetup(true)
                         return
                     }
                     // Navigate based on role
                     if (parsedUser.role === 'admin') {
+                        console.log('➡️ [Login] Navigating to /admin')
                         navigate('/admin', { replace: true })
                     } else {
+                        console.log('➡️ [Login] Navigating to /dashboard')
                         navigate('/dashboard', { replace: true })
                     }
-                } catch {
+                } catch (error) {
+                    console.error('❌ [Login] Error parsing user info:', error)
                     navigate('/dashboard', { replace: true })
                 }
             } else if (token) {
                 // Has token but no user info - navigate anyway
+                console.log('⚠️ [Login] Has token but no user info, navigating to dashboard')
                 navigate('/dashboard', { replace: true })
             }
+        } else {
+            console.log('ℹ️ [Login] User not authenticated, staying on login page')
         }
-    }, [isAuthenticated, navigate, showProfileSetup])
+    }, [isAuthenticated, loading, navigate, showProfileSetup])
 
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)

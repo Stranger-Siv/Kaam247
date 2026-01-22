@@ -7,6 +7,7 @@ function ProtectedRoute({ children }) {
 
   // Show loading state while checking authentication
   if (loading) {
+    console.log('⏳ [ProtectedRoute] Still loading, showing spinner...')
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
@@ -19,7 +20,17 @@ function ProtectedRoute({ children }) {
   const userInfo = localStorage.getItem('kaam247_user')
   const hasAuth = isAuthenticated || (token && userInfo)
 
+  console.log('🔒 [ProtectedRoute] Checking authentication:', {
+    pathname: location.pathname,
+    isAuthenticated,
+    hasToken: !!token,
+    hasUserInfo: !!userInfo,
+    hasAuth,
+    userRole: user?.role
+  })
+
   if (!hasAuth) {
+    console.log('❌ [ProtectedRoute] Not authenticated, redirecting to home')
     return <Navigate to="/" replace />
   }
 
