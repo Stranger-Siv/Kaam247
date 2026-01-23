@@ -2,8 +2,6 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config/env'
 import { persistUserLocation } from '../utils/locationPersistence'
 import { reverseGeocode } from '../utils/geocoding'
-import { auth, googleProvider } from '../config/firebase'
-import { signInWithRedirect, getRedirectResult, onAuthStateChanged, authStateReady } from 'firebase/auth'
 
 const AuthContext = createContext()
 
@@ -12,440 +10,31 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Check localStorage on mount for existing token
   useEffect(() => {
-    const initializeAuth = async () => {
-      let redirectHandled = false
-      
-      // Check for Google redirect result FIRST (before checking existing tokens)
-      if (auth && googleProvider) {
-        try {
-          // Wait for auth state to be ready
-          console.log('⏳ [AuthContext] Waiting for auth state to be ready...')
-          await authStateReady(auth)
-          console.log('✅ [AuthContext] Auth state is ready')
-          
-          // Check URL for redirect indicators
-          const urlParams = new URLSearchParams(window.location.search)
-          const hashParams = new URLSearchParams(window.location.hash.substring(1))
-          const hasAuthParams = urlParams.has('apiKey') || urlParams.has('mode') || urlParams.has('__firebase_request_key') || 
-                                hashParams.has('apiKey') || hashParams.has('mode') || 
-                                window.location.hash.includes('auth') || window.location.hash.includes('credential')
-          const isRedirectReturn = hasAuthParams || sessionStorage.getItem('googleSignInRedirect')
-          
-          console.log('🔍 [AuthContext] Checking redirect result. URL params:', {
-            search: window.location.search,
-            hash: window.location.hash,
-            hasAuthParams,
-            isRedirectReturn,
-            fullUrl: window.location.href,
-            storedRedirect: sessionStorage.getItem('googleSignInRedirect')
-          })
-          
-          // Check current user first
-          console.log('👤 [AuthContext] Checking auth.currentUser:', auth.currentUser ? {
-            email: auth.currentUser.email,
-            uid: auth.currentUser.uid
-          } : 'null')
-          
-          // If user is already signed in to Firebase, verify with backend
-          if (auth.currentUser && !isAuthenticated) {
-            console.log('✅ [AuthContext] Found Firebase currentUser, verifying with backend...')
-            try {
-              const idToken = await auth.currentUser.getIdToken()
-              console.log('🔑 [AuthContext] Got ID token from currentUser')
-              
-              const response = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                credentials: 'include', // Send cookies with cross-origin requests
-                body: JSON.stringify({
-                  idToken
-                })
-              })
-              
-              console.log('📡 [AuthContext] Backend response status (from currentUser):', response.status)
-              
-              if (response.ok) {
-                const data = await response.json()
-                console.log('✅ [AuthContext] Backend verification successful via currentUser')
-                
-                localStorage.setItem('kaam247_token', data.token)
-                localStorage.setItem('kaam247_user', JSON.stringify({
-                  id: data.user._id || data.user.id,
-                  name: data.user.name,
-                  email: data.user.email,
-                  phone: data.user.phone,
-                  role: data.user.role || data.user.roleMode,
-                  profilePhoto: data.user.profilePhoto,
-                  profileSetupCompleted: data.user.profileSetupCompleted
-                }))
-                
-                setUser({
-                  id: data.user._id || data.user.id,
-                  name: data.user.name,
-                  email: data.user.email,
-                  phone: data.user.phone,
-                  role: data.user.role || data.user.roleMode,
-                  profilePhoto: data.user.profilePhoto,
-                  profileSetupCompleted: data.user.profileSetupCompleted
-                })
-                setIsAuthenticated(true)
-                
-                setTimeout(() => {
-                  window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
-                    detail: { 
-                      requiresProfileSetup: data.requiresProfileSetup || false,
-                      user: data.user 
-                    } 
-                  }))
-                }, 200)
-                
-                setLoading(false)
-                return
-              }
-            } catch (error) {
-              console.error('❌ [AuthContext] Error verifying currentUser:', error)
-            }
-          }
-          
-          // Wait a bit for Firebase to process the redirect
-          await new Promise(resolve => setTimeout(resolve, 500))
-          
-          const result = await getRedirectResult(auth)
-          console.log('📋 [AuthContext] getRedirectResult returned:', result ? 'Result found' : 'No result')
-          if (result) {
-            console.log('✅ [AuthContext] Redirect result details:', {
-              user: result.user?.email,
-              providerId: result.providerId,
-              operationType: result.operationType
-            })
-          }
-          
-          if (result) {
-            redirectHandled = true
-            // User just returned from Google sign-in redirect
-            const userCredential = result.user
-            console.log('👤 [AuthContext] User credential from redirect:', {
-              uid: userCredential.uid,
-              email: userCredential.email,
-              displayName: userCredential.displayName
-            })
-            const idToken = await userCredential.getIdToken()
-            console.log('🔑 [AuthContext] Got Firebase ID token (length:', idToken.length, ')')
+    const token = localStorage.getItem('kaam247_token')
+    const userInfo = localStorage.getItem('kaam247_user')
 
-            // Send ID token to backend
-            const response = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                idToken
-              })
-            })
-
-            if (response.ok) {
-              const data = await response.json()
-              localStorage.setItem('kaam247_token', data.token)
-              localStorage.setItem('kaam247_user', JSON.stringify({
-                id: data.user._id || data.user.id,
-                name: data.user.name,
-                email: data.user.email,
-                phone: data.user.phone,
-                role: data.user.role || data.user.roleMode,
-                profilePhoto: data.user.profilePhoto,
-                profileSetupCompleted: data.user.profileSetupCompleted
-              }))
-
-              setUser({
-                id: data.user._id || data.user.id,
-                name: data.user.name,
-                email: data.user.email,
-                phone: data.user.phone,
-                role: data.user.role || data.user.roleMode,
-                profilePhoto: data.user.profilePhoto,
-                profileSetupCompleted: data.user.profileSetupCompleted
-              })
-              setIsAuthenticated(true)
-
-              // Capture location if available (non-blocking)
-              try {
-                const position = await new Promise((resolve, reject) => {
-                  navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
-                  })
-                })
-
-                const lat = position.coords.latitude
-                const lng = position.coords.longitude
-                const location = { lat, lng }
-
-                try {
-                  const { area, city } = await reverseGeocode(lat, lng)
-                  await persistUserLocation(lat, lng, area, city)
-                } catch {
-                  await persistUserLocation(lat, lng, null, null)
-                }
-                
-                localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
-                window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
-              } catch (locationError) {
-                // Location capture failed - non-fatal, continue
-              }
-
-              // Trigger navigation event AFTER state is set
-              setTimeout(() => {
-                console.log('📢 [AuthContext] Dispatching googleSignInSuccess event')
-                window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
-                  detail: { 
-                    requiresProfileSetup: data.requiresProfileSetup || false,
-                    user: data.user 
-                  } 
-                }))
-              }, 200)
-              
-              // Clear redirect indicator
-              sessionStorage.removeItem('googleSignInRedirect')
-              
-              // Set loading to false AFTER authentication is complete
-              setLoading(false)
-              console.log('✅ [AuthContext] Authentication complete, loading set to false')
-              return
-            } else {
-              // Handle error response
-              const errorData = await response.json().catch(() => ({ message: 'Authentication failed' }))
-              console.error('❌ [AuthContext] Google authentication failed:', errorData)
-              window.dispatchEvent(new CustomEvent('googleSignInError', { 
-                detail: { 
-                  error: errorData.message || 'Failed to authenticate with Google'
-                } 
-              }))
-              setLoading(false)
-              return
-            }
-          } else {
-            console.log('ℹ️ [AuthContext] No Google redirect result found')
-            
-            // Check if user is already signed in to Firebase (might have signed in via redirect)
-            if (auth.currentUser) {
-              console.log('✅ [AuthContext] Found Firebase currentUser:', {
-                uid: auth.currentUser.uid,
-                email: auth.currentUser.email
-              })
-              
-              // User is signed in to Firebase but we haven't verified with backend yet
-              try {
-                const idToken = await auth.currentUser.getIdToken()
-                console.log('🔑 [AuthContext] Got ID token from currentUser')
-                
-                // Verify with backend
-                const response = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  credentials: 'include', // Send cookies with cross-origin requests
-                  body: JSON.stringify({
-                    idToken
-                  })
-                })
-                
-                if (response.ok) {
-                  const data = await response.json()
-                  console.log('✅ [AuthContext] Backend verification successful via currentUser')
-                  
-                  localStorage.setItem('kaam247_token', data.token)
-                  localStorage.setItem('kaam247_user', JSON.stringify({
-                    id: data.user._id || data.user.id,
-                    name: data.user.name,
-                    email: data.user.email,
-                    phone: data.user.phone,
-                    role: data.user.role || data.user.roleMode,
-                    profilePhoto: data.user.profilePhoto,
-                    profileSetupCompleted: data.user.profileSetupCompleted
-                  }))
-                  
-                  setUser({
-                    id: data.user._id || data.user.id,
-                    name: data.user.name,
-                    email: data.user.email,
-                    phone: data.user.phone,
-                    role: data.user.role || data.user.roleMode,
-                    profilePhoto: data.user.profilePhoto,
-                    profileSetupCompleted: data.user.profileSetupCompleted
-                  })
-                  setIsAuthenticated(true)
-                  
-                  // Trigger navigation event
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
-                      detail: { 
-                        requiresProfileSetup: data.requiresProfileSetup || false,
-                        user: data.user 
-                      } 
-                    }))
-                  }, 200)
-                  
-                  // Clear redirect indicator
-                  sessionStorage.removeItem('googleSignInRedirect')
-                  
-                  setLoading(false)
-                  return
-                } else {
-                  const errorData = await response.json().catch(() => ({ message: 'Verification failed' }))
-                  console.error('❌ [AuthContext] Backend verification failed (from currentUser):', errorData)
-                }
-              } catch (error) {
-                console.error('❌ [AuthContext] Error verifying currentUser:', error)
-              }
-            }
-          }
-        } catch (error) {
-          console.error('❌ [AuthContext] Error handling redirect result:', error)
-          // Continue to check for existing tokens even if redirect fails
-        }
-      } else {
-        console.log('⚠️ [AuthContext] Firebase auth or googleProvider not available')
+    if (token && userInfo) {
+      try {
+        const parsedUser = JSON.parse(userInfo)
+        setUser(parsedUser)
+        setIsAuthenticated(true)
+      } catch {
+        localStorage.removeItem('kaam247_token')
+        localStorage.removeItem('kaam247_user')
       }
-
-      // Only check for existing token if redirect was not handled
-      if (!redirectHandled) {
-        console.log('🔍 [AuthContext] Checking for existing token in localStorage...')
-        const token = localStorage.getItem('kaam247_token')
-        const userInfo = localStorage.getItem('kaam247_user')
-
-        if (token && userInfo) {
-          console.log('✅ [AuthContext] Found existing token and user info')
-          try {
-            const parsedUser = JSON.parse(userInfo)
-            console.log('👤 [AuthContext] Restoring user from localStorage:', {
-              id: parsedUser.id,
-              email: parsedUser.email,
-              role: parsedUser.role
-            })
-            setUser(parsedUser)
-            setIsAuthenticated(true)
-            console.log('✅ [AuthContext] Restored authentication state, isAuthenticated = true')
-          } catch (error) {
-            console.error('❌ [AuthContext] Error parsing user info:', error)
-            // Clear invalid data
-            localStorage.removeItem('kaam247_token')
-            localStorage.removeItem('kaam247_user')
-          }
-        } else {
-          console.log('ℹ️ [AuthContext] No existing token found, user not authenticated')
-        }
-      }
-      
-      setLoading(false)
-      console.log('🏁 [AuthContext] Initialization complete, loading = false')
     }
 
-    initializeAuth()
+    setLoading(false)
   }, [])
-  
-  // Set up auth state listener to catch sign-ins that getRedirectResult might miss
-  useEffect(() => {
-    if (!auth) return
-    
-    console.log('👂 [AuthContext] Setting up onAuthStateChanged listener')
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('🔄 [AuthContext] Auth state changed:', firebaseUser ? `User signed in (${firebaseUser.email})` : 'User signed out')
-      
-      if (firebaseUser && !isAuthenticated) {
-        // User is signed in to Firebase but not to our backend
-        console.log('🔍 [AuthContext] Firebase user detected, verifying with backend...')
-        try {
-          const idToken = await firebaseUser.getIdToken()
-          console.log('🔑 [AuthContext] Got ID token from auth state listener')
-          
-          const response = await fetch(`${API_BASE_URL}/api/auth/google/verify`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include', // Send cookies with cross-origin requests
-            body: JSON.stringify({
-              idToken
-            })
-          })
-          
-          console.log('📡 [AuthContext] Backend response status (from listener):', response.status)
-          
-          if (response.ok) {
-            const data = await response.json()
-            console.log('✅ [AuthContext] Backend verification via auth state listener successful')
-            
-            localStorage.setItem('kaam247_token', data.token)
-            localStorage.setItem('kaam247_user', JSON.stringify({
-              id: data.user._id || data.user.id,
-              name: data.user.name,
-              email: data.user.email,
-              phone: data.user.phone,
-              role: data.user.role || data.user.roleMode,
-              profilePhoto: data.user.profilePhoto,
-              profileSetupCompleted: data.user.profileSetupCompleted
-            }))
-            
-            setUser({
-              id: data.user._id || data.user.id,
-              name: data.user.name,
-              email: data.user.email,
-              phone: data.user.phone,
-              role: data.user.role || data.user.roleMode,
-              profilePhoto: data.user.profilePhoto,
-              profileSetupCompleted: data.user.profileSetupCompleted
-            })
-            setIsAuthenticated(true)
-            
-            // Clear redirect indicator
-            sessionStorage.removeItem('googleSignInRedirect')
-            
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('googleSignInSuccess', { 
-                detail: { 
-                  requiresProfileSetup: data.requiresProfileSetup || false,
-                  user: data.user 
-                } 
-              }))
-            }, 200)
-          } else {
-            const errorData = await response.json().catch(() => ({ message: 'Verification failed' }))
-            console.error('❌ [AuthContext] Backend verification failed (from listener):', errorData)
-          }
-        } catch (error) {
-          console.error('❌ [AuthContext] Error in auth state listener:', error)
-        }
-      } else if (!firebaseUser && isAuthenticated) {
-        // User signed out from Firebase
-        console.log('👋 [AuthContext] User signed out from Firebase')
-      }
-    })
-    
-    // Cleanup listener on unmount
-    return () => {
-      console.log('🧹 [AuthContext] Cleaning up auth state listener')
-      unsubscribe()
-    }
-  }, [auth, isAuthenticated])
 
   const login = async (identifier, password) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // Send cookies with cross-origin requests
-        body: JSON.stringify({
-          identifier, // email or phone
-          password
-        })
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ identifier, password })
       })
 
       if (!response.ok) {
@@ -455,7 +44,6 @@ export function AuthProvider({ children }) {
 
       const data = await response.json()
 
-      // Store token and user info
       localStorage.setItem('kaam247_token', data.token)
       localStorage.setItem('kaam247_user', JSON.stringify({
         id: data.user._id || data.user.id,
@@ -474,7 +62,6 @@ export function AuthProvider({ children }) {
       })
       setIsAuthenticated(true)
 
-      // Capture location and update profile after successful login
       try {
         const position = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -483,35 +70,22 @@ export function AuthProvider({ children }) {
             maximumAge: 0
           })
         })
-
         const lat = position.coords.latitude
         const lng = position.coords.longitude
-
-        const location = {
-          lat,
-          lng
-        }
-
-        // Reverse geocode via backend (avoids browser CORS + Nominatim 403) and persist
         try {
           const { area, city } = await reverseGeocode(lat, lng)
           await persistUserLocation(lat, lng, area, city)
         } catch {
           await persistUserLocation(lat, lng, null, null)
         }
-        
-        // Store location in localStorage for AvailabilityContext
-        localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
-        // Trigger location update event for AvailabilityContext
-        window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
-      } catch (locationError) {
-        // Location capture failed - non-fatal, continue with login
-        // User can still use the app, but location features won't work until they grant permission
+        localStorage.setItem('kaam247_workerLocation', JSON.stringify({ lat, lng }))
+        window.dispatchEvent(new CustomEvent('location_updated', { detail: { lat, lng } }))
+      } catch {
+        // Location optional
       }
 
       return { success: true }
     } catch (error) {
-      // console.error('Login error:', error)
       return { success: false, error: error.message }
     }
   }
@@ -520,16 +94,9 @@ export function AuthProvider({ children }) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // Send cookies with cross-origin requests
-        body: JSON.stringify({
-          name,
-          email,
-          phone,
-          password
-        })
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name, email, phone, password })
       })
 
       if (!response.ok) {
@@ -539,7 +106,6 @@ export function AuthProvider({ children }) {
 
       const data = await response.json()
 
-      // Store token and user info
       localStorage.setItem('kaam247_token', data.token)
       localStorage.setItem('kaam247_user', JSON.stringify({
         id: data.user._id || data.user.id,
@@ -558,7 +124,6 @@ export function AuthProvider({ children }) {
       })
       setIsAuthenticated(true)
 
-      // Capture location and update profile after successful registration
       try {
         const position = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -567,169 +132,41 @@ export function AuthProvider({ children }) {
             maximumAge: 0
           })
         })
-
         const lat = position.coords.latitude
         const lng = position.coords.longitude
-
-        const location = {
-          lat,
-          lng
-        }
-
-        // Reverse geocode via backend (avoids browser CORS + Nominatim 403) and persist
         try {
           const { area, city } = await reverseGeocode(lat, lng)
           await persistUserLocation(lat, lng, area, city)
         } catch {
           await persistUserLocation(lat, lng, null, null)
         }
-        
-        // Store location in localStorage for AvailabilityContext
-        localStorage.setItem('kaam247_workerLocation', JSON.stringify(location))
-        // Trigger location update event for AvailabilityContext
-        window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
-      } catch (locationError) {
-        // Location capture failed - non-fatal, continue with registration
-        // User can still use the app, but location features won't work until they grant permission
+        localStorage.setItem('kaam247_workerLocation', JSON.stringify({ lat, lng }))
+        window.dispatchEvent(new CustomEvent('location_updated', { detail: { lat, lng } }))
+      } catch {
+        // Location optional
       }
 
       return { success: true }
     } catch (error) {
-      // console.error('Registration error:', error)
       return { success: false, error: error.message }
-    }
-  }
-
-  // Google Sign-In Authentication (using redirect instead of popup to avoid COOP issues)
-  const loginWithGoogle = async () => {
-    try {
-      console.log('🔵 [AuthContext] loginWithGoogle called')
-      console.log('🔍 [AuthContext] Firebase check:', {
-        hasAuth: !!auth,
-        hasGoogleProvider: !!googleProvider,
-        authDomain: auth?.config?.authDomain,
-        currentUrl: window.location.href
-      })
-      
-      if (!auth || !googleProvider) {
-        console.error('❌ [AuthContext] Firebase not configured')
-        throw new Error('Firebase is not configured. Please contact support.')
-      }
-
-      // Store current URL to redirect back after Google sign-in
-      const currentPath = window.location.pathname + window.location.search
-      sessionStorage.setItem('googleSignInRedirect', currentPath)
-      console.log('💾 [AuthContext] Stored redirect path:', currentPath)
-
-      // Sign in with Google redirect (works better with COOP policies)
-      console.log('🔄 [AuthContext] Initiating signInWithRedirect...')
-      console.log('🔍 [AuthContext] Redirect configuration:', {
-        currentOrigin: window.location.origin,
-        authDomain: auth.config.authDomain,
-        fullUrl: window.location.href
-      })
-      
-      // Ensure we're using the correct redirect URL
-      // Firebase will redirect back to the current origin
-      await signInWithRedirect(auth, googleProvider)
-      
-      // This function will return immediately - the actual auth happens after redirect
-      // The redirect result will be handled in the useEffect hook above
-      console.log('✅ [AuthContext] signInWithRedirect initiated, redirecting to Google...')
-      return {
-        success: true,
-        redirecting: true
-      }
-    } catch (error) {
-      console.error('❌ [AuthContext] Error initiating Google sign-in:', error)
-      console.error('❌ [AuthContext] Error details:', {
-        message: error.message,
-        code: error.code,
-        stack: error.stack
-      })
-      return {
-        success: false,
-        error: error.message || 'Failed to sign in with Google. Please try again.'
-      }
-    }
-  }
-
-  // Complete profile setup for new users
-  const completeProfileSetup = async (name, email) => {
-    try {
-      const token = localStorage.getItem('kaam247_token')
-      if (!token) {
-        throw new Error('Not authenticated')
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/auth/profile/setup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include', // Send cookies with cross-origin requests
-        body: JSON.stringify({
-          name,
-          email
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Profile setup failed')
-      }
-
-      const data = await response.json()
-
-      // Update stored user info
-      localStorage.setItem('kaam247_token', data.token)
-      localStorage.setItem('kaam247_user', JSON.stringify({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode,
-        profileSetupCompleted: data.user.profileSetupCompleted
-      }))
-
-      setUser({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode,
-        profileSetupCompleted: data.user.profileSetupCompleted
-      })
-
-      return { success: true }
-    } catch (error) {
-      console.error('Error completing profile setup:', error)
-      return {
-        success: false,
-        error: error.message || 'Failed to complete profile setup'
-      }
     }
   }
 
   const logout = async () => {
     try {
-      // Call backend logout endpoint to clear cookie
       await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
-        credentials: 'include' // Send cookies with cross-origin requests
+        credentials: 'include'
       })
-    } catch (error) {
-      console.error('Error calling logout endpoint:', error)
+    } catch {
+      // Ignore
     }
-    
+
     setIsAuthenticated(false)
     setUser(null)
     localStorage.removeItem('kaam247_token')
     localStorage.removeItem('kaam247_user')
-    // Reset availability on logout
     localStorage.removeItem('kaam247_isOnline')
-    // Clean up temporary user IDs
     localStorage.removeItem('kaam247_userId')
     localStorage.removeItem('kaam247_workerId')
   }
@@ -741,9 +178,7 @@ export function AuthProvider({ children }) {
       loading,
       login,
       register,
-      logout,
-      loginWithGoogle,
-      completeProfileSetup
+      logout
     }}>
       {children}
     </AuthContext.Provider>
@@ -757,4 +192,3 @@ export function useAuth() {
   }
   return context
 }
-

@@ -1,134 +1,35 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import ProfileSetup from '../../components/ProfileSetup'
-import GoogleSignIn from '../../components/GoogleSignIn'
 
 function Login() {
     const navigate = useNavigate()
-    const { login, isAuthenticated, user, loading } = useAuth()
-    const [showProfileSetup, setShowProfileSetup] = useState(false)
-
-    // Handle Google sign-in success event
-    useEffect(() => {
-        const handleGoogleSignInSuccess = (event) => {
-            console.log('🎉 [Login] Received googleSignInSuccess event:', event.detail)
-            const { requiresProfileSetup } = event.detail || {}
-            if (requiresProfileSetup) {
-                console.log('📝 [Login] Profile setup required')
-                setShowProfileSetup(true)
-            } else {
-                // Navigate after a short delay to ensure state is updated
-                setTimeout(() => {
-                    console.log('🚀 [Login] Attempting navigation after Google sign-in...')
-                    const userInfo = localStorage.getItem('kaam247_user')
-                    if (userInfo) {
-                        try {
-                            const parsedUser = JSON.parse(userInfo)
-                            console.log('👤 [Login] User info found:', {
-                                role: parsedUser.role,
-                                email: parsedUser.email
-                            })
-                            if (parsedUser.role === 'admin') {
-                                console.log('➡️ [Login] Navigating to /admin')
-                                navigate('/admin', { replace: true })
-                            } else {
-                                console.log('➡️ [Login] Navigating to /dashboard')
-                                navigate('/dashboard', { replace: true })
-                            }
-                        } catch (error) {
-                            console.error('❌ [Login] Error parsing user info:', error)
-                            navigate('/dashboard', { replace: true })
-                        }
-                    } else {
-                        console.log('⚠️ [Login] No user info found, navigating to dashboard anyway')
-                        navigate('/dashboard', { replace: true })
-                    }
-                }, 300)
-            }
-        }
-
-        const handleGoogleSignInError = (event) => {
-            console.error('❌ [Login] Google sign-in error:', event.detail)
-            const { error } = event.detail || {}
-            setError(error || 'Failed to sign in with Google')
-        }
-
-        console.log('👂 [Login] Setting up event listeners for Google sign-in')
-        window.addEventListener('googleSignInSuccess', handleGoogleSignInSuccess)
-        window.addEventListener('googleSignInError', handleGoogleSignInError)
-        
-        return () => {
-            window.removeEventListener('googleSignInSuccess', handleGoogleSignInSuccess)
-            window.removeEventListener('googleSignInError', handleGoogleSignInError)
-        }
-    }, [navigate])
+    const { login, isAuthenticated, loading } = useAuth()
 
     // Redirect if already authenticated (check both state and localStorage as fallback)
     useEffect(() => {
-        console.log('🔍 [Login] Checking authentication state:', {
-            loading,
-            isAuthenticated,
-            showProfileSetup
-        })
-        
-        // Don't redirect if we're still loading or showing profile setup
-        if (loading) {
-            console.log('⏳ [Login] Still loading, waiting...')
-            return
-        }
-        if (showProfileSetup) {
-            console.log('📝 [Login] Profile setup in progress, not redirecting')
-            return
-        }
-        
+        if (loading) return
+
         const token = localStorage.getItem('kaam247_token')
         const userInfo = localStorage.getItem('kaam247_user')
-        
-        console.log('🔐 [Login] Authentication check:', {
-            isAuthenticated,
-            hasToken: !!token,
-            hasUserInfo: !!userInfo
-        })
-        
-        // Only navigate if we have authentication
+
         if (isAuthenticated || token) {
-            console.log('✅ [Login] User is authenticated, checking navigation...')
             if (userInfo) {
                 try {
                     const parsedUser = JSON.parse(userInfo)
-                    console.log('👤 [Login] Parsed user:', {
-                        role: parsedUser.role,
-                        email: parsedUser.email,
-                        profileSetupCompleted: parsedUser.profileSetupCompleted
-                    })
-                    // Check if profile setup is needed
-                    if (parsedUser.profileSetupCompleted === false) {
-                        console.log('📝 [Login] Profile setup needed')
-                        setShowProfileSetup(true)
-                        return
-                    }
-                    // Navigate based on role
                     if (parsedUser.role === 'admin') {
-                        console.log('➡️ [Login] Navigating to /admin')
                         navigate('/admin', { replace: true })
                     } else {
-                        console.log('➡️ [Login] Navigating to /dashboard')
                         navigate('/dashboard', { replace: true })
                     }
-                } catch (error) {
-                    console.error('❌ [Login] Error parsing user info:', error)
+                } catch {
                     navigate('/dashboard', { replace: true })
                 }
             } else if (token) {
-                // Has token but no user info - navigate anyway
-                console.log('⚠️ [Login] Has token but no user info, navigating to dashboard')
                 navigate('/dashboard', { replace: true })
             }
-        } else {
-            console.log('ℹ️ [Login] User not authenticated, staying on login page')
         }
-    }, [isAuthenticated, loading, navigate, showProfileSetup])
+    }, [isAuthenticated, loading, navigate])
 
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -176,33 +77,6 @@ function Login() {
         }
 
         setIsLoading(false)
-    }
-
-    // Show profile setup if needed
-    if (showProfileSetup) {
-        return (
-            <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16 w-full overflow-x-hidden">
-                <ProfileSetup
-                    onComplete={() => {
-                        const userInfo = localStorage.getItem('kaam247_user')
-                        if (userInfo) {
-                            try {
-                                const parsedUser = JSON.parse(userInfo)
-                                if (parsedUser.role === 'admin') {
-                                    navigate('/admin')
-                                } else {
-                                    navigate('/dashboard')
-                                }
-                            } catch {
-                                navigate('/dashboard')
-                            }
-                        } else {
-                            navigate('/dashboard')
-                        }
-                    }}
-                />
-            </div>
-        )
     }
 
     return (
@@ -278,47 +152,6 @@ function Login() {
                             </div>
                         </div>
 
-                        {/* Google Sign-In Button */}
-                        <div className="mb-6">
-                            <GoogleSignIn
-                                onSuccess={(result) => {
-                                    if (result.requiresProfileSetup) {
-                                        setShowProfileSetup(true)
-                                    } else {
-                                        const userInfo = localStorage.getItem('kaam247_user')
-                                        if (userInfo) {
-                                            try {
-                                                const parsedUser = JSON.parse(userInfo)
-                                                if (parsedUser.role === 'admin') {
-                                                    navigate('/admin')
-                                                } else {
-                                                    navigate('/dashboard')
-                                                }
-                                            } catch {
-                                                navigate('/dashboard')
-                                            }
-                                        } else {
-                                            navigate('/dashboard')
-                                        }
-                                    }
-                                }}
-                                onError={(error) => setError(error)}
-                            />
-                        </div>
-
-                        {/* Divider */}
-                        <div className="relative mb-6">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                                    Or continue with
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Email/Password Login */}
                         <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
