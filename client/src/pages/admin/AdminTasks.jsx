@@ -53,7 +53,6 @@ function AdminTasks() {
         pages: data.pagination?.pages || 0
       }))
     } catch (err) {
-      console.error('Error fetching tasks:', err)
       setError(err.message || 'Failed to load tasks')
     } finally {
       setLoading(false)

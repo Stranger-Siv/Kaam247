@@ -45,7 +45,6 @@ function AdminUserDetail() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        console.error('Failed to fetch user details:', response.status, errorData)
         throw new Error(errorData.message || errorData.error || `Failed to fetch user details (${response.status})`)
       }
 
@@ -66,7 +65,6 @@ function AdminUserDetail() {
         setActivity(data.activity)
       }
     } catch (err) {
-      console.error('Error fetching user details:', err)
       setError(err.message || 'Failed to load user details')
     } finally {
       setLoading(false)

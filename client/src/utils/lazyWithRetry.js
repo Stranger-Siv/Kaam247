@@ -38,12 +38,9 @@ export function lazyWithRetry(componentImport, retries = 3, delay = 1000) {
                 
                 // Retry after delay with exponential backoff
                 const retryDelay = delay * Math.pow(2, attempt - 1)
-                console.warn(`Module load failed, retrying in ${retryDelay}ms... (${attempt}/${retries})`, error)
                 setTimeout(() => attemptImport(attempt + 1), retryDelay)
               } else {
                 // All retries failed - clear all caches and reload
-                console.error('Module load failed after retries, clearing cache and reloading...', error)
-                
                 // Clear all caches
                 if ('caches' in window) {
                   caches.keys().then(cacheNames => {

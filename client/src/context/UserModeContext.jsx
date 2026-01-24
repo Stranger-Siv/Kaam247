@@ -32,7 +32,6 @@ export function UserModeProvider({ children }) {
       }
       return null
     } catch (error) {
-      console.error('Error checking active task:', error)
       return null
     }
   }
@@ -82,7 +81,6 @@ export function UserModeProvider({ children }) {
       
       return true // Indicate switch was successful
     } catch (error) {
-      console.error('Error during mode switch:', error)
       return false
     } finally {
       setCheckingActiveTask(false)

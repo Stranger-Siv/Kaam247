@@ -78,26 +78,16 @@ const userIndexes = [
  */
 async function addTaskIndexes() {
     try {
-        console.log('Adding indexes to Task collection...')
         const collection = mongoose.connection.collection('tasks')
 
         for (const index of taskIndexes) {
             try {
                 await collection.createIndex(index)
-                console.log(`✅ Created index:`, index)
             } catch (error) {
-                if (error.code === 85) {
-                    console.log(`⚠️  Index already exists:`, index)
-                } else {
-                    console.error(`❌ Error creating index:`, index, error.message)
-                }
+                // Ignore (e.g. index already exists)
             }
         }
-
-        console.log('✅ Task indexes added successfully')
-    } catch (error) {
-        console.error('❌ Error adding task indexes:', error)
-    }
+    } catch (error) {}
 }
 
 /**
@@ -105,26 +95,16 @@ async function addTaskIndexes() {
  */
 async function addUserIndexes() {
     try {
-        console.log('Adding indexes to User collection...')
         const collection = mongoose.connection.collection('users')
 
         for (const index of userIndexes) {
             try {
                 await collection.createIndex(index)
-                console.log(`✅ Created index:`, index)
             } catch (error) {
-                if (error.code === 85) {
-                    console.log(`⚠️  Index already exists:`, index)
-                } else {
-                    console.error(`❌ Error creating index:`, index, error.message)
-                }
+                // Ignore (e.g. index already exists)
             }
         }
-
-        console.log('✅ User indexes added successfully')
-    } catch (error) {
-        console.error('❌ Error adding user indexes:', error)
-    }
+    } catch (error) {}
 }
 
 /**
@@ -132,13 +112,11 @@ async function addUserIndexes() {
  */
 async function addAllIndexes() {
     if (mongoose.connection.readyState !== 1) {
-        console.error('❌ Database not connected. Please connect first.')
         return
     }
 
     await addTaskIndexes()
     await addUserIndexes()
-    console.log('\n✅ All indexes added successfully!')
 }
 
 // Export for use in other files

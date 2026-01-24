@@ -72,7 +72,6 @@ function Dashboard() {
                 }))
             }
         } catch (err) {
-            console.error('Error fetching worker stats:', err)
         } finally {
             fetchingRef.current.workerStats = false
         }
@@ -108,7 +107,6 @@ function Dashboard() {
                 })
             }
         } catch (err) {
-            console.error('Error fetching poster stats:', err)
         } finally {
             fetchingRef.current.posterStats = false
         }
@@ -181,7 +179,6 @@ function Dashboard() {
                     }
                 }
             } catch (error) {
-                console.error('State recovery failed:', error)
             }
         }
 
@@ -216,7 +213,6 @@ function Dashboard() {
                         }
                     }
                 } catch (error) {
-                    console.error('Reconnection recovery failed:', error)
                 }
             }
         }
@@ -386,7 +382,6 @@ function Dashboard() {
                 setAcceptedTasks(workerTasks)
             }
         } catch (err) {
-            console.error('Error fetching accepted tasks:', err)
         } finally {
             fetchingRef.current.acceptedTasks = false
         }
@@ -464,7 +459,6 @@ function Dashboard() {
                 setPostedTasks(transformedTasks)
             }
         } catch (err) {
-            console.error('Error fetching posted tasks:', err)
         } finally {
             fetchingRef.current.postedTasks = false
         }
@@ -699,7 +693,6 @@ function Dashboard() {
                 setLocationError(null)
             }
         } catch (err) {
-            console.error('Error fetching available tasks:', err)
         } finally {
             fetchingRef.current.availableTasks = false
         }

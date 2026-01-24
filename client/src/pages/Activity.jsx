@@ -46,8 +46,7 @@ function Activity() {
 
       // Use backend data as-is - backend already categorizes and assigns roles correctly
       setActivity(apiActivity)
-    } catch (err) {
-      console.error('Error fetching activity:', err)
+      } catch (err) {
       setError(err.message || 'Failed to load activity')
     } finally {
       setLoading(false)

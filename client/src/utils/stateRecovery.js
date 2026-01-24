@@ -27,7 +27,6 @@ export const fetchUserProfile = async () => {
     }
     return null
   } catch (error) {
-    console.error('Error fetching user profile:', error)
     return null
   }
 }
@@ -52,7 +51,6 @@ export const fetchActiveTask = async () => {
     }
     return null
   } catch (error) {
-    console.error('Error fetching active task:', error)
     return null
   }
 }
@@ -71,7 +69,6 @@ export const fetchUserAvailability = () => {
       workerLocation: workerLocation ? JSON.parse(workerLocation) : null
     }
   } catch (error) {
-    console.error('Error fetching availability:', error)
     return {
       isOnline: false,
       workerLocation: null
@@ -126,7 +123,6 @@ export const fetchDashboardStats = async (userMode, userId) => {
     }
     return null
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error)
     return null
   }
 }
@@ -151,7 +147,6 @@ export const performStateRecovery = async (userMode, userId) => {
       stats
     }
   } catch (error) {
-    console.error('Error during state recovery:', error)
     return {
       profile: null,
       activeTask: null,

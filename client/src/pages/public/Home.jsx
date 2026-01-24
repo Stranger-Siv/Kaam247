@@ -46,7 +46,6 @@ function Home() {
                     })
                 }
             } catch (err) {
-                console.error('Error fetching stats:', err)
             } finally {
                 setStatsLoading(false)
             }

@@ -58,11 +58,6 @@ window.addEventListener('error', (event) => {
     errorMessage.includes('MIME type') ||
     errorSource.includes('.js') && errorMessage.includes('Failed to fetch')
   ) {
-    console.error('Chunk loading error detected, clearing cache and reloading...', {
-      message: errorMessage,
-      source: errorSource
-    })
-    
     // Clear caches and reload
     if ('caches' in window) {
       caches.keys().then(cacheNames => {
@@ -119,8 +114,6 @@ window.addEventListener('unhandledrejection', (event) => {
     errorMessage.includes('MIME type') ||
     errorMessage.includes('ChunkLoadError')
   ) {
-    console.error('Chunk loading error in promise rejection, clearing cache and reloading...', errorMessage)
-    
     // Clear caches and reload
     if ('caches' in window) {
       caches.keys().then(cacheNames => {
@@ -173,77 +166,6 @@ window.addEventListener('unhandledrejection', (event) => {
   
   return true
 }, true) // Use capture phase to catch errors early
-
-// Suppress ALL Workbox debug logs (verbose router messages)
-const originalConsoleLog = console.log
-console.log = function(...args) {
-  const logString = args.join(' ')
-  
-  // Suppress ALL Workbox messages (router, cache, network, etc.)
-  if (logString.toLowerCase().includes('workbox')) {
-    return
-  }
-  
-  // Call original console.log for other messages
-  originalConsoleLog.apply(console, args)
-}
-
-// Additional console error suppression for checkout-related errors, Workbox, and Socket.IO
-const originalConsoleError = console.error
-console.error = function(...args) {
-  const errorString = args.join(' ')
-  
-  // Suppress checkout popup errors from browser extensions
-  if (errorString.includes('checkout popup config') || 
-      (errorString.includes('checkout') && errorString.includes('popup'))) {
-    return
-  }
-  
-  // Suppress only DNS resolution errors for WebSocket (expected when backend is down)
-  // Allow Socket.IO to log connection errors for debugging
-  if (errorString.includes('ERR_NAME_NOT_RESOLVED') && 
-      (errorString.includes('socket.io') || errorString.includes('wss://') || errorString.includes('ws://'))) {
-    return
-  }
-  
-  // Suppress Workbox no-response errors for API routes (expected behavior)
-  if (errorString.includes('no-response') && 
-      (errorString.includes('/api/') || errorString.includes('api.kaam247') || errorString.includes('kaam247.onrender.com'))) {
-    // This is expected - API routes use NetworkOnly strategy
-    return
-  }
-  
-  // Suppress Workbox FetchEvent errors for API routes
-  if (errorString.includes('FetchEvent') && 
-      (errorString.includes('/api/') || errorString.includes('network error'))) {
-    return
-  }
-  
-  // Call original console.error for other errors
-  originalConsoleError.apply(console, args)
-}
-
-// Suppress React DevTools suggestion message and React Router warnings
-const originalConsoleWarn = console.warn
-console.warn = function(...args) {
-  const warnString = args.join(' ')
-  
-  // Suppress React DevTools download suggestion
-  if (warnString.includes('Download the React DevTools') || 
-      warnString.includes('reactjs.org/link/react-devtools')) {
-    return
-  }
-  
-  // Suppress React Router future flag warnings (we've already enabled the flags)
-  if (warnString.includes('React Router Future Flag Warning') ||
-      warnString.includes('v7_startTransition') ||
-      warnString.includes('v7_relativeSplatPath')) {
-    return
-  }
-  
-  // Call original console.warn for other warnings
-  originalConsoleWarn.apply(console, args)
-}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <App />

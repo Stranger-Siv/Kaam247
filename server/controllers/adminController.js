@@ -100,7 +100,6 @@ const getUsers = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error fetching users:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to fetch users'
@@ -214,7 +213,6 @@ const getUserById = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error fetching user details:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to fetch user details'
@@ -268,7 +266,6 @@ const blockUser = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error blocking user:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to block user'
@@ -322,7 +319,6 @@ const unblockUser = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error unblocking user:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to unblock user'
@@ -376,7 +372,6 @@ const banUser = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error banning user:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to ban user'
@@ -431,7 +426,6 @@ const resetCancellations = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error resetting cancellations:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to reset cancellations'
@@ -505,7 +499,6 @@ const updateCancelLimit = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error updating cancellation limit:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to update cancellation limit'
@@ -585,7 +578,6 @@ const getTasks = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error fetching tasks:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to fetch tasks'
@@ -639,7 +631,6 @@ const getTaskById = async (req, res) => {
       timeline
     })
   } catch (error) {
-    console.error('Error fetching task details:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to fetch task details'
@@ -695,7 +686,6 @@ const cancelTask = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error cancelling task:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to cancel task'
@@ -748,7 +738,6 @@ const unassignTask = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error unassigning task:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to unassign task'
@@ -790,7 +779,6 @@ const hideTask = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error hiding task:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to hide task'
@@ -845,7 +833,6 @@ const getReports = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error fetching reports:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to fetch reports'
@@ -908,7 +895,6 @@ const resolveReport = async (req, res) => {
       report: report.toObject()
     })
   } catch (error) {
-    console.error('Error resolving report:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to resolve report'
@@ -983,7 +969,6 @@ const getPublicStats = async (req, res) => {
       averageRating: averageRating > 0 ? parseFloat(averageRating.toFixed(1)) : 0
     })
   } catch (error) {
-    console.error('Error fetching public stats:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to fetch public stats'
@@ -1043,7 +1028,6 @@ const getStats = async (req, res) => {
       abuseMetrics
     })
   } catch (error) {
-    console.error('Error fetching admin stats:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to fetch admin stats'

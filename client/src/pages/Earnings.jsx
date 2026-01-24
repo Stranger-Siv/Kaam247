@@ -62,8 +62,7 @@ function Earnings() {
         if (!response.ok) throw new Error('Failed to fetch earnings')
         const data = await response.json()
         setEarnings(data.earnings)
-      } catch (err) {
-        console.error('Error fetching earnings:', err)
+        } catch (err) {
         setError(err.message || 'Failed to load earnings')
       } finally {
         setLoading(false)

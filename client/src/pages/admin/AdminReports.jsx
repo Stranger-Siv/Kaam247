@@ -58,7 +58,6 @@ function AdminReports() {
         pages: data.pagination?.pages || 0
       }))
     } catch (err) {
-      console.error('Error fetching reports:', err)
       setError(err.message || 'Failed to load reports')
     } finally {
       setLoading(false)

@@ -5,7 +5,6 @@ function AdminRoute({ children }) {
     const { isAuthenticated, user, loading } = useAuth()
 
     if (loading) {
-        console.log('⏳ [AdminRoute] Still loading, showing spinner...')
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
@@ -28,26 +27,14 @@ function AdminRoute({ children }) {
         }
     }
 
-    console.log('🔒 [AdminRoute] Checking authentication:', {
-        isAuthenticated,
-        hasToken: !!token,
-        hasUserInfo: !!userInfo,
-        hasAuth,
-        userRole: currentUser?.role
-    })
-
     if (!hasAuth) {
-        console.log('❌ [AdminRoute] Not authenticated, redirecting to home')
         return <Navigate to="/" replace />
     }
 
-    // Check if user is admin
     if (currentUser?.role !== 'admin') {
-        console.log('❌ [AdminRoute] User is not admin, redirecting to dashboard')
         return <Navigate to="/dashboard" replace />
     }
 
-    console.log('✅ [AdminRoute] User is admin, allowing access')
     return children
 }
 

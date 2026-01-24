@@ -86,8 +86,6 @@ const register = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error registering user:', error)
-
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(err => err.message)
       return res.status(400).json({
@@ -188,8 +186,6 @@ const login = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error logging in user:', error)
-
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while logging in'
@@ -211,7 +207,6 @@ const logout = async (req, res) => {
       message: 'Logout successful'
     })
   } catch (error) {
-    console.error('Error logging out user:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while logging out'

@@ -20,7 +20,6 @@ export const useStateRecovery = (userMode, userId) => {
       const recoveredState = await performStateRecovery(userMode, userId)
       return recoveredState
     } catch (error) {
-      console.error('State recovery failed:', error)
       return null
     } finally {
       setIsRecovering(false)

@@ -75,7 +75,6 @@ function Profile() {
                     }
                 }
             } catch (err) {
-                console.error('Error fetching profile:', err)
             } finally {
                 setLoading(false)
             }
@@ -152,7 +151,6 @@ function Profile() {
                 }
             }
         } catch (err) {
-            console.error('Error fetching activity:', err)
         }
     }, [user?.id, userMode])
 
@@ -231,7 +229,6 @@ function Profile() {
                     }))
                 }
             } catch (err) {
-                console.error('Error fetching earnings:', err)
             }
         }
 
@@ -270,7 +267,6 @@ function Profile() {
 
             setIsEditing(false)
         } catch (err) {
-            console.error('Error saving profile:', err)
             setSaveError(err.message || 'Failed to save profile. Please try again.')
         } finally {
             setIsSaving(false)

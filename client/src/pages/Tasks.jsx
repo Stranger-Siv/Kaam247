@@ -102,7 +102,6 @@ function Tasks() {
 
         setTasks(transformedTasks)
       } catch (err) {
-        console.error('Error fetching tasks:', err)
         setError(err.message || 'Failed to load tasks. Please try again later.')
       } finally {
         setLoading(false)
@@ -258,9 +257,7 @@ function Tasks() {
       try {
         const activeTask = await fetchActiveTask()
         setHasActiveTask(Boolean(activeTask && activeTask.hasActiveTask))
-      } catch (error) {
-        console.error('State recovery failed:', error)
-      }
+      } catch (error) {}
     }
 
     recoverState()
@@ -305,7 +302,6 @@ function Tasks() {
             setTasks(transformedTasks)
           }
         } catch (err) {
-          console.error('Error refetching tasks on reconnect:', err)
         }
       }
       fetchTasks()

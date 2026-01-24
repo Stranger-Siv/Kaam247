@@ -104,9 +104,8 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
           area,
           city
         }))
-      } catch (err) {
-        console.error('Reverse geocoding error:', err)
-      }
+        } catch (err) {
+        }
     }
   }
 

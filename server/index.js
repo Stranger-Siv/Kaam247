@@ -38,7 +38,6 @@ const corsOptions = {
     if (isAllowed) {
       callback(null, true)
     } else {
-      console.log('CORS: Blocked origin:', origin)
       callback(new Error('Not allowed by CORS'))
     }
   },
@@ -53,10 +52,7 @@ app.use(cookieParser())
 
 // Request logging middleware (only log in development)
 if (process.env.NODE_ENV !== 'production') {
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`)
-    next()
-  })
+  app.use((req, res, next) => { next() })
 }
 
 // Health check route
@@ -77,7 +73,6 @@ app.use('/api/admin', adminRoutes)
 
 // 404 handler
 app.use((req, res) => {
-  console.log('404 - Route not found:', req.method, req.url)
   res.status(404).json({
     error: 'Route not found',
     message: `${req.method} ${req.url} not found`
@@ -91,18 +86,11 @@ const startServer = async () => {
     try {
       await connectDB()
     } catch (dbError) {
-      console.error('MongoDB connection failed, but server is running:', dbError.message)
-      console.log('Server will continue without database connection')
     }
 
     // Start server with Socket.IO
-    server.listen(PORT, () => {
-      console.log(`Server running at port ${PORT}`)
-      console.log(`Health check: http://localhost:${PORT}/health`)
-      console.log(`Socket.IO ready for connections`)
-    })
+    server.listen(PORT, () => {})
   } catch (error) {
-    console.error('Failed to start server:', error.message)
     process.exit(1)
   }
 }

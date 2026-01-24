@@ -88,8 +88,6 @@ const createUser = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error creating user:', error)
-    
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(err => err.message)
       return res.status(400).json({
@@ -222,8 +220,6 @@ const updateProfile = async (req, res) => {
       user: updatedUser
     })
   } catch (error) {
-    console.error('Error updating profile:', error)
-    
     if (error.code === 11000) {
       return res.status(400).json({
         error: 'Duplicate field',
@@ -343,7 +339,6 @@ const getActivity = async (req, res) => {
       activity: categorized
     })
   } catch (error) {
-    console.error('Error fetching activity:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while fetching activity'
@@ -427,7 +422,6 @@ const getEarnings = async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error fetching earnings:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while fetching earnings'
@@ -453,7 +447,6 @@ const getProfile = async (req, res) => {
       user: user
     })
   } catch (error) {
-    console.error('Error fetching profile:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while fetching profile'
@@ -505,7 +498,6 @@ const getCancellationStatus = async (req, res) => {
       limitReached: !canAcceptTasks
     })
   } catch (error) {
-    console.error('Error fetching cancellation status:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while fetching cancellation status'
@@ -542,7 +534,6 @@ const getActiveTask = async (req, res) => {
       role
     })
   } catch (error) {
-    console.error('Error checking active task:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while checking active task'

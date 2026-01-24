@@ -50,8 +50,6 @@ export function SocketProvider({ children }) {
             allowEIO3: true
           })
         } catch (error) {
-          // Socket initialization failed - app continues without socket
-          console.warn('Socket.IO initialization failed, continuing without real-time features:', error.message)
           socketRef.current = null
           return
         }
@@ -107,32 +105,20 @@ export function SocketProvider({ children }) {
           // Connection error - log once but don't spam console
           // App continues without socket, will retry automatically
           if (socketRef.current?.reconnecting === false) {
-            // Only log on first connection attempt, not on every retry
-            console.warn('Socket.IO connection failed, will retry:', error.message)
           }
         })
 
         // Handle reconnection attempts gracefully
-        socketRef.current.on('reconnect_attempt', (attemptNumber) => {
-          // Log reconnection attempts (Socket.IO will stop automatically after max attempts)
-          if (attemptNumber <= 3) {
-            console.log('Socket.IO: Reconnection attempt', attemptNumber)
-          }
-        })
+        socketRef.current.on('reconnect_attempt', () => {})
 
-        socketRef.current.on('reconnect', (attemptNumber) => {
-          console.log('Socket.IO: Successfully reconnected after', attemptNumber, 'attempts')
-        })
+        socketRef.current.on('reconnect', () => {})
 
-        socketRef.current.on('reconnect_failed', () => {
-          console.warn('Socket.IO: All reconnection attempts failed, app will continue with REST APIs')
-        })
+        socketRef.current.on('reconnect_failed', () => {})
       } else if (!socketRef.current.connected) {
         // Reconnect if disconnected (but don't crash if it fails)
         try {
           socketRef.current.connect()
         } catch (error) {
-          console.warn('Socket.IO reconnection failed, continuing without socket:', error.message)
           socketRef.current = null
         }
       } else if (socketRef.current.connected) {

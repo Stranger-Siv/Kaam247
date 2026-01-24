@@ -59,7 +59,6 @@ export function AvailabilityProvider({ children }) {
       }
       return null
     } catch (error) {
-      console.error('Error checking active task:', error)
       return null
     }
   }
@@ -82,7 +81,6 @@ export function AvailabilityProvider({ children }) {
           return false // Indicate offline was blocked
         }
       } catch (error) {
-        console.error('Error checking active task:', error)
       } finally {
         setCheckingActiveTask(false)
       }
@@ -92,7 +90,6 @@ export function AvailabilityProvider({ children }) {
     if (status) {
       // If browser doesn't support geolocation, block going online
       if (typeof navigator === 'undefined' || !navigator.geolocation) {
-        console.warn('Geolocation not available: cannot go ON DUTY without location')
         return false
       }
 
@@ -128,7 +125,6 @@ export function AvailabilityProvider({ children }) {
         localStorage.setItem('kaam247_isOnline', 'true')
         return true
       } catch (error) {
-        console.warn('Failed to get location for ON DUTY:', error)
         return false
       }
     }

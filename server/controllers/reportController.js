@@ -183,7 +183,6 @@ const createReport = async (req, res) => {
       report: report.toObject()
     })
   } catch (error) {
-    console.error('Error creating report:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to create report'

@@ -22,7 +22,6 @@ const initializeSocket = (server) => {
                 if (isAllowed) {
                     callback(null, true)
                 } else {
-                    console.log('Socket.IO CORS: Blocked origin:', origin)
                     callback(new Error('Not allowed by CORS'))
                 }
             },
@@ -58,9 +57,7 @@ const initializeSocket = (server) => {
                 } else if (mode === 'poster') {
                     socketManager.addOnlineUser(socket.id, userId)
                 }
-            } catch (error) {
-                console.error('Error handling clientConnected:', error.message)
-            }
+            } catch (error) {}
         })
 
         // Handle register_user event (primary registration method)
@@ -96,9 +93,7 @@ const initializeSocket = (server) => {
                     // Track as general user (for posters)
                     socketManager.addOnlineUser(socket.id, userId)
                 }
-            } catch (error) {
-                console.error('Error handling register_user:', error.message)
-            }
+            } catch (error) {}
         })
 
         // Handle user going online (general tracking for posters and workers)
@@ -127,9 +122,7 @@ const initializeSocket = (server) => {
                 socketManager.addOnlineUser(socket.id, userId)
                 socket.userId = userId.toString()
                 socket.roleMode = roleMode
-            } catch (error) {
-                console.error('Error handling user_online:', error.message)
-            }
+            } catch (error) {}
         })
 
         // Handle worker going online (toggle ON)
@@ -138,7 +131,6 @@ const initializeSocket = (server) => {
                 const { userId, location, radius } = data
 
                 if (!userId) {
-                    console.log('worker_online event missing userId')
                     return
                 }
 
@@ -178,16 +170,7 @@ const initializeSocket = (server) => {
                 socket.userId = workerId.toString()
                 socket.roleMode = 'worker'
                 socket.location = workerLocation
-                
-                console.log(`[worker_online] Worker ${workerId} registered as online`, {
-                    socketId: socket.id,
-                    location: workerLocation,
-                    radius: workerRadius
-                })
-            } catch (error) {
-                console.error('[worker_online] Error handling worker_online:', error.message)
-                console.error('[worker_online] Stack:', error.stack)
-            }
+            } catch (error) {}
         })
 
         // Handle worker going offline (toggle OFF)
@@ -253,32 +236,26 @@ const getIO = () => {
 const broadcastNewTask = (taskData, postedByUserId) => {
     try {
         if (!io) {
-            console.log('[broadcastNewTask] Socket.IO not initialized')
             return
         }
 
         // Get total count of online workers
         const totalWorkers = socketManager.getOnlineWorkerCount()
-        console.log(`[broadcastNewTask] Online workers: ${totalWorkers}`)
 
         if (totalWorkers === 0) {
-            console.log('[broadcastNewTask] No online workers - skipping broadcast')
             return
         }
 
         // Get task location
         const taskLocation = taskData.location?.coordinates
         if (!taskLocation || taskLocation.length !== 2) {
-            console.log('[broadcastNewTask] Task missing valid location coordinates')
             return
         }
 
         const [taskLng, taskLat] = taskLocation
-        console.log(`[broadcastNewTask] Task location: [${taskLng}, ${taskLat}]`)
 
         // Get all workers with their locations
         const workers = socketManager.getAllWorkersWithLocations()
-        console.log(`[broadcastNewTask] Total workers with locations: ${workers.length}`)
         
         // Filter workers: exclude task creator and check distance
         const eligibleWorkers = workers.filter(worker => {
@@ -315,7 +292,6 @@ const broadcastNewTask = (taskData, postedByUserId) => {
                     taskLng
                 )
             } catch (error) {
-                console.error(`Error calculating distance for worker ${worker.userId}:`, error.message)
                 return false
             }
 
@@ -335,11 +311,8 @@ const broadcastNewTask = (taskData, postedByUserId) => {
         })
 
         if (eligibleWorkers.length === 0) {
-            console.log('[broadcastNewTask] No eligible workers after filtering')
             return
         }
-
-        console.log(`[broadcastNewTask] Eligible workers: ${eligibleWorkers.length}`)
 
         // Emit to eligible worker sockets with distance included
         let emittedCount = 0
@@ -376,17 +349,11 @@ const broadcastNewTask = (taskData, postedByUserId) => {
                 }
                 
                 emittedCount++
-                console.log(`[broadcastNewTask] Alert sent to worker ${worker.userId} (socket: ${worker.socketId})`)
             } catch (emitError) {
-                console.error(`[broadcastNewTask] Error emitting to worker ${worker.userId}:`, emitError.message)
                 // Silent fail - don't block task broadcast
             }
         })
-        
-        console.log(`[broadcastNewTask] Successfully sent alerts to ${emittedCount} workers`)
     } catch (error) {
-        console.error('[broadcastNewTask] Error broadcasting new task:', error.message)
-        console.error('[broadcastNewTask] Stack:', error.stack)
         // Don't throw - task creation should succeed even if broadcast fails
     }
 }
@@ -475,9 +442,7 @@ const notifyTaskCompleted = (posterUserId, workerUserId, taskId) => {
                 role: 'worker'
             })
         }
-    } catch (error) {
-        console.error('Error notifying task completion (non-fatal):', error.message)
-    }
+    } catch (error) {}
 }
 
 const notifyTaskStatusChanged = (userId, taskId, status) => {
@@ -493,9 +458,7 @@ const notifyTaskStatusChanged = (userId, taskId, status) => {
                 status: status
             })
         }
-    } catch (error) {
-        console.error('Error notifying task status change (non-fatal):', error.message)
-    }
+    } catch (error) {}
 }
 
 // Notify user update (for admin actions)
@@ -510,9 +473,7 @@ const notifyUserUpdated = (userId, userData) => {
                 ...userData
             })
         }
-    } catch (error) {
-        console.error('Error notifying user update:', error.message)
-    }
+    } catch (error) {}
 }
 
 // Notify task update (for admin actions)
@@ -541,9 +502,7 @@ const notifyTaskUpdated = (taskId, taskData) => {
                 })
             }
         }
-    } catch (error) {
-        console.error('Error notifying task update:', error.message)
-    }
+    } catch (error) {}
 }
 
 // Broadcast admin stats refresh event to all connected admin users
@@ -555,9 +514,7 @@ const notifyAdminStatsRefresh = () => {
         io.emit('admin_stats_refresh', {
             timestamp: new Date().toISOString()
         })
-    } catch (error) {
-        console.error('Error broadcasting admin stats refresh:', error.message)
-    }
+    } catch (error) {}
 }
 
 module.exports = {

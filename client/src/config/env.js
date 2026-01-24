@@ -17,9 +17,6 @@ const getApiBaseUrl = () => {
   if (envUrl && envUrl.trim() !== '') {
     // But reject localhost in production
     if (isProduction && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
-      console.error('⚠️ ERROR: VITE_API_BASE_URL is set to localhost in production!')
-      console.error('This will cause CORS errors. Please set it to your backend URL in Netlify.')
-      // Fall back to production default
       return 'https://kaam247.onrender.com'
     }
     return envUrl.trim()
@@ -43,9 +40,6 @@ const getSocketUrl = () => {
   if (envUrl && envUrl.trim() !== '') {
     // But reject localhost in production
     if (isProduction && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
-      console.error('⚠️ ERROR: VITE_SOCKET_URL is set to localhost in production!')
-      console.error('This will cause CORS errors. Please set it to your backend URL in Netlify.')
-      // Fall back to production default
       return 'https://kaam247.onrender.com'
     }
     return envUrl.trim()
@@ -68,25 +62,4 @@ export const SOCKET_URL = getSocketUrl()
 // App uses Socket.IO for real-time updates and falls back to REST APIs if socket fails
 export const SOCKET_ENABLED = true
 
-// Log the final URLs for debugging (only in production)
-if (isProduction) {
-  console.log('🌐 API Configuration:')
-  console.log('  API_BASE_URL:', API_BASE_URL)
-  console.log('  SOCKET_URL:', SOCKET_URL)
-  console.log('  Environment:', import.meta.env.MODE)
-  console.log('  VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL || 'NOT SET')
-  console.log('  VITE_SOCKET_URL:', import.meta.env.VITE_SOCKET_URL || 'NOT SET')
-
-  // Warn if still using localhost (shouldn't happen with our checks, but just in case)
-  if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
-    console.error('❌ CRITICAL ERROR: API_BASE_URL is still pointing to localhost!')
-    console.error('This will cause CORS errors. Please set VITE_API_BASE_URL in Netlify environment variables.')
-  }
-
-  // Info about current backend URL
-  if (API_BASE_URL.includes('kaam247.onrender.com')) {
-    console.info('ℹ️ Using Render backend: https://kaam247.onrender.com')
-    console.info('💡 Tip: Later you can set up api.kaam247.in DNS and update environment variables')
-  }
-}
 

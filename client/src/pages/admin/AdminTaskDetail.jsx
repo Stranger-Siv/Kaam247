@@ -32,7 +32,6 @@ function AdminTaskDetail() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        console.error('Failed to fetch task details:', response.status, errorData)
         throw new Error(errorData.message || errorData.error || `Failed to fetch task details (${response.status})`)
       }
 
@@ -46,7 +45,6 @@ function AdminTaskDetail() {
         setTimeline(data.timeline || [])
       }
     } catch (err) {
-      console.error('Error fetching task details:', err)
       setError(err.message || 'Failed to load task details')
     } finally {
       setLoading(false)

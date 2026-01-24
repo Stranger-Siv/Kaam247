@@ -354,8 +354,6 @@ function PostTask() {
       // Redirect to task detail page
       navigate(`/tasks/${taskId}`)
     } catch (err) {
-      console.error('Error creating task:', err)
-      
       // Provide more specific error messages
       let errorMessage = 'Failed to post task. Please try again.'
       

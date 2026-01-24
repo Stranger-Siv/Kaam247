@@ -221,7 +221,6 @@ const createTask = async (req, res) => {
       // Pass postedBy to exclude task creator from receiving the notification
       broadcastNewTask(taskData, savedTask.postedBy.toString())
     } catch (broadcastError) {
-      console.error('Error broadcasting task (non-fatal):', broadcastError.message)
       // Don't fail task creation if broadcast fails
     }
 
@@ -230,18 +229,9 @@ const createTask = async (req, res) => {
       task: savedTask
     })
   } catch (error) {
-    console.error('=== ERROR CREATING TASK ===')
-    console.error('Error name:', error.name)
-    console.error('Error message:', error.message)
-    console.error('Error stack:', error.stack)
-    if (error.errors) {
-      console.error('Validation errors:', error.errors)
-    }
-
     // Handle Mongoose validation errors
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(err => err.message)
-      console.error('Validation errors:', validationErrors)
       return res.status(400).json({
         error: 'Validation error',
         message: validationErrors.join(', '),
@@ -460,7 +450,6 @@ const acceptTask = async (req, res) => {
       notifyTaskStatusChanged(posterId, taskId, 'ACCEPTED')
       notifyTaskStatusChanged(workerId, taskId, 'ACCEPTED')
     } catch (socketError) {
-      console.error('Error emitting socket events (non-fatal):', socketError.message)
       // Don't fail the request if socket emission fails
     }
 
@@ -469,11 +458,6 @@ const acceptTask = async (req, res) => {
       task: updatedTask
     })
   } catch (error) {
-    console.error('=== ERROR ACCEPTING TASK ===')
-    console.error('Error name:', error.name)
-    console.error('Error message:', error.message)
-    console.error('Error stack:', error.stack)
-
     // Handle Mongoose validation errors
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map(err => err.message)
@@ -534,7 +518,6 @@ const getAvailableTasks = async (req, res) => {
               distanceKm: distance
             }
           } catch (error) {
-            console.error('Error calculating distance for task:', task._id, error.message)
             return {
               ...task,
               distanceKm: null
@@ -574,11 +557,6 @@ const getAvailableTasks = async (req, res) => {
       tasks: tasks
     })
   } catch (error) {
-    console.error('=== ERROR FETCHING TASKS ===')
-    console.error('Error name:', error.name)
-    console.error('Error message:', error.message)
-    console.error('Error stack:', error.stack)
-
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while fetching tasks'
@@ -636,7 +614,6 @@ const getTaskById = async (req, res) => {
             taskResponse.distanceKm = calculateDistance(workerLat, workerLng, taskLat, taskLng)
           }
         } catch (error) {
-          console.error('Error calculating distance:', error.message)
           taskResponse.distanceKm = null
         }
       } else {
@@ -684,11 +661,6 @@ const getTaskById = async (req, res) => {
       task: taskResponse
     })
   } catch (error) {
-    console.error('=== ERROR FETCHING TASK BY ID ===')
-    console.error('Error name:', error.name)
-    console.error('Error message:', error.message)
-    console.error('Error stack:', error.stack)
-
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while fetching the task'
@@ -1051,7 +1023,6 @@ const startTask = async (req, res) => {
       task: updatedTask
     })
   } catch (error) {
-    console.error('Error starting task:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while starting the task'
@@ -1164,7 +1135,6 @@ const markComplete = async (req, res) => {
       task: updatedTask
     })
   } catch (error) {
-    console.error('Error marking task as complete:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while marking the task as complete'
@@ -1285,7 +1255,6 @@ const confirmComplete = async (req, res) => {
       task: updatedTask
     })
   } catch (error) {
-    console.error('Error confirming task completion:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while confirming task completion'
@@ -1405,7 +1374,6 @@ const rateTask = async (req, res) => {
       task: updatedTask
     })
   } catch (error) {
-    console.error('Error rating task:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while submitting the rating'
@@ -1531,9 +1499,7 @@ const editTask = async (req, res) => {
           location: updatedTask.location,
           createdAt: updatedTask.createdAt
         }, posterId)
-      } catch (socketError) {
-        console.error('Error re-alerting workers (non-fatal):', socketError.message)
-      }
+      } catch (socketError) {}
     }
 
     // Emit taskUpdated event for state sync
@@ -1556,7 +1522,6 @@ const editTask = async (req, res) => {
       reAlerted: shouldAlert
     })
   } catch (error) {
-    console.error('Error editing task:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while editing the task'
@@ -1629,7 +1594,6 @@ const deleteTask = async (req, res) => {
       message: 'Task deleted successfully'
     })
   } catch (error) {
-    console.error('Error deleting task:', error)
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while deleting the task'

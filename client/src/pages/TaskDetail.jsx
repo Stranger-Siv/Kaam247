@@ -155,7 +155,6 @@ function TaskDetail() {
 
       setTask(transformedTask)
     } catch (err) {
-      console.error('Error fetching task:', err)
       setError(err.message || 'Failed to load task details. Please try again later.')
     } finally {
       setLoading(false)
@@ -260,7 +259,6 @@ function TaskDetail() {
               }))
             }
           } catch (err) {
-            console.error('Error fetching updated task:', err)
           }
         }
         fetchUpdatedTask()
@@ -339,7 +337,6 @@ function TaskDetail() {
           setHasActiveTask(activeTaskData?.hasActiveTask || false)
         }
       } catch (error) {
-        console.error('State recovery failed:', error)
       }
     }
 
@@ -355,7 +352,6 @@ function TaskDetail() {
           const activeTaskData = await checkActiveTask()
           setHasActiveTask(activeTaskData?.hasActiveTask || false)
         } catch (error) {
-          console.error('Error checking active task:', error)
         } finally {
           setCheckingActiveTask(false)
         }
@@ -586,7 +582,6 @@ function TaskDetail() {
         detail: { taskId, status: 'ACCEPTED' }
       }))
     } catch (err) {
-      console.error('Error accepting task:', err)
       setAcceptError(err.message || 'Failed to accept task. Please try again.')
     } finally {
       setIsAccepting(false)
@@ -668,7 +663,6 @@ function TaskDetail() {
         setHasActiveTask(activeTaskData?.hasActiveTask || false)
       }
     } catch (err) {
-      console.error('Error starting task:', err)
       setStartError(err.message || 'Failed to start task. Please try again.')
     } finally {
       setIsStarting(false)
@@ -748,7 +742,6 @@ function TaskDetail() {
         detail: { taskId, status: 'IN_PROGRESS' }
       }))
     } catch (err) {
-      console.error('Error marking task as complete:', err)
       setMarkCompleteError(err.message || 'Failed to mark task as complete. Please try again.')
     } finally {
       setIsMarkingComplete(false)
@@ -812,7 +805,6 @@ function TaskDetail() {
         detail: { taskId, rating }
       }))
     } catch (err) {
-      console.error('Error rating task:', err)
       setRatingError(err.message || 'Failed to submit rating. Please try again.')
     } finally {
       setIsRating(false)
@@ -884,7 +876,6 @@ function TaskDetail() {
         }))
       }
     } catch (err) {
-      console.error('Error confirming task completion:', err)
       setConfirmError(err.message || 'Failed to confirm task completion. Please try again.')
     } finally {
       setIsConfirming(false)
@@ -952,7 +943,6 @@ function TaskDetail() {
         state: { message: 'Task deleted successfully' }
       })
     } catch (err) {
-      console.error('Error deleting task:', err)
       setDeleteError(err.message || 'Failed to delete task. Please try again.')
     } finally {
       setIsDeleting(false)

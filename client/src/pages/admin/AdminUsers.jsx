@@ -53,7 +53,6 @@ function AdminUsers() {
         pages: data.pagination?.pages || 0
       }))
     } catch (err) {
-      console.error('Error fetching users:', err)
       setError(err.message || 'Failed to load users')
     } finally {
       setLoading(false)
