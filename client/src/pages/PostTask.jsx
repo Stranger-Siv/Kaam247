@@ -300,7 +300,8 @@ function PostTask() {
           finalLocation = {
             coordinates: [lng, lat], // GeoJSON format: [longitude, latitude]
             area: area || finalLocation.area,
-            city: city || finalLocation.city
+            city: city || finalLocation.city,
+            fullAddress: finalLocation.fullAddress ?? null
           }
 
           // Persist location to user profile
@@ -422,8 +423,8 @@ function PostTask() {
                   placeholder="Describe your task in detail. Include any specific requirements or instructions."
                   rows={5}
                   className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors leading-relaxed ${fieldErrors.description
-                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
-                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
+                    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                    : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                     }`}
                   required
                 />
@@ -445,8 +446,8 @@ function PostTask() {
                     if (fieldErrors.category) setFieldErrors(prev => ({ ...prev, category: null }))
                   }}
                   className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.category
-                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
-                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
+                    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                    : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                     }`}
                   required
                 >
@@ -492,8 +493,8 @@ function PostTask() {
                   }}
                   placeholder="e.g., Koramangala, Bangalore"
                   className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${fieldErrors.location
-                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
-                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
+                    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                    : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                     }`}
                   required
                 />
@@ -579,8 +580,8 @@ function PostTask() {
                     return maxDate.toISOString().split('T')[0]
                   })()}
                   className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.date
-                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
-                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
+                    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                    : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                     }`}
                   required
                 />
@@ -606,8 +607,8 @@ function PostTask() {
                     ? `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`
                     : undefined}
                   className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.time
-                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
-                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
+                    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                    : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                     }`}
                   required
                 />
@@ -629,8 +630,8 @@ function PostTask() {
                     if (fieldErrors.hours) setFieldErrors(prev => ({ ...prev, hours: null }))
                   }}
                   className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.hours
-                      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
-                      : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
+                    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
+                    : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
                     }`}
                   required
                 >
