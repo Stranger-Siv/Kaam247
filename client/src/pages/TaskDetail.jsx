@@ -124,6 +124,7 @@ function TaskDetail() {
         description: backendTask.description,
         location: backendTask.location?.area || 'Location not specified',
         city: backendTask.location?.city || '',
+        fullAddress: backendTask.location?.fullAddress || null,
         coordinates: backendTask.location?.coordinates || null, // Store coordinates for Google Maps
         distance: backendTask.distanceKm !== null && backendTask.distanceKm !== undefined
           ? `${backendTask.distanceKm} km away`
@@ -1861,6 +1862,9 @@ function TaskDetail() {
                 <div>
                   <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">{task.location}</p>
                   <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">{task.city}</p>
+                  {task.fullAddress && (
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-2 leading-relaxed whitespace-pre-wrap">{task.fullAddress}</p>
+                  )}
                   {userMode === 'worker' && (
                     <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1.5">
                       <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

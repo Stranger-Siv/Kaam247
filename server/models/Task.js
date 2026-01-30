@@ -53,6 +53,10 @@ const taskSchema = new mongoose.Schema({
         },
         city: {
             type: String
+        },
+        fullAddress: {
+            type: String,
+            description: 'Poster full address: room no, flat, building, landmark, etc.'
         }
     },
     scheduledAt: {

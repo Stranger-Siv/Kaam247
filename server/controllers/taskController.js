@@ -179,7 +179,8 @@ const createTask = async (req, res) => {
         type: 'Point',
         coordinates: normalizedCoordinates,
         area: location.area ? location.area.trim() : null,
-        city: location.city ? location.city.trim() : null
+        city: location.city ? location.city.trim() : null,
+        fullAddress: location.fullAddress ? location.fullAddress.trim() : null
       },
       postedBy: postedBy, // Pass as string, Mongoose will cast to ObjectId
       status: 'OPEN',
@@ -1475,7 +1476,8 @@ const editTask = async (req, res) => {
         type: 'Point',
         coordinates: location.coordinates,
         area: location.area || task.location?.area,
-        city: location.city || task.location?.city
+        city: location.city || task.location?.city,
+        fullAddress: location.fullAddress !== undefined ? (location.fullAddress ? location.fullAddress.trim() : null) : task.location?.fullAddress
       }
     }
     if (scheduledAt !== undefined) {

@@ -18,6 +18,7 @@ function PostTask() {
     description: '',
     category: '',
     location: '',
+    fullAddress: '',
     budget: '',
     date: '',
     time: '',
@@ -31,7 +32,7 @@ function PostTask() {
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [locationError, setLocationError] = useState(null)
   const [mapCenter, setMapCenter] = useState([12.9716, 77.5946]) // Bangalore default [lat, lng]
-  
+
   // Initialize location data with default coordinates if not set
   useEffect(() => {
     if (!locationData.coordinates) {
@@ -75,7 +76,7 @@ function PostTask() {
   // Handle location change from map (marker drag or initial load)
   const handleMapLocationChange = async (locationInfo) => {
     const { coordinates, lat, lng } = locationInfo
-    
+
     // Update location data
     setLocationData(prev => ({
       ...prev,
@@ -132,26 +133,26 @@ function PostTask() {
         try {
           const lat = position.coords.latitude
           const lng = position.coords.longitude
-          
+
           // Reverse geocode to get area and city
           const { area, city } = await reverseGeocode(lat, lng)
-          
+
           // Store coordinates and location data
           setLocationData({
             coordinates: [lng, lat], // GeoJSON format: [longitude, latitude]
             area,
             city
           })
-          
+
           // Update form location field with area and city
           setFormData(prev => ({
             ...prev,
             location: `${area}, ${city}`
           }))
-          
+
           // Update map center to user location [lat, lng] for Leaflet
           setMapCenter([lat, lng])
-          
+
           setIsGettingLocation(false)
         } catch (error) {
           setLocationError('Failed to get location details. You can still set location manually using the map.')
@@ -216,7 +217,7 @@ function PostTask() {
       setError('Please fill in all required fields')
       return
     }
-    
+
     setError(null) // Clear any previous errors
     setFieldErrors({}) // Clear field errors
     if (step < 3) {
@@ -238,7 +239,7 @@ function PostTask() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Prevent duplicate submissions
     if (isSubmitting) {
       return
@@ -276,7 +277,8 @@ function PostTask() {
       let finalLocation = {
         coordinates: locationData.coordinates || [77.5946, 12.9716], // Fallback to default
         area: locationData.area || formData.location?.split(',')[0]?.trim() || 'Unknown Area',
-        city: locationData.city || formData.location?.split(',')[1]?.trim() || 'Unknown City'
+        city: locationData.city || formData.location?.split(',')[1]?.trim() || 'Unknown City',
+        fullAddress: formData.fullAddress?.trim() || null
       }
 
       // Try to get current location for more precision
@@ -300,7 +302,7 @@ function PostTask() {
             area: area || finalLocation.area,
             city: city || finalLocation.city
           }
-          
+
           // Persist location to user profile
           await persistUserLocation(lat, lng, area, city)
         } catch (geocodeError) {
@@ -356,13 +358,13 @@ function PostTask() {
     } catch (err) {
       // Provide more specific error messages
       let errorMessage = 'Failed to post task. Please try again.'
-      
+
       if (err.message) {
         errorMessage = err.message
       } else if (err.name === 'TypeError' && err.message.includes('fetch')) {
         errorMessage = 'Cannot connect to server. Please make sure the server is running.'
       }
-      
+
       setError(errorMessage)
       setIsSubmitting(false)
     }
@@ -382,7 +384,7 @@ function PostTask() {
         {step === 1 && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">What task do you need help with?</h2>
-            
+
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
                 <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
@@ -396,9 +398,8 @@ function PostTask() {
                     if (fieldErrors.title) setFieldErrors(prev => ({ ...prev, title: null }))
                   }}
                   placeholder="e.g., Need help moving furniture"
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${
-                    fieldErrors.title ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400' : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
-                  }`}
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${fieldErrors.title ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400' : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
+                    }`}
                   required
                 />
                 {fieldErrors.title ? (
@@ -420,11 +421,10 @@ function PostTask() {
                   }}
                   placeholder="Describe your task in detail. Include any specific requirements or instructions."
                   rows={5}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors leading-relaxed ${
-                    fieldErrors.description
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors leading-relaxed ${fieldErrors.description
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
                       : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
-                  }`}
+                    }`}
                   required
                 />
                 {fieldErrors.description ? (
@@ -444,11 +444,10 @@ function PostTask() {
                     handleInputChange('category', e.target.value)
                     if (fieldErrors.category) setFieldErrors(prev => ({ ...prev, category: null }))
                   }}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
-                    fieldErrors.category
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.category
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
                       : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
-                  }`}
+                    }`}
                   required
                 >
                   <option value="">Select a category</option>
@@ -478,7 +477,7 @@ function PostTask() {
         {step === 2 && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">Where and when?</h2>
-            
+
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
                 <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
@@ -492,11 +491,10 @@ function PostTask() {
                     if (fieldErrors.location) setFieldErrors(prev => ({ ...prev, location: null }))
                   }}
                   placeholder="e.g., Koramangala, Bangalore"
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${
-                    fieldErrors.location
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] ${fieldErrors.location
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
                       : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
-                  }`}
+                    }`}
                   required
                 />
                 {fieldErrors.location && (
@@ -534,7 +532,21 @@ function PostTask() {
                     ✓ Location captured: {locationData.area}, {locationData.city}
                   </p>
                 )}
-                
+
+                <div className="mt-4 sm:mt-5">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                    Full address (optional)
+                  </label>
+                  <textarea
+                    value={formData.fullAddress}
+                    onChange={(e) => handleInputChange('fullAddress', e.target.value)}
+                    placeholder="Room no, flat no, building name, landmark, etc."
+                    rows={3}
+                    className="w-full px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors resize-y min-h-[80px]"
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Helps the worker find you (e.g. Block A, 3rd floor, near XYZ)</p>
+                </div>
+
                 {/* Embedded Map */}
                 <div className="mt-4 sm:mt-5">
                   <LocationPickerMap
@@ -566,11 +578,10 @@ function PostTask() {
                     maxDate.setDate(maxDate.getDate() + 2)
                     return maxDate.toISOString().split('T')[0]
                   })()}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
-                    fieldErrors.date
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.date
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
                       : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
-                  }`}
+                    }`}
                   required
                 />
                 {fieldErrors.date ? (
@@ -594,11 +605,10 @@ function PostTask() {
                   min={formData.date === new Date().toISOString().split('T')[0]
                     ? `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`
                     : undefined}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
-                    fieldErrors.time
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.time
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
                       : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
-                  }`}
+                    }`}
                   required
                 />
                 {fieldErrors.time ? (
@@ -618,11 +628,10 @@ function PostTask() {
                     handleInputChange('hours', e.target.value)
                     if (fieldErrors.hours) setFieldErrors(prev => ({ ...prev, hours: null }))
                   }}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${
-                    fieldErrors.hours
+                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.hours
                       ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
                       : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
-                  }`}
+                    }`}
                   required
                 >
                   {hoursOptions.map((option) => (
@@ -662,7 +671,7 @@ function PostTask() {
         {step === 3 && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">Set your budget</h2>
-            
+
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
                 <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 sm:mb-4 uppercase tracking-wide">

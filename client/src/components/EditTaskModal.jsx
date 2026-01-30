@@ -12,7 +12,8 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
     budget: '',
     date: '',
     time: '',
-    hours: ''
+    hours: '',
+    fullAddress: ''
   })
   const [locationData, setLocationData] = useState({
     coordinates: null,
@@ -63,7 +64,8 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
         budget: task.budget?.toString() || '',
         date: scheduledDate ? scheduledDate.toISOString().split('T')[0] : '',
         time: scheduledDate ? scheduledDate.toTimeString().slice(0, 5) : '',
-        hours: task.expectedDuration?.toString() || ''
+        hours: task.expectedDuration?.toString() || '',
+        fullAddress: task.fullAddress || task.location?.fullAddress || ''
       })
       setLocationData({
         coordinates: task.location?.coordinates || null,
@@ -90,7 +92,7 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
 
   const handleMapLocationChange = async (locationInfo) => {
     const { coordinates, lat, lng } = locationInfo
-    
+
     setLocationData(prev => ({
       ...prev,
       coordinates: coordinates || prev.coordinates
@@ -104,8 +106,8 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
           area,
           city
         }))
-        } catch (err) {
-        }
+      } catch (err) {
+      }
     }
   }
 
@@ -174,7 +176,7 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
@@ -217,7 +219,8 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
         location: {
           coordinates: locationData.coordinates,
           area: locationData.area,
-          city: locationData.city
+          city: locationData.city,
+          fullAddress: formData.fullAddress?.trim() || null
         },
         scheduledAt: scheduledAt || null,
         expectedDuration: formData.hours ? Number(formData.hours) : null,
@@ -239,11 +242,11 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
       }
 
       const data = await response.json()
-      
+
       if (onSuccess) {
         onSuccess(data.task, data.reAlerted)
       }
-      
+
       onClose()
     } catch (err) {
       setError(err.message || 'Failed to update task. Please try again.')
@@ -389,6 +392,18 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
                 📍 {locationData.area}{locationData.city ? `, ${locationData.city}` : ''}
               </p>
             )}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Full address (optional)
+              </label>
+              <textarea
+                value={formData.fullAddress}
+                onChange={(e) => handleInputChange('fullAddress', e.target.value)}
+                placeholder="Room no, flat no, building name, landmark, etc."
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
+              />
+            </div>
             {fieldErrors.location && (
               <p className="mt-1 text-sm text-red-600">{fieldErrors.location}</p>
             )}
