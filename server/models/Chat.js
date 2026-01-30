@@ -41,8 +41,7 @@ const chatSchema = new mongoose.Schema({
   }
 })
 
-// One chat per task
-chatSchema.index({ taskId: 1 }, { unique: true })
+// One chat per task — index is created by unique: true on taskId above
 
 const Chat = mongoose.model('Chat', chatSchema)
 module.exports = Chat
