@@ -3,7 +3,6 @@ const router = express.Router()
 const { authenticate } = require('../middleware/auth')
 const { adminMiddleware } = require('../middleware/admin')
 const {
-  // User management
   getUsers,
   getUserById,
   blockUser,
@@ -11,18 +10,24 @@ const {
   banUser,
   resetCancellations,
   updateCancelLimit,
-  // Task moderation
   getTasks,
   getTaskById,
   cancelTask,
   unassignTask,
   hideTask,
-  // Reports
   getReports,
   resolveReport,
-  // Stats
   getStats,
-  getDashboard
+  getDashboard,
+  getDashboardCharts,
+  getWorkers,
+  getChats,
+  getChatByTaskId,
+  getSettings,
+  updateSettings,
+  getReviews,
+  getLogs,
+  getAnalytics
 } = require('../controllers/adminController')
 
 // All admin routes require authentication AND admin role
@@ -93,6 +98,41 @@ router.get('/stats', getStats)
 
 // GET /api/admin/dashboard - Full dashboard (tasks by status/location/category, revenue, users, recent activity)
 router.get('/dashboard', getDashboard)
+
+// GET /api/admin/dashboard/charts?period=daily|weekly|monthly - Time-series for graphs
+router.get('/dashboard/charts', getDashboardCharts)
+
+// ============================================
+// WORKERS
+// ============================================
+router.get('/workers', getWorkers)
+
+// ============================================
+// CHATS
+// ============================================
+router.get('/chats', getChats)
+router.get('/chats/:taskId', getChatByTaskId)
+
+// ============================================
+// SETTINGS
+// ============================================
+router.get('/settings', getSettings)
+router.put('/settings', updateSettings)
+
+// ============================================
+// REVIEWS
+// ============================================
+router.get('/reviews', getReviews)
+
+// ============================================
+// LOGS
+// ============================================
+router.get('/logs', getLogs)
+
+// ============================================
+// ANALYTICS
+// ============================================
+router.get('/analytics', getAnalytics)
 
 module.exports = router
 

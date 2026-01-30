@@ -34,6 +34,12 @@ const AdminUserDetail = lazyWithRetry(() => import('./pages/admin/AdminUserDetai
 const AdminTasks = lazyWithRetry(() => import('./pages/admin/AdminTasks'))
 const AdminTaskDetail = lazyWithRetry(() => import('./pages/admin/AdminTaskDetail'))
 const AdminReports = lazyWithRetry(() => import('./pages/admin/AdminReports'))
+const AdminWorkers = lazyWithRetry(() => import('./pages/admin/AdminWorkers'))
+const AdminChats = lazyWithRetry(() => import('./pages/admin/AdminChats'))
+const AdminSettings = lazyWithRetry(() => import('./pages/admin/AdminSettings'))
+const AdminReviews = lazyWithRetry(() => import('./pages/admin/AdminReviews'))
+const AdminLogs = lazyWithRetry(() => import('./pages/admin/AdminLogs'))
+const AdminAnalytics = lazyWithRetry(() => import('./pages/admin/AdminAnalytics'))
 
 // Loading component for Suspense fallback
 const PageLoader = () => (
@@ -139,9 +145,15 @@ function App() {
                     >
                       <Route path="/admin" element={<AdminOverview />} />
                       <Route path="/admin/users" element={<AdminUsers />} />
+                      <Route path="/admin/workers" element={<AdminWorkers />} />
                       <Route path="/admin/users/:userId" element={<AdminUserDetail />} />
                       <Route path="/admin/tasks" element={<AdminTasks />} />
                       <Route path="/admin/tasks/:taskId" element={<AdminTaskDetail />} />
+                      <Route path="/admin/chats" element={<AdminChats />} />
+                      <Route path="/admin/settings" element={<AdminSettings />} />
+                      <Route path="/admin/reviews" element={<AdminReviews />} />
+                      <Route path="/admin/logs" element={<AdminLogs />} />
+                      <Route path="/admin/analytics" element={<AdminAnalytics />} />
                       <Route path="/admin/reports" element={<AdminReports />} />
                     </Route>
                           </Routes>

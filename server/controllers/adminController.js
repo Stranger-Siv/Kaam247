@@ -1,6 +1,9 @@
 const User = require('../models/User')
 const Task = require('../models/Task')
 const Report = require('../models/Report')
+const Config = require('../models/Config')
+const Chat = require('../models/Chat')
+const AdminLog = require('../models/AdminLog')
 const mongoose = require('mongoose')
 const { notifyUserUpdated, notifyTaskUpdated, notifyTaskCancelled, notifyAdminStatsRefresh } = require('../socket/socketHandler')
 
@@ -1013,12 +1016,12 @@ const getDashboard = async (req, res) => {
       createdAt: { $gte: today, $lt: tomorrow }
     })
 
-    // ---- TASKS BY CATEGORY ----
+    // ---- TASKS BY CATEGORY (count + revenue for completed) ----
     const tasksByCategory = await Task.aggregate([
-      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $group: { _id: '$category', count: { $sum: 1 }, revenue: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, '$budget', 0] } } } },
       { $sort: { count: -1 } },
       { $limit: 20 }
-    ]).then(arr => arr.map(({ _id, count }) => ({ category: _id || 'Unknown', count })))
+    ]).then(arr => arr.map(({ _id, count, revenue }) => ({ category: _id || 'Unknown', count, revenue: revenue || 0 })))
 
     // ---- TASKS BY LOCATION (city) ----
     const tasksByLocation = await Task.aggregate([
@@ -1063,6 +1066,25 @@ const getDashboard = async (req, res) => {
     const newUsersToday = await User.countDocuments({ createdAt: { $gte: today, $lt: tomorrow } })
     const newUsersThisWeek = await User.countDocuments({ createdAt: { $gte: weekStart } })
 
+    // ---- POSTERS / WORKERS (distinct users who posted / accepted at least one task) ----
+    const [postersAgg] = await Task.aggregate([{ $group: { _id: '$postedBy' } }, { $count: 'count' }])
+    const [workersAgg] = await Task.aggregate([{ $match: { acceptedBy: { $ne: null } } }, { $group: { _id: '$acceptedBy' } }, { $count: 'count' }])
+    const totalPosters = postersAgg?.count ?? 0
+    const totalWorkers = workersAgg?.count ?? 0
+
+    // ---- DISPUTES / REPORTS ----
+    const disputesCount = await Report.countDocuments({ status: 'open' })
+    const reportsTotal = await Report.countDocuments()
+
+    // ---- PLATFORM COMMISSION (from config or 0) ----
+    let platformCommissionPercent = 0
+    try {
+      const configDoc = await Config.findOne({ key: 'platformCommissionPercent' })
+      if (configDoc && typeof configDoc.value === 'number') platformCommissionPercent = configDoc.value
+    } catch (_) { }
+    const platformCommissionTotal = Math.round((totalGMV * platformCommissionPercent) / 100)
+    const totalPayoutToWorkers = totalGMV - platformCommissionTotal
+
     // ---- RECENT TASKS (last 30) ----
     const recentTasks = await Task.find()
       .populate('postedBy', 'name email phone')
@@ -1084,18 +1106,27 @@ const getDashboard = async (req, res) => {
       overview: {
         totalUsers,
         totalAdmins,
+        totalPosters,
+        totalWorkers,
         onlineWorkers: onlineWorkersCount,
         totalTasks,
         tasksToday,
         tasksThisWeek,
         pendingTasks,
         ongoingTasks,
+        activeTasks: ongoingTasks,
         completedTasks,
         cancelledTasks,
         completedToday,
         cancelledToday,
         earningsToday,
         totalGMV,
+        totalPayoutToWorkers,
+        platformCommissionTotal,
+        platformCommissionPercent,
+        pendingPayouts: 0,
+        disputesCount,
+        reportsTotal,
         earningsThisWeek,
         earningsThisMonth
       },
@@ -1125,6 +1156,86 @@ const getDashboard = async (req, res) => {
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to fetch dashboard'
+    })
+  }
+}
+
+// GET /api/admin/dashboard/charts?period=daily|weekly|monthly - Time-series for graphs
+const getDashboardCharts = async (req, res) => {
+  try {
+    const period = (req.query.period || 'weekly').toLowerCase()
+    const validPeriod = ['daily', 'weekly', 'monthly'].includes(period) ? period : 'weekly'
+
+    const now = new Date()
+    let startDate
+    let dateFormat
+    let groupFormat
+
+    if (validPeriod === 'daily') {
+      startDate = new Date(now)
+      startDate.setDate(startDate.getDate() - 30)
+      startDate.setHours(0, 0, 0, 0)
+      dateFormat = '%Y-%m-%d'
+      groupFormat = { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
+    } else if (validPeriod === 'weekly') {
+      startDate = new Date(now)
+      startDate.setDate(startDate.getDate() - 84)
+      startDate.setHours(0, 0, 0, 0)
+      dateFormat = '%Y-W%V'
+      groupFormat = { $dateToString: { format: '%Y-W%V', date: '$createdAt' } }
+    } else {
+      startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1)
+      dateFormat = '%Y-%m'
+      groupFormat = { $dateToString: { format: '%Y-%m', date: '$createdAt' } }
+    }
+
+    // Revenue over time (completed tasks budget sum per bucket)
+    const revenueTimeSeries = await Task.aggregate([
+      { $match: { status: 'COMPLETED', completedAt: { $gte: startDate } } },
+      { $group: { _id: { $dateToString: { format: dateFormat === '%Y-%m-%d' ? '%Y-%m-%d' : dateFormat === '%Y-%m' ? '%Y-%m' : '%Y-W%V', date: '$completedAt' } }, total: { $sum: '$budget' } } },
+      { $sort: { _id: 1 } }
+    ]).then(arr => arr.map(({ _id, total }) => ({ date: _id, revenue: total })))
+
+    // Tasks created per bucket
+    const tasksCreatedTimeSeries = await Task.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      { $group: { _id: groupFormat, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]).then(arr => arr.map(({ _id, count }) => ({ date: _id, created: count })))
+
+    // Tasks completed per bucket
+    const tasksCompletedTimeSeries = await Task.aggregate([
+      { $match: { status: 'COMPLETED', completedAt: { $gte: startDate } } },
+      { $group: { _id: { $dateToString: { format: dateFormat === '%Y-%m-%d' ? '%Y-%m-%d' : dateFormat === '%Y-%m' ? '%Y-%m' : '%Y-W%V', date: '$completedAt' } }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]).then(arr => arr.map(({ _id, count }) => ({ date: _id, completed: count })))
+
+    // Tasks cancelled per bucket (by createdAt for simplicity)
+    const tasksCancelledTimeSeries = await Task.aggregate([
+      { $match: { status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] }, createdAt: { $gte: startDate } } },
+      { $group: { _id: groupFormat, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]).then(arr => arr.map(({ _id, count }) => ({ date: _id, cancelled: count })))
+
+    // User growth (new users per bucket)
+    const userGrowthTimeSeries = await User.aggregate([
+      { $match: { role: 'user', createdAt: { $gte: startDate } } },
+      { $group: { _id: { $dateToString: { format: dateFormat === '%Y-%m-%d' ? '%Y-%m-%d' : dateFormat === '%Y-%m' ? '%Y-%m' : '%Y-W%V', date: '$createdAt' } }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]).then(arr => arr.map(({ _id, count }) => ({ date: _id, users: count })))
+
+    res.json({
+      period: validPeriod,
+      revenueTimeSeries,
+      tasksCreatedTimeSeries,
+      tasksCompletedTimeSeries,
+      tasksCancelledTimeSeries,
+      userGrowthTimeSeries
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch chart data'
     })
   }
 }
@@ -1188,6 +1299,306 @@ const getStats = async (req, res) => {
   }
 }
 
+// ============================================
+// WORKERS MANAGEMENT
+// ============================================
+
+// GET /api/admin/workers - List workers (users who accepted ≥1 task) with stats + online status
+const getWorkers = async (req, res) => {
+  try {
+    const socketManager = require('../socket/socketManager')
+    const onlineWorkerIds = new Set(socketManager.getOnlineWorkers())
+    const workersWithLocations = socketManager.getAllWorkersWithLocations()
+
+    const workerIds = await Task.distinct('acceptedBy', { acceptedBy: { $ne: null } })
+    if (workerIds.length === 0) {
+      return res.json({ workers: [], onlineCount: 0 })
+    }
+
+    const workers = await User.find({ _id: { $in: workerIds } })
+      .select('-password')
+      .lean()
+
+    const stats = await Promise.all(
+      workerIds.map(async (userId) => {
+        const accepted = await Task.countDocuments({ acceptedBy: userId })
+        const completedTasks = await Task.find({ acceptedBy: userId, status: 'COMPLETED' }).select('budget rating')
+        const completed = completedTasks.length
+        const totalEarnings = completedTasks.reduce((s, t) => s + (t.budget || 0), 0)
+        const rated = completedTasks.filter((t) => t.rating != null)
+        const avgRating = rated.length ? rated.reduce((s, t) => s + (t.rating || 0), 0) / rated.length : null
+        return {
+          userId: userId.toString(),
+          tasksAccepted: accepted,
+          tasksCompleted: completed,
+          completionRate: accepted ? Math.round((completed / accepted) * 100) : 0,
+          totalEarnings,
+          averageRating: avgRating != null ? Math.round(avgRating * 10) / 10 : null,
+          totalRatings: rated.length
+        }
+      })
+    )
+    const statsMap = {}
+    stats.forEach((s) => { statsMap[s.userId] = s })
+
+    const workersWithStats = workers.map((w) => {
+      const id = w._id.toString()
+      const s = statsMap[id] || {}
+      const loc = workersWithLocations.find((x) => x.userId === id)
+      return {
+        ...w,
+        tasksAccepted: s.tasksAccepted || 0,
+        tasksCompleted: s.tasksCompleted || 0,
+        completionRate: s.completionRate || 0,
+        totalEarnings: s.totalEarnings || 0,
+        averageRating: s.averageRating,
+        totalRatings: s.totalRatings || 0,
+        isOnline: onlineWorkerIds.has(id),
+        location: loc?.location || null
+      }
+    })
+
+    res.json({
+      workers: workersWithStats,
+      onlineCount: onlineWorkerIds.size
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch workers'
+    })
+  }
+}
+
+// ============================================
+// CHAT MONITORING
+// ============================================
+
+// GET /api/admin/chats - List all chat rooms (by task)
+const getChats = async (req, res) => {
+  try {
+    const { taskId, userId } = req.query
+    const query = {}
+    if (taskId) query.taskId = taskId
+    const chats = await Chat.find(query)
+      .populate('taskId', 'title status postedBy acceptedBy')
+      .populate('participants', 'name email phone')
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean()
+
+    if (userId) {
+      const uid = userId.toString()
+      const filtered = chats.filter((c) => c.participants?.some((p) => p?._id?.toString() === uid))
+      return res.json({ chats: filtered })
+    }
+    res.json({ chats })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch chats'
+    })
+  }
+}
+
+// GET /api/admin/chats/:taskId - Get chat messages for a task
+const getChatByTaskId = async (req, res) => {
+  try {
+    const { taskId } = req.params
+    const chat = await Chat.findOne({ taskId })
+      .populate('taskId', 'title status postedBy acceptedBy')
+      .populate('participants', 'name email phone')
+      .lean()
+    if (!chat) {
+      return res.status(404).json({ error: 'Chat not found', message: 'No chat for this task' })
+    }
+    const senderIds = [...new Set((chat.messages || []).map((m) => m.senderId?.toString()))]
+    const senders = await User.find({ _id: { $in: senderIds } }).select('name email phone').lean()
+    const senderMap = {}
+    senders.forEach((s) => { senderMap[s._id.toString()] = s })
+    const messagesWithSender = (chat.messages || []).map((m) => ({
+      ...m,
+      sender: senderMap[m.senderId?.toString()] || null
+    }))
+    res.json({
+      chat: { ...chat, messages: messagesWithSender }
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch chat'
+    })
+  }
+}
+
+// ============================================
+// SETTINGS (Config)
+// ============================================
+
+// GET /api/admin/settings - Get all config keys
+const getSettings = async (req, res) => {
+  try {
+    const configs = await Config.find().sort({ key: 1 }).lean()
+    const map = {}
+    configs.forEach((c) => { map[c.key] = c.value })
+    res.json({ settings: map, list: configs })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch settings'
+    })
+  }
+}
+
+// PUT /api/admin/settings - Update config (body: { key, value, description? })
+const updateSettings = async (req, res) => {
+  try {
+    const { key, value, description } = req.body
+    if (!key) {
+      return res.status(400).json({ error: 'Missing key', message: 'key is required' })
+    }
+    const updated = await Config.findOneAndUpdate(
+      { key: String(key).trim() },
+      {
+        $set: {
+          value: value !== undefined ? value : null,
+          ...(description !== undefined && { description: String(description).trim() }),
+          updatedAt: new Date(),
+          updatedBy: req.user?._id
+        }
+      },
+      { upsert: true, new: true }
+    )
+    res.json({ message: 'Settings updated', setting: updated })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to update settings'
+    })
+  }
+}
+
+// ============================================
+// REVIEWS & RATINGS
+// ============================================
+
+// GET /api/admin/reviews - List all ratings/reviews (from completed tasks)
+const getReviews = async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query
+    const skip = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit) || 20)
+    const tasks = await Task.find({ rating: { $exists: true, $ne: null } })
+      .populate('postedBy', 'name email phone')
+      .populate('acceptedBy', 'name email phone')
+      .sort({ ratedAt: -1 })
+      .skip(skip)
+      .limit(Math.min(50, parseInt(limit) || 20))
+      .lean()
+    const total = await Task.countDocuments({ rating: { $exists: true, $ne: null } })
+    res.json({
+      reviews: tasks,
+      pagination: { page: Math.max(1, parseInt(page)), limit: Math.min(50, parseInt(limit) || 20), total, pages: Math.ceil(total / (Math.min(50, parseInt(limit) || 20))) }
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch reviews'
+    })
+  }
+}
+
+// ============================================
+// LOGS
+// ============================================
+
+// GET /api/admin/logs - Admin action logs + optional filter
+const getLogs = async (req, res) => {
+  try {
+    const { page = 1, limit = 50, resource, adminId } = req.query
+    const skip = (Math.max(1, parseInt(page)) - 1) * Math.min(100, parseInt(limit) || 50)
+    const query = {}
+    if (resource) query.resource = resource
+    if (adminId) query.adminId = adminId
+    const logs = await AdminLog.find(query)
+      .populate('adminId', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Math.min(100, parseInt(limit) || 50))
+      .lean()
+    const total = await AdminLog.countDocuments(query)
+    res.json({
+      logs,
+      pagination: { page: Math.max(1, parseInt(page)), limit: Math.min(100, parseInt(limit) || 50), total, pages: Math.ceil(total / (Math.min(100, parseInt(limit) || 50))) }
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch logs'
+    })
+  }
+}
+
+// ============================================
+// ANALYTICS
+// ============================================
+
+// GET /api/admin/analytics - Top posters, top workers, best areas, funnel
+const getAnalytics = async (req, res) => {
+  try {
+    const topPosters = await Task.aggregate([
+      { $match: { status: 'COMPLETED' } },
+      { $group: { _id: '$postedBy', totalSpent: { $sum: '$budget' }, count: { $sum: 1 } } },
+      { $sort: { totalSpent: -1 } },
+      { $limit: 20 },
+      { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+      { $unwind: '$user' },
+      { $project: { userId: '$_id', name: '$user.name', email: '$user.email', totalSpent: 1, count: 1, _id: 0 } }
+    ])
+
+    const topWorkers = await Task.aggregate([
+      { $match: { status: 'COMPLETED', acceptedBy: { $ne: null } } },
+      { $group: { _id: '$acceptedBy', totalEarnings: { $sum: '$budget' }, count: { $sum: 1 } } },
+      { $sort: { totalEarnings: -1 } },
+      { $limit: 20 },
+      { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+      { $unwind: '$user' },
+      { $project: { userId: '$_id', name: '$user.name', email: '$user.email', totalEarnings: 1, count: 1, _id: 0 } }
+    ])
+
+    const bestAreas = await Task.aggregate([
+      { $match: { 'location.city': { $exists: true, $ne: null, $ne: '' } } },
+      { $group: { _id: '$location.city', taskCount: { $sum: 1 }, revenue: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, '$budget', 0] } } } },
+      { $sort: { taskCount: -1 } },
+      { $limit: 15 }
+    ]).then((arr) => arr.map(({ _id, taskCount, revenue }) => ({ city: _id, taskCount, revenue })))
+
+    const funnel = await Task.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ])
+    const posted = funnel.filter((f) => ['OPEN', 'SEARCHING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(f._id)).reduce((s, f) => s + f.count, 0)
+    const accepted = (funnel.find((f) => f._id === 'ACCEPTED')?.count || 0) + (funnel.find((f) => f._id === 'IN_PROGRESS')?.count || 0) + (funnel.find((f) => f._id === 'COMPLETED')?.count || 0)
+    const completed = funnel.find((f) => f._id === 'COMPLETED')?.count || 0
+    const cancelled = (funnel.find((f) => f._id === 'CANCELLED')?.count || 0) + (funnel.find((f) => f._id === 'CANCELLED_BY_POSTER')?.count || 0) + (funnel.find((f) => f._id === 'CANCELLED_BY_WORKER')?.count || 0) + (funnel.find((f) => f._id === 'CANCELLED_BY_ADMIN')?.count || 0)
+
+    res.json({
+      topPosters,
+      topWorkers,
+      bestAreas,
+      funnel: {
+        posted,
+        accepted,
+        completed,
+        cancelled
+      }
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch analytics'
+    })
+  }
+}
+
 module.exports = {
   // Public stats
   getPublicStats,
@@ -1210,6 +1621,21 @@ module.exports = {
   resolveReport,
   // Stats
   getStats,
-  getDashboard
+  getDashboard,
+  getDashboardCharts,
+  // Workers
+  getWorkers,
+  // Chats
+  getChats,
+  getChatByTaskId,
+  // Settings
+  getSettings,
+  updateSettings,
+  // Reviews
+  getReviews,
+  // Logs
+  getLogs,
+  // Analytics
+  getAnalytics
 }
 

@@ -17,8 +17,14 @@ function AdminLayout() {
   const menuItems = [
     { path: '/admin', label: 'Overview', icon: '📊' },
     { path: '/admin/users', label: 'Users', icon: '👥' },
+    { path: '/admin/workers', label: 'Workers', icon: '🔧' },
     { path: '/admin/tasks', label: 'Tasks', icon: '📋' },
-    { path: '/admin/reports', label: 'Reports', icon: '🚨' }
+    { path: '/admin/chats', label: 'Chats', icon: '💬' },
+    { path: '/admin/reports', label: 'Reports', icon: '🚨' },
+    { path: '/admin/reviews', label: 'Reviews', icon: '⭐' },
+    { path: '/admin/logs', label: 'Logs', icon: '📜' },
+    { path: '/admin/analytics', label: 'Analytics', icon: '📈' },
+    { path: '/admin/settings', label: 'Settings', icon: '⚙️' }
   ]
 
   const isActive = (path) => {
