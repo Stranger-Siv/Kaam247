@@ -21,7 +21,8 @@ const {
   getReports,
   resolveReport,
   // Stats
-  getStats
+  getStats,
+  getDashboard
 } = require('../controllers/adminController')
 
 // All admin routes require authentication AND admin role
@@ -87,8 +88,11 @@ router.patch('/reports/:id/resolve', resolveReport)
 // ADMIN STATS ROUTES
 // ============================================
 
-// GET /api/admin/stats - Get admin dashboard stats
+// GET /api/admin/stats - Get admin dashboard stats (legacy overview cards)
 router.get('/stats', getStats)
+
+// GET /api/admin/dashboard - Full dashboard (tasks by status/location/category, revenue, users, recent activity)
+router.get('/dashboard', getDashboard)
 
 module.exports = router
 

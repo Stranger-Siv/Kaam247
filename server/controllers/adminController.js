@@ -976,6 +976,159 @@ const getPublicStats = async (req, res) => {
   }
 }
 
+// GET /api/admin/dashboard - Full dashboard data (tasks by status, location, category, revenue, users, recent activity)
+const getDashboard = async (req, res) => {
+  try {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const weekStart = new Date(today)
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+    weekStart.setHours(0, 0, 0, 0)
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+
+    const socketManager = require('../socket/socketManager')
+    const onlineWorkersCount = socketManager.getOnlineWorkerCount()
+
+    // ---- TASKS BY STATUS ----
+    const statusCounts = await Task.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ])
+    const tasksByStatus = {}
+    const allStatuses = ['OPEN', 'SEARCHING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN']
+    allStatuses.forEach(s => { tasksByStatus[s] = 0 })
+    statusCounts.forEach(({ _id, count }) => { tasksByStatus[_id] = count })
+
+    const totalTasks = await Task.countDocuments()
+    const tasksToday = await Task.countDocuments({ createdAt: { $gte: today, $lt: tomorrow } })
+    const tasksThisWeek = await Task.countDocuments({ createdAt: { $gte: weekStart } })
+    const pendingTasks = (tasksByStatus.OPEN || 0) + (tasksByStatus.SEARCHING || 0)
+    const ongoingTasks = (tasksByStatus.ACCEPTED || 0) + (tasksByStatus.IN_PROGRESS || 0)
+    const completedTasks = tasksByStatus.COMPLETED || 0
+    const cancelledTasks = (tasksByStatus.CANCELLED || 0) + (tasksByStatus.CANCELLED_BY_POSTER || 0) + (tasksByStatus.CANCELLED_BY_WORKER || 0) + (tasksByStatus.CANCELLED_BY_ADMIN || 0)
+    const completedToday = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: today, $lt: tomorrow } })
+    const cancelledToday = await Task.countDocuments({
+      status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] },
+      createdAt: { $gte: today, $lt: tomorrow }
+    })
+
+    // ---- TASKS BY CATEGORY ----
+    const tasksByCategory = await Task.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 20 }
+    ]).then(arr => arr.map(({ _id, count }) => ({ category: _id || 'Unknown', count })))
+
+    // ---- TASKS BY LOCATION (city) ----
+    const tasksByLocation = await Task.aggregate([
+      { $match: { 'location.city': { $exists: true, $ne: null, $ne: '' } } },
+      { $group: { _id: '$location.city', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 25 }
+    ]).then(arr => arr.map(({ _id, count }) => ({ city: _id, count })))
+
+    // ---- REVENUE / GMV (sum of completed task budgets) ----
+    const completedPipeline = [
+      { $match: { status: 'COMPLETED' } },
+      { $group: { _id: null, total: { $sum: '$budget' } } }
+    ]
+    const [totalGMVResult] = await Task.aggregate([...completedPipeline])
+    const totalGMV = totalGMVResult?.total || 0
+
+    const completedTodayAgg = await Task.aggregate([
+      { $match: { status: 'COMPLETED', completedAt: { $gte: today, $lt: tomorrow } } },
+      { $group: { _id: null, total: { $sum: '$budget' } } }
+    ])
+    const earningsToday = completedTodayAgg[0]?.total || 0
+
+    const completedThisWeekAgg = await Task.aggregate([
+      { $match: { status: 'COMPLETED', completedAt: { $gte: weekStart } } },
+      { $group: { _id: null, total: { $sum: '$budget' } } }
+    ])
+    const earningsThisWeek = completedThisWeekAgg[0]?.total || 0
+
+    const completedThisMonthAgg = await Task.aggregate([
+      { $match: { status: 'COMPLETED', completedAt: { $gte: monthStart } } },
+      { $group: { _id: null, total: { $sum: '$budget' } } }
+    ])
+    const earningsThisMonth = completedThisMonthAgg[0]?.total || 0
+
+    // ---- USERS ----
+    const totalUsers = await User.countDocuments({ role: 'user' })
+    const totalAdmins = await User.countDocuments({ role: 'admin' })
+    const usersActive = await User.countDocuments({ status: 'active' })
+    const usersBlocked = await User.countDocuments({ status: 'blocked' })
+    const usersBanned = await User.countDocuments({ status: 'banned' })
+    const newUsersToday = await User.countDocuments({ createdAt: { $gte: today, $lt: tomorrow } })
+    const newUsersThisWeek = await User.countDocuments({ createdAt: { $gte: weekStart } })
+
+    // ---- RECENT TASKS (last 30) ----
+    const recentTasks = await Task.find()
+      .populate('postedBy', 'name email phone')
+      .populate('acceptedBy', 'name email phone')
+      .sort({ createdAt: -1 })
+      .limit(30)
+      .lean()
+
+    // ---- RECENT USERS (last 20) ----
+    const recentUsers = await User.find({ role: 'user' })
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean()
+
+    const abuseMetrics = await getAbuseMetrics()
+
+    res.json({
+      overview: {
+        totalUsers,
+        totalAdmins,
+        onlineWorkers: onlineWorkersCount,
+        totalTasks,
+        tasksToday,
+        tasksThisWeek,
+        pendingTasks,
+        ongoingTasks,
+        completedTasks,
+        cancelledTasks,
+        completedToday,
+        cancelledToday,
+        earningsToday,
+        totalGMV,
+        earningsThisWeek,
+        earningsThisMonth
+      },
+      tasksByStatus,
+      tasksByCategory,
+      tasksByLocation,
+      revenue: {
+        totalGMV,
+        today: earningsToday,
+        thisWeek: earningsThisWeek,
+        thisMonth: earningsThisMonth
+      },
+      users: {
+        total: totalUsers,
+        admins: totalAdmins,
+        active: usersActive,
+        blocked: usersBlocked,
+        banned: usersBanned,
+        newToday: newUsersToday,
+        newThisWeek: newUsersThisWeek
+      },
+      recentTasks,
+      recentUsers,
+      abuseMetrics
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch dashboard'
+    })
+  }
+}
+
 const getStats = async (req, res) => {
   try {
     const today = new Date()
@@ -1056,6 +1209,7 @@ module.exports = {
   getReports,
   resolveReport,
   // Stats
-  getStats
+  getStats,
+  getDashboard
 }
 
