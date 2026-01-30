@@ -41,8 +41,8 @@ function AvailabilityToggle() {
 
   return (
     <>
-      <div className="flex items-center gap-2 md:gap-3 relative group">
-        {/* Toggle Switch */}
+      <div className="flex items-center gap-2 relative group flex-shrink-0">
+        {/* Toggle Switch - fixed 52×28px track, 24px knob, same on all screens */}
         <button
           onClick={toggleAvailability}
           disabled={isDisabled}
@@ -50,17 +50,24 @@ function AvailabilityToggle() {
           role="switch"
           aria-checked={isOnline}
           aria-label={isOnline ? 'Online' : 'Offline'}
-          className={`relative inline-flex h-6 w-16 md:h-7 md:w-16 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation ${isOnline ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-500' : 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
+          className={`relative inline-flex h-7 w-[52px] items-center rounded-full transition-colors duration-200
+    focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2
+    disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation overflow-hidden shrink-0
+    ${isOnline
+              ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-500'
+              : 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
             }`}
         >
           <span
-            className={`inline-block h-5 w-5 md:h-6 md:w-6 transform rounded-full bg-white dark:bg-gray-100 border-2 border-gray-200 dark:border-gray-600 shadow-lg transition-transform duration-200 ${isOnline ? 'translate-x-10 md:translate-x-9' : 'translate-x-0.5'
-              }`}
+            className={`absolute left-[2px] top-1/2 -translate-y-1/2 inline-block h-6 w-6 rounded-full
+      bg-white dark:bg-gray-100 shadow transition-transform duration-200 ease-out
+      ${isOnline ? 'translate-x-[24px]' : 'translate-x-0'}
+    `}
           />
         </button>
 
-        {/* Status Text */}
-        <span className={`text-xs md:text-sm font-semibold whitespace-nowrap min-w-[65px] md:min-w-[70px] ${isOnline ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
+        {/* Status Text - fixed width so layout doesn't shift */}
+        <span className={`text-xs font-semibold whitespace-nowrap w-[70px] text-left ${isOnline ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
           }`}>
           {isOnline ? 'ON DUTY' : 'OFF DUTY'}
         </span>
