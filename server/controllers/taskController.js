@@ -676,6 +676,11 @@ const getTaskById = async (req, res) => {
       delete taskResponse.acceptedBy.phone
     }
 
+    // Ensure location.fullAddress is always present in response (for poster full address in worker/poster views)
+    if (taskResponse.location && typeof taskResponse.location === 'object') {
+      taskResponse.location.fullAddress = task.location?.fullAddress ?? null
+    }
+
     return res.status(200).json({
       message: 'Task fetched successfully',
       task: taskResponse

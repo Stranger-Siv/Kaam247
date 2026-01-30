@@ -124,7 +124,7 @@ function TaskDetail() {
         description: backendTask.description,
         location: backendTask.location?.area || 'Location not specified',
         city: backendTask.location?.city || '',
-        fullAddress: backendTask.location?.fullAddress || null,
+        fullAddress: backendTask.location?.fullAddress ?? backendTask.fullAddress ?? null,
         coordinates: backendTask.location?.coordinates || null, // Store coordinates for Google Maps
         distance: backendTask.distanceKm !== null && backendTask.distanceKm !== undefined
           ? `${backendTask.distanceKm} km away`
@@ -246,7 +246,8 @@ function TaskDetail() {
                 rawStatus: backendTask.status,
                 posterPhone: backendTask.posterPhone || null,
                 workerPhone: backendTask.workerPhone || null,
-                worker: backendTask.acceptedBy ? 'Worker' : null
+                worker: backendTask.acceptedBy ? 'Worker' : null,
+                fullAddress: backendTask.location?.fullAddress ?? prev.fullAddress
               }))
             }
           } catch (err) {
@@ -520,7 +521,8 @@ function TaskDetail() {
           rawStatus: backendTask.status,
           worker: backendTask.acceptedBy ? 'You' : null,
           posterPhone: backendTask.posterPhone || null,
-          workerPhone: backendTask.workerPhone || null
+          workerPhone: backendTask.workerPhone || null,
+          fullAddress: backendTask.location?.fullAddress ?? prev.fullAddress
         }))
       }
 
