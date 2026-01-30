@@ -52,28 +52,38 @@ function TaskDetail() {
   const [deleteError, setDeleteError] = useState(null)
   const fetchInFlightRef = useRef(false)
   const lastFetchAtRef = useRef(0)
-  const pollingIntervalRef = useRef(null)
   const fetchTaskRef = useRef(null)
   const taskStatusRef = useRef(null)
+  const lastHiddenAtRef = useRef(null)
+  const userModeRef = useRef(userMode)
+  const userIdRef = useRef(user?.id)
+  const checkActiveTaskRef = useRef(checkActiveTask)
+  userModeRef.current = userMode
+  userIdRef.current = user?.id
+  checkActiveTaskRef.current = checkActiveTask
 
-  // Fetch task function (reusable) - using useCallback to avoid dependency issues
-  const fetchTask = useCallback(async () => {
+  // Fetch task: silent = true for background refetches (socket/visibility) - no loading spinner
+  const fetchTask = useCallback(async (silent = false) => {
     if (!taskId) {
-      setError('Task ID is missing')
-      setLoading(false)
+      if (!silent) {
+        setError('Task ID is missing')
+        setLoading(false)
+      }
       return
     }
 
-    // Prevent fetch storms (socket events + visibilitychange + recovery can all fire together)
     const now = Date.now()
     if (fetchInFlightRef.current) return
-    if (now - lastFetchAtRef.current < 500) return
+    if (!silent && now - lastFetchAtRef.current < 500) return
+    if (silent && now - lastFetchAtRef.current < 1500) return // throttle background refetches
     fetchInFlightRef.current = true
     lastFetchAtRef.current = now
 
     try {
-      setLoading(true)
-      setError(null)
+      if (!silent) {
+        setLoading(true)
+        setError(null)
+      }
 
       // Build URL with location and userId if available
       let url = `${API_BASE_URL}/api/tasks/${taskId}`
@@ -158,9 +168,11 @@ function TaskDetail() {
       taskStatusRef.current = backendTask.status
       setTask(transformedTask)
     } catch (err) {
-      setError(err.message || 'Failed to load task details. Please try again later.')
+      if (!silent) {
+        setError(err.message || 'Failed to load task details. Please try again later.')
+      }
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
       fetchInFlightRef.current = false
     }
   }, [taskId, userMode, workerLocation, user])
@@ -168,44 +180,13 @@ function TaskDetail() {
   // Keep ref pointing to latest fetchTask (do not use as effect dependency)
   fetchTaskRef.current = fetchTask
 
-  // Fetch task ONLY when taskId changes (prevents infinite loop from task/user/mode in deps)
+  // Fetch task ONLY when taskId changes (single load per page; real-time via WebSocket below)
   useEffect(() => {
     if (!taskId) return
     fetchTaskRef.current()
   }, [taskId])
 
-  // Poster mode: lightweight polling every 5s (no task in deps to avoid re-trigger; interval clears when status not active via ref)
-  useEffect(() => {
-    if (userMode !== 'poster' || !taskId) {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current)
-        pollingIntervalRef.current = null
-      }
-      return
-    }
-
-    const activeStatuses = ['ACCEPTED', 'IN_PROGRESS']
-    const poll = () => {
-      const currentStatus = taskStatusRef.current
-      if (currentStatus && activeStatuses.includes(currentStatus)) {
-        fetchTaskRef.current()
-      }
-    }
-
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current)
-    }
-    pollingIntervalRef.current = setInterval(poll, 5000)
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current)
-        pollingIntervalRef.current = null
-      }
-    }
-  }, [taskId, userMode])
-
-  // Listen for Socket.IO events
+  // Listen for Socket.IO events (real-time updates – no polling)
   useEffect(() => {
     const socket = getSocket()
     if (!socket || !socket.connected) {
@@ -264,11 +245,10 @@ function TaskDetail() {
       }
     }
 
-    // Listen for task_updated event (real-time state sync)
+    // Real-time: one silent refetch per socket event (no loading spinner)
     const handleTaskUpdated = (data) => {
       if (String(data.taskId) === String(taskId)) {
-        fetchTaskRef.current()
-        // Recheck active task status
+        fetchTaskRef.current(true)
         if (userMode === 'worker' && checkActiveTask) {
           checkActiveTask().then(activeTaskData => {
             setHasActiveTask(activeTaskData?.hasActiveTask || false)
@@ -277,11 +257,9 @@ function TaskDetail() {
       }
     }
 
-    // Listen for task_completed event (when task is completed)
     const handleTaskCompleted = (data) => {
       if (String(data.taskId) === String(taskId)) {
-        fetchTaskRef.current()
-        // Clear active task status for worker
+        fetchTaskRef.current(true)
         if (userMode === 'worker' && checkActiveTask) {
           checkActiveTask().then(activeTaskData => {
             setHasActiveTask(activeTaskData?.hasActiveTask || false)
@@ -290,11 +268,9 @@ function TaskDetail() {
       }
     }
 
-    // Listen for task_cancelled event (when task is cancelled)
     const handleTaskCancelled = (data) => {
       if (String(data.taskId) === String(taskId)) {
-        fetchTaskRef.current()
-        // Clear active task status for worker
+        fetchTaskRef.current(true)
         if (userMode === 'worker' && checkActiveTask) {
           checkActiveTask().then(activeTaskData => {
             setHasActiveTask(activeTaskData?.hasActiveTask || false)
@@ -318,47 +294,32 @@ function TaskDetail() {
     }
   }, [taskId, userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // STATE RECOVERY: Check active task for worker when user/taskId available (no refetch - initial fetch is [taskId] only)
+  // Check active task for worker when taskId or user available (run once per task/user)
   useEffect(() => {
     if (!user?.id || !taskId) return
     if (userMode !== 'worker' || !checkActiveTask) return
-
+    setCheckingActiveTask(true)
     const runCheck = async () => {
       try {
         const activeTaskData = await checkActiveTask()
         setHasActiveTask(activeTaskData?.hasActiveTask || false)
       } catch (error) { }
-    }
-    runCheck()
-  }, [user?.id, taskId, userMode, checkActiveTask])
-
-  // Check for active task when component loads or task changes (for worker mode)
-  useEffect(() => {
-    const checkActive = async () => {
-      if (userMode === 'worker' && user?.id && checkActiveTask) {
-        setCheckingActiveTask(true)
-        try {
-          const activeTaskData = await checkActiveTask()
-          setHasActiveTask(activeTaskData?.hasActiveTask || false)
-        } catch (error) {
-        } finally {
-          setCheckingActiveTask(false)
-        }
+      finally {
+        setCheckingActiveTask(false)
       }
     }
-    checkActive()
-  }, [userMode, user?.id, taskId]) // eslint-disable-line react-hooks/exhaustive-deps
+    runCheck()
+  }, [taskId, user?.id, userMode, checkActiveTask])
 
-  // STATE RECOVERY: Listen for task completion and status changes via window events
+  // Window events + visibility: one listener setup per taskId (refs used in handlers to avoid effect re-runs)
   useEffect(() => {
     const handleTaskCompleted = (event) => {
       const { detail } = event
       if (detail.taskId === taskId) {
-        fetchTaskRef.current()
-        if (userMode === 'worker' && checkActiveTask) {
-          checkActiveTask().then(data => {
-            setHasActiveTask(data?.hasActiveTask || false)
-          })
+        fetchTaskRef.current(true)
+        const check = checkActiveTaskRef.current
+        if (userModeRef.current === 'worker' && check) {
+          check().then(data => setHasActiveTask(data?.hasActiveTask || false))
         }
       }
     }
@@ -366,48 +327,48 @@ function TaskDetail() {
     const handleTaskStatusChanged = (event) => {
       const { detail } = event
       if (detail.taskId === taskId) {
-        fetchTaskRef.current()
-        if (userMode === 'worker' && checkActiveTask) {
-          checkActiveTask().then(data => {
-            setHasActiveTask(data?.hasActiveTask || false)
-          })
+        fetchTaskRef.current(true)
+        const check = checkActiveTaskRef.current
+        if (userModeRef.current === 'worker' && check) {
+          check().then(data => setHasActiveTask(data?.hasActiveTask || false))
         }
       }
     }
 
-    const handleRefetch = async (event) => {
+    const handleRefetch = (event) => {
       const { type, taskId: refetchTaskId } = event.detail
-
       if (refetchTaskId === taskId && (type === 'task_updated' || type === 'task_status_changed' || type === 'task_completed' || type === 'task_cancelled')) {
-        setTimeout(() => {
-          fetchTaskRef.current()
-          if (userMode === 'worker' && checkActiveTask) {
-            checkActiveTask().then(data => {
-              setHasActiveTask(data?.hasActiveTask || false)
-            })
-          }
-        }, 100)
-      }
-    }
-
-    const handleReconnect = async (event) => {
-      const { userId, userMode: reconnectedMode } = event.detail
-
-      if (userId === user?.id && reconnectedMode === userMode) {
-        fetchTaskRef.current()
-        if (userMode === 'worker' && checkActiveTask) {
-          const activeTaskData = await checkActiveTask()
-          setHasActiveTask(activeTaskData?.hasActiveTask || false)
+        fetchTaskRef.current(true)
+        const check = checkActiveTaskRef.current
+        if (userModeRef.current === 'worker' && check) {
+          check().then(data => setHasActiveTask(data?.hasActiveTask || false))
         }
       }
     }
 
-    const handleVisibilityChange = async () => {
+    const handleReconnect = (event) => {
+      const { userId, userMode: reconnectedMode } = event.detail
+      if (userId === userIdRef.current && reconnectedMode === userModeRef.current) {
+        fetchTaskRef.current(true)
+        const check = checkActiveTaskRef.current
+        if (userModeRef.current === 'worker' && check) {
+          check().then(activeTaskData => setHasActiveTask(activeTaskData?.hasActiveTask || false))
+        }
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        lastHiddenAtRef.current = Date.now()
+        return
+      }
       if (document.visibilityState === 'visible' && taskId) {
-        fetchTaskRef.current()
-        if (userMode === 'worker' && checkActiveTask) {
-          const activeTaskData = await checkActiveTask()
-          setHasActiveTask(activeTaskData?.hasActiveTask || false)
+        const hiddenMs = lastHiddenAtRef.current ? Date.now() - lastHiddenAtRef.current : 0
+        if (hiddenMs < 15000) return
+        fetchTaskRef.current(true)
+        const check = checkActiveTaskRef.current
+        if (userModeRef.current === 'worker' && check) {
+          check().then(activeTaskData => setHasActiveTask(activeTaskData?.hasActiveTask || false))
         }
       }
     }
@@ -425,7 +386,7 @@ function TaskDetail() {
       window.removeEventListener('socket_reconnected', handleReconnect)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [taskId, userMode, checkActiveTask, user?.id])
+  }, [taskId])
 
 
   // Handle accept task
@@ -486,7 +447,7 @@ function TaskDetail() {
         const errorData = await response.json()
 
         if (response.status === 409) {
-          fetchTaskRef.current()
+          fetchTaskRef.current(true)
 
           // Task already accepted
           setAcceptError('Task already accepted by another worker')
@@ -503,9 +464,7 @@ function TaskDetail() {
 
         // STATE RECOVERY: For other errors, refetch task to ensure UI matches backend
         if (response.status === 400 || response.status === 403) {
-          setTimeout(() => {
-            fetchTaskRef.current()
-          }, 500)
+          setTimeout(() => fetchTaskRef.current(true), 500)
         }
 
         throw new Error(errorData.message || 'Failed to accept task')
@@ -596,9 +555,7 @@ function TaskDetail() {
 
         // STATE RECOVERY: For errors, refetch task to ensure UI matches backend
         if (response.status === 400 || response.status === 403 || response.status === 409) {
-          setTimeout(() => {
-            fetchTaskRef.current()
-          }, 500)
+          setTimeout(() => fetchTaskRef.current(true), 500)
         }
 
         throw new Error(errorData.message || 'Failed to start task')
@@ -683,9 +640,7 @@ function TaskDetail() {
 
         // STATE RECOVERY: For errors, refetch task to ensure UI matches backend
         if (response.status === 400 || response.status === 403 || response.status === 409) {
-          setTimeout(() => {
-            fetchTaskRef.current()
-          }, 500)
+          setTimeout(() => fetchTaskRef.current(true), 500)
         }
 
         throw new Error(errorData.message || 'Failed to mark task as complete')
@@ -824,9 +779,7 @@ function TaskDetail() {
 
         // STATE RECOVERY: For errors, refetch task to ensure UI matches backend
         if (response.status === 400 || response.status === 403 || response.status === 409) {
-          setTimeout(() => {
-            fetchTaskRef.current()
-          }, 500)
+          setTimeout(() => fetchTaskRef.current(true), 500)
         }
 
         throw new Error(errorData.message || 'Failed to confirm task completion')
@@ -871,7 +824,7 @@ function TaskDetail() {
 
   // Handle edit task success
   const handleEditSuccess = (updatedTask, reAlerted) => {
-    fetchTaskRef.current()
+    fetchTaskRef.current(true)
     setShowEditModal(false)
 
     // Show success message
@@ -969,9 +922,7 @@ function TaskDetail() {
 
         // STATE RECOVERY: For errors, refetch task to ensure UI matches backend
         if (response.status === 400 || response.status === 403 || response.status === 409) {
-          setTimeout(() => {
-            fetchTaskRef.current()
-          }, 500)
+          setTimeout(() => fetchTaskRef.current(true), 500)
         }
 
         throw new Error(errorData.message || 'Failed to cancel task')

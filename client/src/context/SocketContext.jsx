@@ -109,11 +109,11 @@ export function SocketProvider({ children }) {
         })
 
         // Handle reconnection attempts gracefully
-        socketRef.current.on('reconnect_attempt', () => {})
+        socketRef.current.on('reconnect_attempt', () => { })
 
-        socketRef.current.on('reconnect', () => {})
+        socketRef.current.on('reconnect', () => { })
 
-        socketRef.current.on('reconnect_failed', () => {})
+        socketRef.current.on('reconnect_failed', () => { })
       } else if (!socketRef.current.connected) {
         // Reconnect if disconnected (but don't crash if it fails)
         try {
@@ -326,49 +326,25 @@ export function SocketProvider({ children }) {
       return
     }
 
+    // Real-time: one event per socket message; pages refetch once on their listener (no delayed refetch_required = no double fetch)
     const handleTaskCompleted = (data) => {
-      // STATE RECOVERY: Emit event AND trigger refetch after delay
       window.dispatchEvent(new CustomEvent('task_completed', { detail: data }))
-
-      // Silent refetch after 500ms to ensure fresh data
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('refetch_required', { detail: { type: 'task_completed', taskId: data.taskId } }))
-      }, 500)
     }
 
     const handleTaskStatusChanged = (data) => {
-      // STATE RECOVERY: Emit event AND trigger refetch after delay
       window.dispatchEvent(new CustomEvent('task_status_changed', { detail: data }))
-
-      // Silent refetch after 500ms to ensure fresh data
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('refetch_required', { detail: { type: 'task_status_changed', taskId: data.taskId } }))
-      }, 500)
     }
 
     const handleTaskCancelled = (data) => {
-      // STATE RECOVERY: Emit event AND trigger refetch after delay
       window.dispatchEvent(new CustomEvent('task_cancelled', { detail: data }))
-
-      // Silent refetch after 500ms to ensure fresh data
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('refetch_required', { detail: { type: 'task_cancelled', taskId: data.taskId } }))
-      }, 500)
     }
 
     const handleAdminStatsRefresh = () => {
-      // Emit custom event for admin stats refresh
       window.dispatchEvent(new Event('admin_stats_refresh'))
     }
 
     const handleTaskUpdated = (data) => {
-      // STATE RECOVERY: Emit event AND trigger refetch after delay
       window.dispatchEvent(new CustomEvent('task_updated', { detail: data }))
-
-      // Silent refetch after 500ms to ensure fresh data
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('refetch_required', { detail: { type: 'task_updated', taskId: data.taskId } }))
-      }, 500)
     }
 
     const setupListeners = () => {
