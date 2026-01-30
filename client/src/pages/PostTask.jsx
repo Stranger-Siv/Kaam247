@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
+import { useCategories } from '../hooks/useCategories'
 import LocationPickerMap from '../components/LocationPickerMap'
 import { persistUserLocation } from '../utils/locationPersistence'
 import { reverseGeocode as reverseGeocodeViaApi } from '../utils/geocoding'
@@ -44,16 +45,7 @@ function PostTask() {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const categories = [
-    'Cleaning',
-    'Delivery',
-    'Helper / Labour',
-    'Tutor / Mentor',
-    'Tech Help',
-    'Errands',
-    'Event Help',
-    'Custom Task'
-  ]
+  const { categories } = useCategories()
 
   const hoursOptions = [
     { value: '', label: 'Select duration' },

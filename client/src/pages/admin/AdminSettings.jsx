@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react'
 import { API_BASE_URL } from '../../config/env'
 
+const DEFAULT_CATEGORIES = [
+  'Cleaning',
+  'Delivery',
+  'Helper / Labour',
+  'Tutor / Mentor',
+  'Tech Help',
+  'Errands',
+  'Event Help',
+  'Custom Task'
+]
+
 function AdminSettings() {
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -14,10 +25,20 @@ function AdminSettings() {
   const [newValue, setNewValue] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [adding, setAdding] = useState(false)
+  const [categories, setCategories] = useState([])
+  const [newCategory, setNewCategory] = useState('')
+  const [savingCategories, setSavingCategories] = useState(false)
+  const [categoriesError, setCategoriesError] = useState(null)
 
   useEffect(() => {
     fetchSettings()
   }, [])
+
+  useEffect(() => {
+    const item = list.find((i) => i.key === 'taskCategories')
+    const arr = Array.isArray(item?.value) && item.value.length > 0 ? item.value : DEFAULT_CATEGORIES
+    setCategories(arr.map((c) => String(c).trim()).filter(Boolean))
+  }, [list])
 
   const fetchSettings = async () => {
     try {
@@ -87,6 +108,49 @@ function AdminSettings() {
       setSaveError(err.message || 'Failed to save')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const addCategory = () => {
+    const name = newCategory.trim()
+    if (!name) return
+    if (categories.some((c) => c.toLowerCase() === name.toLowerCase())) return
+    setCategories((prev) => [...prev, name])
+    setNewCategory('')
+    setCategoriesError(null)
+  }
+
+  const removeCategory = (index) => {
+    setCategories((prev) => prev.filter((_, i) => i !== index))
+    setCategoriesError(null)
+  }
+
+  const saveCategories = async () => {
+    setSavingCategories(true)
+    setCategoriesError(null)
+    try {
+      const token = localStorage.getItem('kaam247_token')
+      const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          key: 'taskCategories',
+          value: categories,
+          description: 'Task categories for posting and filtering'
+        })
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.message || 'Failed to save categories')
+      }
+      await fetchSettings()
+    } catch (err) {
+      setCategoriesError(err.message || 'Failed to save categories')
+    } finally {
+      setSavingCategories(false)
     }
   }
 
@@ -175,6 +239,65 @@ function AdminSettings() {
           {saveError}
         </div>
       )}
+
+      {/* Task categories */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-4 sm:p-5 lg:p-6 mb-6">
+        <h2 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-4">Task categories</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          Categories shown when posting a task and in filters. Add or remove below, then click Save.
+        </p>
+        {categoriesError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400">
+            {categoriesError}
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {categories.map((cat, index) => (
+            <span
+              key={`${cat}-${index}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium"
+            >
+              {cat}
+              <button
+                type="button"
+                onClick={() => removeCategory(index)}
+                className="p-0.5 rounded text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                aria-label={`Remove ${cat}`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-3 items-center">
+          <input
+            type="text"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCategory())}
+            placeholder="New category name"
+            className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-48 min-w-0"
+          />
+          <button
+            type="button"
+            onClick={addCategory}
+            disabled={!newCategory.trim()}
+            className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Add category
+          </button>
+          <button
+            type="button"
+            onClick={saveCategories}
+            disabled={savingCategories}
+            className="px-4 py-2.5 rounded-xl bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {savingCategories ? 'Saving…' : 'Save categories'}
+          </button>
+        </div>
+      </div>
 
       {/* Add new */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-4 sm:p-5 lg:p-6 mb-6">

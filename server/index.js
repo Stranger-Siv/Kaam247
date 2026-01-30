@@ -10,6 +10,7 @@ const authRoutes = require('./routes/authRoutes')
 const adminRoutes = require('./routes/adminRoutes')
 const reportRoutes = require('./routes/reportRoutes')
 const geocodeRoutes = require('./routes/geocodeRoutes')
+const configRoutes = require('./routes/configRoutes')
 const { initializeSocket } = require('./socket/socketHandler')
 
 const app = express()
@@ -77,6 +78,7 @@ app.use('/api', taskRoutes)
 app.use('/api', userRoutes)
 app.use('/api', reportRoutes)
 app.use('/api', geocodeRoutes)
+app.use('/api', configRoutes)
 app.use('/api/admin', adminRoutes)
 
 // 404 handler

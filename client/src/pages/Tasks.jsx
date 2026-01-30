@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUserMode } from '../context/UserModeContext'
 import StatusBadge from '../components/StatusBadge'
 import { API_BASE_URL } from '../config/env'
+import { useCategories } from '../hooks/useCategories'
 import { fetchActiveTask } from '../utils/stateRecovery'
 
 function Tasks() {
@@ -21,8 +22,9 @@ function Tasks() {
   const { user } = useAuth()
   const { userMode } = useUserMode()
   const newTaskHighlightRef = useRef(new Set())
+  const { categories: categoriesList } = useCategories()
+  const categories = ['All', ...categoriesList]
 
-  const categories = ['All', 'Cleaning', 'Delivery', 'Helper / Labour', 'Tutor / Mentor', 'Tech Help', 'Errands']
   const distances = ['All', 'Within 1 km', 'Within 3 km', 'Within 5 km', 'Within 10 km']
   const budgets = ['All', 'Under ₹500', '₹500 - ₹1000', '₹1000 - ₹2000', 'Above ₹2000']
 
@@ -257,7 +259,7 @@ function Tasks() {
       try {
         const activeTask = await fetchActiveTask()
         setHasActiveTask(Boolean(activeTask && activeTask.hasActiveTask))
-      } catch (error) {}
+      } catch (error) { }
     }
 
     recoverState()

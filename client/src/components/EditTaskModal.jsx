@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config/env'
+import { useCategories } from '../hooks/useCategories'
 import LocationPickerMap from './LocationPickerMap'
 import { reverseGeocode } from '../utils/geocoding'
 import ConfirmationModal from './ConfirmationModal'
@@ -28,16 +29,7 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   const [fieldErrors, setFieldErrors] = useState({})
   const [showConfirmModal, setShowConfirmModal] = useState(false)
 
-  const categories = [
-    'Cleaning',
-    'Delivery',
-    'Helper / Labour',
-    'Tutor / Mentor',
-    'Tech Help',
-    'Errands',
-    'Event Help',
-    'Custom Task'
-  ]
+  const { categories } = useCategories()
 
   const hoursOptions = [
     { value: '', label: 'Select duration' },
