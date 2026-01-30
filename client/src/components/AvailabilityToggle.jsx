@@ -42,7 +42,7 @@ function AvailabilityToggle() {
   return (
     <>
       <div className="flex items-center gap-2 relative group flex-shrink-0">
-        {/* Toggle Switch - fixed 52×28px track */}
+        {/* Toggle Switch - 72×36px track */}
         <button
           onClick={toggleAvailability}
           disabled={isDisabled}
@@ -50,7 +50,7 @@ function AvailabilityToggle() {
           role="switch"
           aria-checked={isOnline}
           aria-label={isOnline ? "Online" : "Offline"}
-          className={`relative inline-flex h-7 w-[52px] rounded-full transition-colors duration-200
+          className={`relative inline-flex h-9 w-[72px] rounded-full transition-colors duration-200
     focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2
     disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden shrink-0
     ${isOnline
@@ -58,16 +58,16 @@ function AvailabilityToggle() {
               : "bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600"
             }`}
         >
-          {/* KNOB (BIG) */}
+          {/* KNOB (BIG PILL) */}
           <span
             className={`absolute top-1/2 left-[2px] -translate-y-1/2 flex items-center justify-center
-      h-6 w-8 rounded-full bg-white dark:bg-gray-100 shadow-md
+      h-8 w-11 rounded-full bg-white dark:bg-gray-100 shadow-md
       transition-transform duration-200 ease-out
-      ${isOnline ? "translate-x-[20px]" : "translate-x-0"}
+      ${isOnline ? "translate-x-[27px]" : "translate-x-0"}
     `}
           >
-            {/* INNER BALL (BIGGER) */}
-            <span className="h-4 w-4 rounded-full bg-gray-300 dark:bg-gray-400" />
+            {/* INNER BALL */}
+            <span className="h-[22px] w-[22px] rounded-full bg-gray-300 dark:bg-gray-400" />
           </span>
         </button>
 
