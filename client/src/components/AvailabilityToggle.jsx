@@ -42,28 +42,33 @@ function AvailabilityToggle() {
   return (
     <>
       <div className="flex items-center gap-2 relative group flex-shrink-0">
-        {/* Toggle Switch - fixed 52×28px track, 24px knob, same on all screens */}
+        {/* Toggle Switch - fixed 52×28px track */}
         <button
           onClick={toggleAvailability}
           disabled={isDisabled}
           type="button"
           role="switch"
           aria-checked={isOnline}
-          aria-label={isOnline ? 'Online' : 'Offline'}
-          className={`relative inline-flex h-7 w-[52px] items-center rounded-full transition-colors duration-200
+          aria-label={isOnline ? "Online" : "Offline"}
+          className={`relative inline-flex h-7 w-[52px] rounded-full transition-colors duration-200
     focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2
-    disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation overflow-hidden shrink-0
+    disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden shrink-0
     ${isOnline
-              ? 'bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-500'
-              : 'bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600'
+              ? "bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-500"
+              : "bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600"
             }`}
         >
+          {/* KNOB (BIG) */}
           <span
-            className={`absolute left-[2px] top-1/2 -translate-y-1/2 inline-block h-6 w-6 rounded-full
-      bg-white dark:bg-gray-100 shadow transition-transform duration-200 ease-out
-      ${isOnline ? 'translate-x-[24px]' : 'translate-x-0'}
+            className={`absolute top-1/2 left-[2px] -translate-y-1/2 flex items-center justify-center
+      h-6 w-8 rounded-full bg-white dark:bg-gray-100 shadow-md
+      transition-transform duration-200 ease-out
+      ${isOnline ? "translate-x-[20px]" : "translate-x-0"}
     `}
-          />
+          >
+            {/* INNER BALL (BIGGER) */}
+            <span className="h-4 w-4 rounded-full bg-gray-300 dark:bg-gray-400" />
+          </span>
         </button>
 
         {/* Status Text - fixed width so layout doesn't shift */}
