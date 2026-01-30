@@ -1,5 +1,6 @@
 const Task = require('../models/Task')
 const User = require('../models/User')
+const Chat = require('../models/Chat')
 const mongoose = require('mongoose')
 const { broadcastNewTask, notifyTaskAccepted, notifyTaskRemoved, notifyTaskCompleted, notifyTaskStatusChanged, notifyTaskUpdated } = require('../socket/socketHandler')
 const { calculateDistance } = require('../utils/distance')
@@ -436,6 +437,24 @@ const acceptTask = async (req, res) => {
     }
     worker.lastActionTimestamps.set('acceptTask', new Date())
     await worker.save()
+
+    // Create task chat (one chat per task; poster + worker only)
+    try {
+      await Chat.findOneAndUpdate(
+        { taskId: updatedTask._id },
+        {
+          $setOnInsert: {
+            taskId: updatedTask._id,
+            participants: [updatedTask.postedBy, new mongoose.Types.ObjectId(workerIdStr)],
+            messages: [],
+            isActive: true
+          }
+        },
+        { upsert: true, new: true }
+      )
+    } catch (chatErr) {
+      // Don't fail accept if chat creation fails (e.g. duplicate)
+    }
 
     // Emit real-time events (non-blocking)
     try {
@@ -1499,7 +1518,7 @@ const editTask = async (req, res) => {
           location: updatedTask.location,
           createdAt: updatedTask.createdAt
         }, posterId)
-      } catch (socketError) {}
+      } catch (socketError) { }
     }
 
     // Emit taskUpdated event for state sync

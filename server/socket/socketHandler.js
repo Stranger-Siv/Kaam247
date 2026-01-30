@@ -1,7 +1,10 @@
 const { Server } = require('socket.io')
 const User = require('../models/User')
+const Task = require('../models/Task')
 const socketManager = require('./socketManager')
 const { calculateDistance } = require('../utils/distance')
+
+const CHAT_ROOM_PREFIX = 'chat_'
 
 let io = null
 
@@ -38,7 +41,7 @@ const initializeSocket = (server) => {
         socket.on('clientConnected', async (data) => {
             try {
                 const { userId, role, mode, isOnline, location } = data
-                
+
                 if (!userId) {
                     return
                 }
@@ -57,7 +60,7 @@ const initializeSocket = (server) => {
                 } else if (mode === 'poster') {
                     socketManager.addOnlineUser(socket.id, userId)
                 }
-            } catch (error) {}
+            } catch (error) { }
         })
 
         // Handle register_user event (primary registration method)
@@ -93,7 +96,7 @@ const initializeSocket = (server) => {
                     // Track as general user (for posters)
                     socketManager.addOnlineUser(socket.id, userId)
                 }
-            } catch (error) {}
+            } catch (error) { }
         })
 
         // Handle user going online (general tracking for posters and workers)
@@ -122,7 +125,7 @@ const initializeSocket = (server) => {
                 socketManager.addOnlineUser(socket.id, userId)
                 socket.userId = userId.toString()
                 socket.roleMode = roleMode
-            } catch (error) {}
+            } catch (error) { }
         })
 
         // Handle worker going online (toggle ON)
@@ -170,7 +173,7 @@ const initializeSocket = (server) => {
                 socket.userId = workerId.toString()
                 socket.roleMode = 'worker'
                 socket.location = workerLocation
-            } catch (error) {}
+            } catch (error) { }
         })
 
         // Handle worker going offline (toggle OFF)
@@ -184,6 +187,30 @@ const initializeSocket = (server) => {
             }
 
             // Worker offline - no logging needed
+        })
+
+        // Task chat: join room (only participants; task status ACCEPTED, IN_PROGRESS, or COMPLETED)
+        socket.on('join_task_chat', async (data) => {
+            try {
+                const taskId = (data && data.taskId) ? data.taskId : data
+                if (!taskId || !socket.userId) return
+                const mongoose = require('mongoose')
+                if (!mongoose.Types.ObjectId.isValid(taskId)) return
+                const task = await Task.findById(taskId).select('postedBy acceptedBy status').lean()
+                if (!task) return
+                const allowed = ['ACCEPTED', 'IN_PROGRESS', 'COMPLETED']
+                if (!allowed.includes(task.status)) return
+                const posterId = task.postedBy?.toString()
+                const workerId = task.acceptedBy?.toString()
+                const userIdStr = socket.userId.toString()
+                if (posterId !== userIdStr && workerId !== userIdStr) return
+                socket.join(CHAT_ROOM_PREFIX + taskId)
+            } catch (err) { }
+        })
+
+        socket.on('leave_task_chat', (data) => {
+            const taskId = (data && data.taskId) ? data.taskId : data
+            if (taskId) socket.leave(CHAT_ROOM_PREFIX + taskId)
         })
 
         // Handle disconnect
@@ -256,7 +283,7 @@ const broadcastNewTask = (taskData, postedByUserId) => {
 
         // Get all workers with their locations
         const workers = socketManager.getAllWorkersWithLocations()
-        
+
         // Filter workers: exclude task creator and check distance
         const eligibleWorkers = workers.filter(worker => {
             // Exclude task creator
@@ -270,7 +297,7 @@ const broadcastNewTask = (taskData, postedByUserId) => {
             }
 
             // Validate coordinates before calculating distance
-            if (isNaN(worker.location.lat) || isNaN(worker.location.lng) || 
+            if (isNaN(worker.location.lat) || isNaN(worker.location.lng) ||
                 worker.location.lat < -90 || worker.location.lat > 90 ||
                 worker.location.lng < -180 || worker.location.lng > 180) {
                 return false
@@ -338,7 +365,7 @@ const broadcastNewTask = (taskData, postedByUserId) => {
 
                 // Emit to worker
                 io.to(worker.socketId).emit('new_task', alertPayload)
-                
+
                 // Mark task as alerted to this worker
                 const workerSocket = io.sockets.sockets.get(worker.socketId)
                 if (workerSocket) {
@@ -347,7 +374,7 @@ const broadcastNewTask = (taskData, postedByUserId) => {
                     }
                     workerSocket.alertedTaskIds.add(taskData.taskId)
                 }
-                
+
                 emittedCount++
             } catch (emitError) {
                 // Silent fail - don't block task broadcast
@@ -442,7 +469,7 @@ const notifyTaskCompleted = (posterUserId, workerUserId, taskId) => {
                 role: 'worker'
             })
         }
-    } catch (error) {}
+    } catch (error) { }
 }
 
 const notifyTaskStatusChanged = (userId, taskId, status) => {
@@ -458,7 +485,7 @@ const notifyTaskStatusChanged = (userId, taskId, status) => {
                 status: status
             })
         }
-    } catch (error) {}
+    } catch (error) { }
 }
 
 // Notify user update (for admin actions)
@@ -473,7 +500,7 @@ const notifyUserUpdated = (userId, userData) => {
                 ...userData
             })
         }
-    } catch (error) {}
+    } catch (error) { }
 }
 
 // Notify task update (for admin actions)
@@ -502,7 +529,7 @@ const notifyTaskUpdated = (taskId, taskData) => {
                 })
             }
         }
-    } catch (error) {}
+    } catch (error) { }
 }
 
 // Broadcast admin stats refresh event to all connected admin users
@@ -510,11 +537,21 @@ const notifyAdminStatsRefresh = () => {
     if (!io) return
 
     try {
-        // Emit to all connected clients (admins can filter on frontend)
         io.emit('admin_stats_refresh', {
             timestamp: new Date().toISOString()
         })
-    } catch (error) {}
+    } catch (error) { }
+}
+
+// Task chat: broadcast new message to room (called from chatController after saving)
+const emitReceiveMessage = (taskId, message) => {
+    if (!io) return
+    try {
+        io.to(CHAT_ROOM_PREFIX + taskId).emit('receive_message', {
+            taskId: taskId.toString(),
+            message
+        })
+    } catch (error) { }
 }
 
 module.exports = {
@@ -528,6 +565,7 @@ module.exports = {
     notifyTaskStatusChanged,
     notifyUserUpdated,
     notifyTaskUpdated,
-    notifyAdminStatsRefresh
+    notifyAdminStatsRefresh,
+    emitReceiveMessage
 }
 

@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
+const { authenticate } = require('../middleware/auth')
 const { createTask, acceptTask, getAvailableTasks, getTaskById, getTasksByUser, cancelTask, startTask, markComplete, confirmComplete, rateTask, editTask, deleteTask } = require('../controllers/taskController')
+const { getMessages, sendMessage } = require('../controllers/chatController')
 const { getPublicStats } = require('../controllers/adminController')
 
 // Test route to verify router is working
@@ -16,6 +18,10 @@ router.get('/tasks/user/:userId', getTasksByUser)
 
 // GET /api/tasks/:taskId - Fetch single task by ID (MUST come before /tasks to avoid route conflict)
 router.get('/tasks/:taskId', getTaskById)
+
+// Chat (task-based; auth required)
+router.get('/tasks/:taskId/chat', authenticate, getMessages)
+router.post('/tasks/:taskId/chat', authenticate, sendMessage)
 
 // GET /api/tasks - Fetch available tasks
 router.get('/tasks', getAvailableTasks)
