@@ -33,10 +33,22 @@ function Login() {
 
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [sessionExpired, setSessionExpired] = useState(false)
     const [formData, setFormData] = useState({
         identifier: '', // email or phone
         password: ''
     })
+
+    useEffect(() => {
+        try {
+            if (sessionStorage.getItem('kaam247_session_expired') === '1') {
+                sessionStorage.removeItem('kaam247_session_expired')
+                setSessionExpired(true)
+            }
+        } catch {
+            // ignore
+        }
+    }, [])
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }))
@@ -48,13 +60,16 @@ function Login() {
         setError('')
         setIsLoading(true)
 
-        if (!formData.identifier || !formData.password) {
+        const identifier = (formData.identifier || '').trim()
+        const password = formData.password
+
+        if (!identifier || !password) {
             setError('Please enter your email/phone and password')
             setIsLoading(false)
             return
         }
 
-        const result = await login(formData.identifier, formData.password)
+        const result = await login(identifier, password)
 
         if (result.success) {
             const userInfo = localStorage.getItem('kaam247_user')
@@ -92,7 +107,7 @@ function Login() {
                             Sign in to continue connecting with local helpers and getting things done.
                         </p>
                     </div>
-                    
+
                     <div className="space-y-4 pt-6">
                         <div className="flex items-start gap-4">
                             <div className="flex-shrink-0 w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
@@ -106,7 +121,7 @@ function Login() {
                                 <p className="text-gray-600 dark:text-gray-400">Connect with helpers right in your neighborhood</p>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-start gap-4">
                             <div className="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
                                 <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -118,7 +133,7 @@ function Login() {
                                 <p className="text-gray-600 dark:text-gray-400">Verified users and secure transactions</p>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-start gap-4">
                             <div className="flex-shrink-0 w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
                                 <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -153,59 +168,63 @@ function Login() {
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email / Phone
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.identifier}
-                            onChange={(e) => handleInputChange('identifier', e.target.value)}
-                            placeholder="Enter your email or phone"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
-                            required
-                        />
-                    </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Email / Phone
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.identifier}
+                                    onChange={(e) => handleInputChange('identifier', e.target.value)}
+                                    placeholder="Enter your email or phone"
+                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
+                                    required
+                                />
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            value={formData.password}
-                            onChange={(e) => handleInputChange('password', e.target.value)}
-                            placeholder="Enter your password"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
-                            required
-                        />
-                    </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={(e) => handleInputChange('password', e.target.value)}
+                                    placeholder="Enter your password"
+                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
+                                    required
+                                />
+                            </div>
 
-                    {error && (
-                        <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                            {error}
-                        </div>
-                    )}
+                            {sessionExpired && (
+                                <div className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                                    Your session has expired. Please sign in again.
+                                </div>
+                            )}
+                            {error && (
+                                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                                    {error}
+                                </div>
+                            )}
 
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className={`w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white font-semibold rounded-lg transition-colors text-base min-h-[48px] ${
-                            isLoading 
-                                ? 'bg-blue-400 dark:bg-blue-600 cursor-not-allowed' 
-                                : 'hover:bg-blue-700 dark:hover:bg-blue-600'
-                        }`}
-                    >
-                        {isLoading ? (
-                            <span className="flex items-center justify-center">
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                Signing in...
-                            </span>
-                        ) : (
-                            'Login'
-                        )}
-                    </button>
-                </form>
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className={`w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white font-semibold rounded-lg transition-colors text-base min-h-[48px] ${isLoading
+                                        ? 'bg-blue-400 dark:bg-blue-600 cursor-not-allowed'
+                                        : 'hover:bg-blue-700 dark:hover:bg-blue-600'
+                                    }`}
+                            >
+                                {isLoading ? (
+                                    <span className="flex items-center justify-center">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                        Signing in...
+                                    </span>
+                                ) : (
+                                    'Login'
+                                )}
+                            </button>
+                        </form>
 
                         <div className="mt-6 text-center">
                             <p className="text-sm text-gray-600 dark:text-gray-400">

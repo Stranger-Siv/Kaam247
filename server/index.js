@@ -22,19 +22,27 @@ const PORT = process.env.PORT || 3001
 initializeSocket(server)
 
 // Middleware
-// CORS configuration - production-safe, only allow required origins
+// CORS configuration - production origins + localhost in development
 const allowedOrigins = [
   'https://kaam247.in',
   'https://www.kaam247.in'
 ]
+const devOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000'
+]
+const corsOrigins = process.env.NODE_ENV === 'production'
+  ? allowedOrigins
+  : [...allowedOrigins, ...devOrigins]
 
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, Postman, server-to-server)
     if (!origin) return callback(null, true)
 
-    const isAllowed = allowedOrigins.includes(origin)
-
+    const isAllowed = corsOrigins.includes(origin)
     if (isAllowed) {
       callback(null, true)
     } else {
@@ -89,7 +97,7 @@ const startServer = async () => {
     }
 
     // Start server with Socket.IO
-    server.listen(PORT, () => {})
+    server.listen(PORT, () => { })
   } catch (error) {
     process.exit(1)
   }

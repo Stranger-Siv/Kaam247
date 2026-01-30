@@ -2,12 +2,28 @@ const User = require('../models/User')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
+const JWT_SECRET = process.env.JWT_SECRET
+const isProduction = process.env.NODE_ENV === 'production'
+
+// Require JWT_SECRET in production
+if (isProduction && (!JWT_SECRET || JWT_SECRET.length < 32)) {
+  throw new Error('JWT_SECRET must be set and at least 32 characters in production')
+}
+
 // Generate JWT token
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'kaam247_secret_key_change_in_production', {
-    expiresIn: '30d'
-  })
+  const secret = JWT_SECRET || (isProduction ? null : 'dev-secret-change-in-production')
+  if (!secret) throw new Error('JWT_SECRET is required')
+  return jwt.sign({ userId }, secret, { expiresIn: '7d' })
 }
+
+// Cookie options: secure only in production (HTTPS), sameSite for cross-origin
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? 'none' : 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+})
 
 // Register new user
 const register = async (req, res) => {
@@ -22,17 +38,35 @@ const register = async (req, res) => {
       })
     }
 
-    // Validate password length
-    if (password.length < 6) {
+    // Validate password strength (min 8 chars for better security)
+    if (password.length < 8) {
       return res.status(400).json({
         error: 'Invalid password',
-        message: 'Password must be at least 6 characters long'
+        message: 'Password must be at least 8 characters long'
+      })
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({
+        error: 'Invalid email',
+        message: 'Please provide a valid email address'
+      })
+    }
+
+    // Validate phone: 10-digit mobile number (digits only)
+    const phoneDigits = phone.trim().replace(/\D/g, '')
+    if (phoneDigits.length !== 10) {
+      return res.status(400).json({
+        error: 'Invalid phone',
+        message: 'Please provide a valid 10-digit mobile number'
       })
     }
 
     // Check if user already exists (by email or phone)
     const existingUser = await User.findOne({
-      $or: [{ email: email.toLowerCase().trim() }, { phone: phone.trim() }]
+      $or: [{ email: email.toLowerCase().trim() }, { phone: phoneDigits }]
     })
 
     if (existingUser) {
@@ -48,11 +82,11 @@ const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
 
-    // Create user
+    // Create user (store phone as digits only)
     const user = new User({
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      phone: phone.trim(),
+      phone: phoneDigits,
       password: hashedPassword,
       role: 'user', // Default role (admin is set manually in DB)
       roleMode: 'worker' // User mode (worker or poster)
@@ -63,13 +97,7 @@ const register = async (req, res) => {
     // Generate token
     const token = generateToken(savedUser._id)
 
-    // Set JWT token in HTTP-only cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true, // Only send over HTTPS
-      sameSite: 'none', // Required for cross-origin requests
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    })
+    res.cookie('token', token, getCookieOptions())
 
     // Return user data (without password) and token
     return res.status(201).json({
@@ -163,13 +191,7 @@ const login = async (req, res) => {
     // Generate token
     const token = generateToken(user._id)
 
-    // Set JWT token in HTTP-only cookie
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true, // Only send over HTTPS
-      sameSite: 'none', // Required for cross-origin requests
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    })
+    res.cookie('token', token, getCookieOptions())
 
     // Return user data (without password) and token
     return res.status(200).json({
@@ -196,13 +218,12 @@ const login = async (req, res) => {
 // Logout user - clear cookie
 const logout = async (req, res) => {
   try {
-    // Clear the token cookie
     res.clearCookie('token', {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none'
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax'
     })
-    
+
     return res.status(200).json({
       message: 'Logout successful'
     })

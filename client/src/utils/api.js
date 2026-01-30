@@ -24,11 +24,11 @@ export async function safeFetch(endpoint, options = {}) {
 
     // Handle network errors
     if (!response.ok) {
-      // Handle 401 Unauthorized
+      // Handle 401 Unauthorized - session invalid/expired; notify app to logout
       if (response.status === 401) {
-        // Do NOT hard-redirect here.
-        // Some endpoints (e.g. /api/admin/*) can legitimately return 401/403 for non-admin users.
-        // Let callers decide whether to redirect, show UI, or stop polling.
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+        }
         return { data: null, error: 'Unauthorized (401). Please login.' }
       }
 
@@ -58,20 +58,20 @@ export async function safeFetch(endpoint, options = {}) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       // Check if it's a connection refused error (backend not running)
       if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
-        return { 
-          data: null, 
-          error: 'Backend server is not running. Please start the server on port 3001.' 
+        return {
+          data: null,
+          error: 'Backend server is not running. Please start the server on port 3001.'
         }
       }
-      return { 
-        data: null, 
-        error: 'Network error. Please check your connection and try again.' 
+      return {
+        data: null,
+        error: 'Network error. Please check your connection and try again.'
       }
     }
-    
-    return { 
-      data: null, 
-      error: error.message || 'An unexpected error occurred' 
+
+    return {
+      data: null,
+      error: error.message || 'An unexpected error occurred'
     }
   }
 }

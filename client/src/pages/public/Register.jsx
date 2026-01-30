@@ -9,10 +9,10 @@ function Register() {
     // Redirect if already authenticated (check both state and localStorage as fallback)
     useEffect(() => {
         if (loading) return
-        
+
         const token = localStorage.getItem('kaam247_token')
         const userInfo = localStorage.getItem('kaam247_user')
-        
+
         if (isAuthenticated || (token && userInfo)) {
             if (userInfo) {
                 try {
@@ -51,24 +51,38 @@ function Register() {
         setError('')
         setIsLoading(true)
 
-        if (!formData.name || !formData.email || !formData.phone || !formData.password) {
+        const name = (formData.name || '').trim()
+        const email = (formData.email || '').trim().toLowerCase()
+        const rawPhone = (formData.phone || '').trim()
+        const phone = rawPhone.replace(/\D/g, '')
+        const password = formData.password
+
+        if (!name || !email || !rawPhone || !password) {
             setError('Please fill in all fields')
             setIsLoading(false)
             return
         }
 
-        if (formData.password.length < 6) {
-            setError('Password must be at least 6 characters long')
+        if (phone.length !== 10) {
+            setError('Please enter a valid 10-digit mobile number')
             setIsLoading(false)
             return
         }
 
-        const result = await register(
-            formData.name,
-            formData.email,
-            formData.phone,
-            formData.password
-        )
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(email)) {
+            setError('Please enter a valid email address')
+            setIsLoading(false)
+            return
+        }
+
+        if (password.length < 8) {
+            setError('Password must be at least 8 characters long')
+            setIsLoading(false)
+            return
+        }
+
+        const result = await register(name, email, phone, password)
 
         if (result.success) {
             const userInfo = localStorage.getItem('kaam247_user')
@@ -106,7 +120,7 @@ function Register() {
                             Start connecting with local helpers or earn by helping others. Create your account in seconds.
                         </p>
                     </div>
-                    
+
                     <div className="space-y-4 pt-6">
                         <div className="flex items-start gap-4">
                             <div className="flex-shrink-0 w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
@@ -119,7 +133,7 @@ function Register() {
                                 <p className="text-gray-600 dark:text-gray-400">Set your own rates and work on your schedule</p>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-start gap-4">
                             <div className="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
                                 <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -131,7 +145,7 @@ function Register() {
                                 <p className="text-gray-600 dark:text-gray-400">Talk directly with helpers, no middlemen</p>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-start gap-4">
                             <div className="flex-shrink-0 w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
                                 <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -165,111 +179,113 @@ function Register() {
                             </div>
                         </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Name
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.name}
-                            onChange={(e) => handleInputChange('name', e.target.value)}
-                            placeholder="Enter your name"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Phone
-                        </label>
-                        <input
-                            type="tel"
-                            value={formData.phone}
-                            onChange={(e) => handleInputChange('phone', e.target.value)}
-                            placeholder="Enter your phone number"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => handleInputChange('email', e.target.value)}
-                            placeholder="Enter your email"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            value={formData.password}
-                            onChange={(e) => handleInputChange('password', e.target.value)}
-                            placeholder="Enter your password"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
-                            required
-                            minLength={6}
-                        />
-                    </div>
-
-                        {error && (
-                            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                                {error}
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => handleInputChange('name', e.target.value)}
+                                    placeholder="Enter your name"
+                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
+                                    required
+                                />
                             </div>
-                        )}
 
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white font-semibold rounded-lg transition-colors text-base min-h-[48px] ${
-                                isLoading 
-                                    ? 'bg-blue-400 dark:bg-blue-600 cursor-not-allowed' 
-                                    : 'hover:bg-blue-700 dark:hover:bg-blue-600'
-                            }`}
-                        >
-                            {isLoading ? (
-                                <span className="flex items-center justify-center">
-                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                    Creating account...
-                                </span>
-                            ) : (
-                                'Create account'
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Phone
+                                </label>
+                                <input
+                                    type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    maxLength={10}
+                                    value={formData.phone}
+                                    onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                    placeholder="10-digit mobile number"
+                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Email
+                                </label>
+                                <input
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={(e) => handleInputChange('email', e.target.value)}
+                                    placeholder="Enter your email"
+                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Password
+                                </label>
+                                <input
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={(e) => handleInputChange('password', e.target.value)}
+                                    placeholder="Enter your password"
+                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
+                                    required
+                                    minLength={8}
+                                />
+                            </div>
+
+                            {error && (
+                                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                                    {error}
+                                </div>
                             )}
-                        </button>
-                    </form>
 
-                    <div className="mt-6 text-center">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                            By signing up, you agree to{' '}
-                            <Link to="/terms" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                                Terms
-                            </Link>
-                            {' '}&{' '}
-                            <Link to="/privacy" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                                Privacy
-                            </Link>
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Already have an account?{' '}
-                            <Link
-                                to="/login"
-                                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className={`w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white font-semibold rounded-lg transition-colors text-base min-h-[48px] ${isLoading
+                                    ? 'bg-blue-400 dark:bg-blue-600 cursor-not-allowed'
+                                    : 'hover:bg-blue-700 dark:hover:bg-blue-600'
+                                    }`}
                             >
-                                Sign In
-                            </Link>
-                        </p>
-                    </div>
+                                {isLoading ? (
+                                    <span className="flex items-center justify-center">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                        Creating account...
+                                    </span>
+                                ) : (
+                                    'Create account'
+                                )}
+                            </button>
+                        </form>
+
+                        <div className="mt-6 text-center">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                By signing up, you agree to{' '}
+                                <Link to="/terms" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                                    Terms
+                                </Link>
+                                {' '}&{' '}
+                                <Link to="/privacy" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                                    Privacy
+                                </Link>
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Already have an account?{' '}
+                                <Link
+                                    to="/login"
+                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                                >
+                                    Sign In
+                                </Link>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

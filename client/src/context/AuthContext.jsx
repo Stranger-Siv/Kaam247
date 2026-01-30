@@ -44,22 +44,18 @@ export function AuthProvider({ children }) {
 
       const data = await response.json()
 
+      const userData = {
+        id: data.user._id || data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone,
+        role: data.user.role,
+        roleMode: data.user.roleMode ?? 'worker'
+      }
       localStorage.setItem('kaam247_token', data.token)
-      localStorage.setItem('kaam247_user', JSON.stringify({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode
-      }))
-
-      setUser({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode
-      })
+      localStorage.setItem('kaam247_user', JSON.stringify(userData))
+      localStorage.setItem('kaam247_userMode', userData.roleMode)
+      setUser(userData)
       setIsAuthenticated(true)
 
       try {
@@ -106,22 +102,18 @@ export function AuthProvider({ children }) {
 
       const data = await response.json()
 
+      const userData = {
+        id: data.user._id || data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone,
+        role: data.user.role,
+        roleMode: data.user.roleMode ?? 'worker'
+      }
       localStorage.setItem('kaam247_token', data.token)
-      localStorage.setItem('kaam247_user', JSON.stringify({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode
-      }))
-
-      setUser({
-        id: data.user._id || data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role || data.user.roleMode
-      })
+      localStorage.setItem('kaam247_user', JSON.stringify(userData))
+      localStorage.setItem('kaam247_userMode', userData.roleMode)
+      setUser(userData)
       setIsAuthenticated(true)
 
       try {
@@ -152,6 +144,27 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Global 401 handler: when any API returns 401 (expired/invalid token), logout and clear state
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setIsAuthenticated(false)
+      setUser(null)
+      localStorage.removeItem('kaam247_token')
+      localStorage.removeItem('kaam247_user')
+      localStorage.removeItem('kaam247_isOnline')
+      localStorage.removeItem('kaam247_userId')
+      localStorage.removeItem('kaam247_workerId')
+      localStorage.removeItem('kaam247_userMode')
+      try {
+        sessionStorage.setItem('kaam247_session_expired', '1')
+      } catch {
+        // ignore
+      }
+    }
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
+  }, [])
+
   const logout = async () => {
     try {
       await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -166,6 +179,7 @@ export function AuthProvider({ children }) {
     setUser(null)
     localStorage.removeItem('kaam247_token')
     localStorage.removeItem('kaam247_user')
+    localStorage.removeItem('kaam247_userMode')
     localStorage.removeItem('kaam247_isOnline')
     localStorage.removeItem('kaam247_userId')
     localStorage.removeItem('kaam247_workerId')
