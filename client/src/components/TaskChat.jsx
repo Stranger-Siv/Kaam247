@@ -183,7 +183,7 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
           <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm">Loading chat...</div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 min-h-[280px]">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 min-h-[280px] bg-gray-100 dark:bg-gray-900/50">
               {messages.length === 0 && !error && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">No messages yet. Say hello!</p>
               )}
@@ -194,11 +194,16 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
                     key={msg._id}
                     className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[80%] px-3 py-2 text-sm ${isMe ? 'text-right' : 'text-left'}`}>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <div
+                      className={`max-w-[80%] px-3 py-2.5 rounded-lg text-sm ${isMe
+                        ? 'text-right bg-blue-600 dark:bg-blue-500 text-white'
+                        : 'text-left bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600'
+                        }`}
+                    >
+                      <span className={`text-xs ${isMe ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
                         {isMe ? 'You' : otherLabel} {formatTime(msg.createdAt)}
                       </span>
-                      <p className="mt-0.5 text-gray-900 dark:text-gray-100 break-words whitespace-pre-wrap">{msg.text}</p>
+                      <p className={`mt-0.5 break-words whitespace-pre-wrap ${isMe ? 'text-white' : ''}`}>{msg.text}</p>
                     </div>
                   </div>
                 )
