@@ -676,9 +676,16 @@ const getTaskById = async (req, res) => {
       delete taskResponse.acceptedBy.phone
     }
 
-    // Ensure location.fullAddress is always present in response (for poster full address in worker/poster views)
-    if (taskResponse.location && typeof taskResponse.location === 'object') {
-      taskResponse.location.fullAddress = task.location?.fullAddress ?? null
+    // Build location object explicitly so fullAddress is always included in the API response
+    const loc = task.location || taskResponse.location
+    taskResponse.location = {
+      type: (loc && loc.type) || 'Point',
+      coordinates: (loc && loc.coordinates) || null,
+      area: (loc && loc.area) != null ? loc.area : null,
+      city: (loc && loc.city) != null ? loc.city : null,
+      fullAddress: (loc && loc.fullAddress != null && String(loc.fullAddress).trim() !== '')
+        ? String(loc.fullAddress).trim()
+        : null
     }
 
     return res.status(200).json({

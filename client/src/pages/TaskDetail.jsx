@@ -124,7 +124,12 @@ function TaskDetail() {
         description: backendTask.description,
         location: backendTask.location?.area || 'Location not specified',
         city: backendTask.location?.city || '',
-        fullAddress: backendTask.location?.fullAddress ?? backendTask.fullAddress ?? null,
+        fullAddress: (() => {
+          const fa = backendTask.location?.fullAddress ?? backendTask.fullAddress
+          if (fa == null) return null
+          const s = String(fa).trim()
+          return s === '' ? null : s
+        })(),
         coordinates: backendTask.location?.coordinates || null, // Store coordinates for Google Maps
         distance: backendTask.distanceKm !== null && backendTask.distanceKm !== undefined
           ? `${backendTask.distanceKm} km away`
@@ -1864,8 +1869,11 @@ function TaskDetail() {
                 <div>
                   <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight">{task.location}</p>
                   <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">{task.city}</p>
-                  {task.fullAddress && (
-                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-2 leading-relaxed whitespace-pre-wrap">{task.fullAddress}</p>
+                  {(task.fullAddress != null && String(task.fullAddress).trim() !== '') && (
+                    <>
+                      <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 mt-3 mb-1 uppercase tracking-wide">Full address</p>
+                      <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{String(task.fullAddress).trim()}</p>
+                    </>
                   )}
                   {userMode === 'worker' && (
                     <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1.5">
