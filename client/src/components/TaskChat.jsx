@@ -7,7 +7,7 @@ import { API_BASE_URL } from '../config/env'
  * - Joins socket room for real-time receive_message
  * - Sends via REST + optimistic UI; socket broadcasts to other participant
  */
-function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSocket, otherLabel = 'Other' }) {
+function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSocket, otherLabel = 'Other', userMode = 'worker' }) {
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState('')
   const [loading, setLoading] = useState(true)
@@ -151,7 +151,7 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
     return d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })
   }
 
-  const quickReplies = [
+  const quickRepliesWorker = [
     'On my way',
     'Reached',
     'Running a bit late',
@@ -159,6 +159,15 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
     'Will complete in 10 mins',
     'Need a few more details'
   ]
+  const quickRepliesPoster = [
+    'Thanks!',
+    'Let me know when you start',
+    'Please confirm when you\'re done',
+    'Any questions?',
+    'I\'ve shared the address',
+    'See you then'
+  ]
+  const quickReplies = userMode === 'poster' ? quickRepliesPoster : quickRepliesWorker
 
   const sendQuickReply = (text) => {
     setInputText(text)

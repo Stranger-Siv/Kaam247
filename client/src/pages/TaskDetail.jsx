@@ -2175,6 +2175,7 @@ function TaskDetail() {
             user={user}
             getSocket={getSocket}
             otherLabel={isPoster ? 'Worker' : 'Poster'}
+            userMode={userMode}
           />
         )
       })()}
