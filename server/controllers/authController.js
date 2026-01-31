@@ -239,7 +239,7 @@ const logout = async (req, res) => {
 }
 
 // POST /api/auth/google - Google Sign-In: verify idToken, create/find user, return JWT
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID?.trim() || ''
 const googleLogin = async (req, res) => {
   try {
     const { idToken } = req.body

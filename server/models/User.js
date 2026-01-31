@@ -184,6 +184,12 @@ const userSchema = new mongoose.Schema({
             description: 'Default search radius in km when browsing tasks'
         }
     },
+    fcmToken: {
+        type: String,
+        default: null,
+        trim: true,
+        description: 'FCM token for push notifications (web/mobile)'
+    },
     createdAt: {
         type: Date,
         default: Date.now

@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../config/env'
 import ModeToggle from '../components/ModeToggle'
 import { useCategories } from '../hooks/useCategories'
+import { usePushNotifications } from '../hooks/usePushNotifications'
 
 function Profile() {
     const [isEditing, setIsEditing] = useState(false)
@@ -38,6 +39,7 @@ function Profile() {
     const [preferencesSuccess, setPreferencesSuccess] = useState(false)
 
     const { categories: categoriesList } = useCategories()
+    const { permission: pushPermission, loading: pushLoading, error: pushError, enable: enablePush } = usePushNotifications()
 
     // Fetch profile data
     useEffect(() => {
@@ -620,6 +622,29 @@ function Profile() {
                     </div>
                 </div>
             )}
+
+            {/* Push notifications */}
+            <div className="mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Notifications</h2>
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-5 sm:p-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Get push notifications for new tasks, when someone accepts your task, and reminders (e.g. task in 1 hour).</p>
+                    {pushPermission === 'granted' ? (
+                        <p className="text-sm text-green-600 dark:text-green-400 font-medium">Push notifications are enabled.</p>
+                    ) : (
+                        <>
+                            <button
+                                type="button"
+                                onClick={enablePush}
+                                disabled={pushLoading}
+                                className="h-11 px-5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {pushLoading ? 'Enabling...' : 'Enable push notifications'}
+                            </button>
+                            {pushError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{pushError}</p>}
+                        </>
+                    )}
+                </div>
+            </div>
 
             {/* Account details card */}
             <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">

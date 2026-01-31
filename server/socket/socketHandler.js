@@ -3,6 +3,7 @@ const User = require('../models/User')
 const Task = require('../models/Task')
 const socketManager = require('./socketManager')
 const { calculateDistance } = require('../utils/distance')
+const { sendPushToUser } = require('../utils/pushNotifications')
 
 const CHAT_ROOM_PREFIX = 'chat_'
 
@@ -375,6 +376,9 @@ const broadcastNewTask = (taskData, postedByUserId) => {
                     workerSocket.alertedTaskIds.add(taskData.taskId)
                 }
 
+                // Push notification (non-blocking)
+                sendPushToUser(worker.userId, 'New task near you', taskData.title, { taskId: taskData.taskId }).catch(() => { })
+
                 emittedCount++
             } catch (emitError) {
                 // Silent fail - don't block task broadcast
@@ -400,6 +404,9 @@ const notifyTaskAccepted = (posterUserId, taskId, workerId) => {
             taskId: taskId.toString(),
             workerId: workerId.toString()
         })
+
+        // Push notification to poster (non-blocking)
+        sendPushToUser(posterUserId, 'Worker accepted your task', 'A worker has accepted your task. Open the app to view.', { taskId: taskId.toString() }).catch(() => { })
     } catch (error) {
         // Silent fail - non-fatal
     }

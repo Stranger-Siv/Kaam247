@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { createUser, updateProfile, getActivity, getEarnings, getProfile, getCancellationStatus, getActiveTask } = require('../controllers/userController')
+const { createUser, updateProfile, getActivity, getEarnings, getProfile, getCancellationStatus, getActiveTask, savePushSubscription } = require('../controllers/userController')
 const { createTicket, getMyTickets } = require('../controllers/supportTicketController')
 const { authenticate } = require('../middleware/auth')
 
@@ -30,6 +30,9 @@ router.post('/users/me/tickets', authenticate, createTicket)
 
 // GET /api/users/me/tickets - List current user's tickets
 router.get('/users/me/tickets', authenticate, getMyTickets)
+
+// POST /api/users/me/push-subscription - Save FCM token for push notifications
+router.post('/users/me/push-subscription', authenticate, savePushSubscription)
 
 module.exports = router
 

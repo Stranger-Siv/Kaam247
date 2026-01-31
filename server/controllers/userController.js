@@ -551,6 +551,27 @@ const getActiveTask = async (req, res) => {
   }
 }
 
+// POST /api/users/me/push-subscription - Save FCM token for push notifications
+const savePushSubscription = async (req, res) => {
+  try {
+    const userId = req.userId
+    const { token } = req.body
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid user' })
+    }
+    const fcmToken = token && typeof token === 'string' ? token.trim() : null
+    await User.findByIdAndUpdate(userId, { $set: { fcmToken: fcmToken || null } })
+    return res.status(200).json({
+      message: fcmToken ? 'Push subscription saved' : 'Push subscription cleared'
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to save push subscription'
+    })
+  }
+}
+
 module.exports = {
   createUser,
   updateProfile,
@@ -558,6 +579,7 @@ module.exports = {
   getEarnings,
   getProfile,
   getCancellationStatus,
-  getActiveTask
+  getActiveTask,
+  savePushSubscription
 }
 
