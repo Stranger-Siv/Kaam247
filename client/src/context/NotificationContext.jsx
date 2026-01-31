@@ -3,10 +3,14 @@ import { createContext, useContext, useState, useCallback } from 'react'
 const NotificationContext = createContext()
 
 export function NotificationProvider({ children }) {
-  const [notification, setNotification] = useState(null)
+  // Queue: show one notification at a time, each new task gets its own toast in order
+  const [notificationQueue, setNotificationQueue] = useState([])
   const [alertedTaskIds, setAlertedTaskIds] = useState(new Set())
   const [reminder, setReminder] = useState(null)
   const [reminderCooldown, setReminderCooldown] = useState(new Set()) // taskIds we've reminded in this session
+
+  // Current notification = first in queue (one at a time)
+  const notification = notificationQueue[0] ?? null
 
   const showNotification = useCallback((taskData) => {
     // Prevent duplicate alerts
@@ -33,16 +37,12 @@ export function NotificationProvider({ children }) {
     // Mark as alerted
     setAlertedTaskIds(prev => new Set([...prev, taskData.taskId]))
 
-    setNotification(formattedTask)
-
-    // Auto-dismiss after 15 seconds (toast also auto-navigates to /tasks)
-    setTimeout(() => {
-      setNotification(null)
-    }, 15000)
+    // Add to queue; toast shows one at a time, dismiss shows next
+    setNotificationQueue(prev => [...prev, formattedTask])
   }, [alertedTaskIds])
 
   const hideNotification = useCallback(() => {
-    setNotification(null)
+    setNotificationQueue(prev => prev.slice(1))
   }, [])
 
   const showReminder = useCallback(({ title, message, taskId }) => {
@@ -58,7 +58,7 @@ export function NotificationProvider({ children }) {
 
   const clearAlertedTasks = useCallback(() => {
     setAlertedTaskIds(new Set())
-    setNotification(null)
+    setNotificationQueue([])
   }, [])
 
   return (
