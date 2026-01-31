@@ -1,10 +1,16 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { playNotificationBell, initNotificationSound } from '../utils/notificationSound'
 
 const NotificationContext = createContext()
 
 export function NotificationProvider({ children }) {
   // Queue: show one notification at a time, each new task gets its own toast in order
   const [notificationQueue, setNotificationQueue] = useState([])
+
+  // Initialize audio context early so it can be unlocked on first user interaction
+  useEffect(() => {
+    initNotificationSound()
+  }, [])
   const [alertedTaskIds, setAlertedTaskIds] = useState(new Set())
   const [reminder, setReminder] = useState(null)
   const [reminderCooldown, setReminderCooldown] = useState(new Set()) // taskIds we've reminded in this session
@@ -37,6 +43,9 @@ export function NotificationProvider({ children }) {
 
     // Mark as alerted
     setAlertedTaskIds(prev => new Set([...prev, taskData.taskId]))
+
+    // Play ringing bell for new task
+    playNotificationBell()
 
     // Add to queue; toast shows one at a time, dismiss shows next
     setNotificationQueue(prev => [...prev, formattedTask])
