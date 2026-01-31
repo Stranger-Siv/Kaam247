@@ -9,7 +9,8 @@ export function NotificationProvider({ children }) {
   const [reminder, setReminder] = useState(null)
   const [reminderCooldown, setReminderCooldown] = useState(new Set()) // taskIds we've reminded in this session
 
-  // Current notification = first in queue (one at a time)
+  // Expose full list so UI can show all new tasks in one scrollable panel
+  const notifications = notificationQueue
   const notification = notificationQueue[0] ?? null
 
   const showNotification = useCallback((taskData) => {
@@ -45,6 +46,10 @@ export function NotificationProvider({ children }) {
     setNotificationQueue(prev => prev.slice(1))
   }, [])
 
+  const dismissAllNotifications = useCallback(() => {
+    setNotificationQueue([])
+  }, [])
+
   const showReminder = useCallback(({ title, message, taskId }) => {
     if (taskId && reminderCooldown.has(taskId)) return
     setReminder({ title, message, taskId })
@@ -65,8 +70,10 @@ export function NotificationProvider({ children }) {
     <NotificationContext.Provider
       value={{
         notification,
+        notifications,
         showNotification,
         hideNotification,
+        dismissAllNotifications,
         reminder,
         showReminder,
         hideReminder,

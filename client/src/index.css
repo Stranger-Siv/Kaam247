@@ -93,6 +93,17 @@ body {
   }
 }
 
+@keyframes toast-fade-out {
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.animate-toast-fade-out {
+  animation: toast-fade-out 0.3s ease-out forwards;
+}
+
 /* ============================================
       MAP SAFETY (LEAFLET)
       ============================================ */
