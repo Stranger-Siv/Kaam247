@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './context/AuthContext'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
@@ -46,6 +47,13 @@ const AdminAnalytics = lazyWithRetry(() => import('./pages/admin/AdminAnalytics'
 const AdminTickets = lazyWithRetry(() => import('./pages/admin/AdminTickets'))
 const SetupProfile = lazyWithRetry(() => import('./pages/SetupProfile'))
 
+const HomeOrRedirect = () => {
+  const { isAuthenticated, loading } = useAuth()
+  if (loading) return <PageLoader />
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />
+  return <Home />
+}
+
 const AppContent = () => (
   <>
     <AuthProvider>
@@ -63,12 +71,12 @@ const AppContent = () => (
                   <ErrorBoundary>
                     <Suspense fallback={<PageLoader />}>
                       <Routes>
-                        {/* Public Routes */}
+                        {/* Public Routes - logged-in users hitting / go to dashboard */}
                         <Route
                           path="/"
                           element={
                             <PublicLayout>
-                              <Home />
+                              <HomeOrRedirect />
                             </PublicLayout>
                           }
                         />
