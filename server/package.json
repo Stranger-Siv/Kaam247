@@ -6,9 +6,6 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "node test-all-apis-comprehensive.js",
-    "test:all": "node test-all-apis-comprehensive.js",
-    "test:comprehensive": "node test-all-apis-comprehensive.js",
     "fix:phone-index": "node scripts/fix-phone-index.js"
   },
   "keywords": [],
