@@ -408,11 +408,11 @@ function Tasks() {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm p-12 sm:p-16 lg:p-20 text-center border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
           {loading ? (
             <>
-              <div className="animate-spin rounded-full h-12 w-12 sm:h-14 sm:w-14 border-b-2 border-blue-600 mx-auto mb-4 sm:mb-5"></div>
-              <p className="text-base sm:text-lg text-gray-700 font-semibold">Loading tasks...</p>
+              <div className="animate-spin rounded-full h-12 w-12 sm:h-14 sm:w-14 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4 sm:mb-5"></div>
+              <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 font-semibold">Loading tasks...</p>
             </>
           ) : error ? (
             <>
