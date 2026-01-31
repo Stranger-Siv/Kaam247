@@ -151,12 +151,10 @@ function Tasks() {
               : 'Flexible',
             status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
           }))
-          // Sort: preferred categories first, then by distance (nearest first)
+          // When worker has preferred categories set, show only tasks in those categories
+          .filter(task => workerPreferredCategories.length === 0 || workerPreferredCategories.includes(task.category))
+          // Sort by distance (nearest first)
           .sort((a, b) => {
-            const aPreferred = workerPreferredCategories.length > 0 && workerPreferredCategories.includes(a.category)
-            const bPreferred = workerPreferredCategories.length > 0 && workerPreferredCategories.includes(b.category)
-            if (aPreferred && !bPreferred) return -1
-            if (!aPreferred && bPreferred) return 1
             if (a.distanceKm === null || a.distanceKm === undefined) return 1
             if (b.distanceKm === null || b.distanceKm === undefined) return -1
             return a.distanceKm - b.distanceKm
@@ -334,6 +332,11 @@ function Tasks() {
       <div className="mb-6 sm:mb-8 lg:mb-10 w-full">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight break-words">Available Tasks</h1>
         <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-relaxed break-words">Find work near you</p>
+        {userMode === 'worker' && workerPreferredCategories.length > 0 && (
+          <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
+            Showing only: {workerPreferredCategories.join(', ')}. Change in Profile → Worker preferences.
+          </p>
+        )}
       </div>
 
       {/* Filters */}
