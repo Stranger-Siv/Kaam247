@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCancellation } from '../context/CancellationContext'
 import { useNotification } from '../context/NotificationContext'
 import StatusBadge from '../components/StatusBadge'
+import TaskCardSkeleton from '../components/TaskCardSkeleton'
 import { API_BASE_URL } from '../config/env'
 import { performStateRecovery } from '../utils/stateRecovery'
 import { reverseGeocode } from '../utils/geocoding'
@@ -19,6 +20,7 @@ function Dashboard() {
     const { cancellationStatus } = useCancellation()
     const { showReminder } = useNotification()
     const [availableTasks, setAvailableTasks] = useState([])
+    const [availableTasksLoading, setAvailableTasksLoading] = useState(false)
     const [locationError, setLocationError] = useState(null)
     const [requestingLocation, setRequestingLocation] = useState(false)
     const [hasLocationPermission, setHasLocationPermission] = useState(false)
@@ -679,12 +681,14 @@ function Dashboard() {
         // REQUIRE LOCATION: Don't fetch tasks if no location
         if (!workerLocation || !workerLocation.lat || !workerLocation.lng) {
             setAvailableTasks([])
+            setAvailableTasksLoading(false)
             // Try to get location
             await requestLocation()
             return
         }
 
         fetchingRef.current.availableTasks = true
+        setAvailableTasksLoading(true)
         try {
             // Fetch tasks with location filter (5km radius)
             const url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
@@ -737,6 +741,7 @@ function Dashboard() {
         } catch (err) {
         } finally {
             fetchingRef.current.availableTasks = false
+            setAvailableTasksLoading(false)
         }
     }, [userMode, workerLocation, isOnline]) // Removed requestLocation from deps
 
@@ -757,6 +762,7 @@ function Dashboard() {
         } else if (userMode === 'worker' && !isOnline) {
             // Clear tasks when going OFF DUTY
             setAvailableTasks([])
+            setAvailableTasksLoading(false)
         }
     }, [userMode, isOnline, user?.id, workerLocation?.lat, workerLocation?.lng]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1064,7 +1070,13 @@ function Dashboard() {
                             </Link>
                         </div>
 
-                        {availableTasks.length > 0 ? (
+                        {availableTasksLoading && availableTasks.length === 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+                                {[...Array(4)].map((_, i) => (
+                                    <TaskCardSkeleton key={i} />
+                                ))}
+                            </div>
+                        ) : availableTasks.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
                                 {availableTasks.map((task) => (
                                     <Link

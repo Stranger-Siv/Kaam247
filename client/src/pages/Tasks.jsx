@@ -8,6 +8,7 @@ import StatusBadge from '../components/StatusBadge'
 import { API_BASE_URL } from '../config/env'
 import { useCategories } from '../hooks/useCategories'
 import { fetchActiveTask } from '../utils/stateRecovery'
+import TaskCardSkeleton from '../components/TaskCardSkeleton'
 
 const DISTANCE_OPTIONS = [
   { label: 'All', km: 10 },
@@ -27,6 +28,8 @@ function Tasks() {
   const [hasActiveTask, setHasActiveTask] = useState(false)
   const [refetchTrigger, setRefetchTrigger] = useState(0)
   const [workerPreferredCategories, setWorkerPreferredCategories] = useState([])
+  const [showAllTasksOverride, setShowAllTasksOverride] = useState(false)
+  const [clearingPreferences, setClearingPreferences] = useState(false)
   const preferencesAppliedRef = useRef(false)
   const { getSocket } = useSocket()
   const { isOnline, workerLocation } = useAvailability()
@@ -151,8 +154,8 @@ function Tasks() {
               : 'Flexible',
             status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
           }))
-          // When worker has preferred categories set, show only tasks in those categories
-          .filter(task => workerPreferredCategories.length === 0 || workerPreferredCategories.includes(task.category))
+          // When worker has preferred categories set, show only those unless "Show all" was clicked
+          .filter(task => workerPreferredCategories.length === 0 || showAllTasksOverride || workerPreferredCategories.includes(task.category))
           // Sort by distance (nearest first)
           .sort((a, b) => {
             if (a.distanceKm === null || a.distanceKm === undefined) return 1
@@ -169,7 +172,7 @@ function Tasks() {
     }
 
     fetchTasks()
-  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, refetchTrigger, workerPreferredCategories])
+  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, refetchTrigger, workerPreferredCategories, showAllTasksOverride])
 
   // Listen for new tasks via Socket.IO (only when online)
   useEffect(() => {
@@ -333,9 +336,60 @@ function Tasks() {
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight break-words">Available Tasks</h1>
         <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-relaxed break-words">Find work near you</p>
         {userMode === 'worker' && workerPreferredCategories.length > 0 && (
-          <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
-            Showing only: {workerPreferredCategories.join(', ')}. Change in Profile → Worker preferences.
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {showAllTasksOverride ? (
+              <>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Showing all tasks.</p>
+                <button
+                  type="button"
+                  onClick={() => { setShowAllTasksOverride(false); setRefetchTrigger(prev => prev + 1) }}
+                  className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Use my preferences again
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-blue-600 dark:text-blue-400">
+                  Showing only: {workerPreferredCategories.join(', ')}.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setShowAllTasksOverride(true); setRefetchTrigger(prev => prev + 1) }}
+                  className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Show all tasks
+                </button>
+                <span className="text-gray-400 dark:text-gray-500">|</span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (clearingPreferences) return
+                    setClearingPreferences(true)
+                    try {
+                      const token = localStorage.getItem('kaam247_token')
+                      const res = await fetch(`${API_BASE_URL}/api/users/me`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                        body: JSON.stringify({ workerPreferences: { preferredCategories: [], defaultRadiusKm: 5 } })
+                      })
+                      if (res.ok) {
+                        setWorkerPreferredCategories([])
+                        setShowAllTasksOverride(true)
+                        setRefetchTrigger(prev => prev + 1)
+                      }
+                    } finally {
+                      setClearingPreferences(false)
+                    }
+                  }}
+                  disabled={clearingPreferences}
+                  className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:underline disabled:opacity-50"
+                >
+                  {clearingPreferences ? 'Clearing...' : 'Clear saved preferences'}
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -387,7 +441,13 @@ function Tasks() {
       </div>
 
       {/* Tasks List */}
-      {filteredTasks.length > 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 w-full">
+          {[...Array(6)].map((_, i) => (
+            <TaskCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : filteredTasks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 w-full">
           {filteredTasks.map((task) => (
             <Link
@@ -448,12 +508,7 @@ function Tasks() {
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
-          {loading ? (
-            <>
-              <div className="animate-spin rounded-full h-12 w-12 sm:h-14 sm:w-14 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4 sm:mb-5"></div>
-              <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 font-semibold">Loading tasks...</p>
-            </>
-          ) : error ? (
+          {error ? (
             <>
               <svg className="h-14 w-14 sm:h-16 sm:w-16 text-red-300 dark:text-red-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
