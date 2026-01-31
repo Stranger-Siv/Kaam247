@@ -7,6 +7,7 @@ import AvailabilityToggle from '../AvailabilityToggle'
 import ThemeToggle from '../ThemeToggle'
 import Footer from './Footer'
 import NotificationToast from '../NotificationToast'
+import ReminderToast from '../ReminderToast'
 import BottomNav from './BottomNav'
 
 function MainLayout() {
@@ -136,6 +137,7 @@ function MainLayout() {
 
             {/* Global Notification Toast */}
             <NotificationToast />
+            <ReminderToast />
         </div>
     )
 }

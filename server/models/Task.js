@@ -106,6 +106,11 @@ const taskSchema = new mongoose.Schema({
         required: false,
         description: 'Timestamp when task was last alerted to workers (for 3-hour cooldown)'
     },
+    expiresAt: {
+        type: Date,
+        required: false,
+        description: 'Task listing expires at this time; after this the task is no longer available for workers'
+    },
     createdAt: {
         type: Date,
         default: Date.now

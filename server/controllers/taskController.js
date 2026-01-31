@@ -8,7 +8,7 @@ const socketManager = require('../socket/socketManager')
 
 const createTask = async (req, res) => {
   try {
-    const { title, description, category, budget, scheduledAt, location, postedBy, expectedDuration } = req.body
+    const { title, description, category, budget, scheduledAt, location, postedBy, expectedDuration, expiresAt: expiresAtBody, validForDays } = req.body
 
     // Validate required fields exist
     if (!title || !description || !category || budget === undefined || budget === null || !location || !postedBy) {
@@ -166,8 +166,28 @@ const createTask = async (req, res) => {
       }
     }
 
-    // Create task with validated and normalized data
-    // Let Mongoose handle ObjectId casting automatically
+    // Expiry: every task must have an expiry so it stops showing after that
+    let expiresAt = null
+    if (expiresAtBody) {
+      const d = new Date(expiresAtBody)
+      if (!isNaN(d.getTime()) && d > new Date()) expiresAt = d
+    }
+    if (!expiresAt && validForDays != null) {
+      const days = Number(validForDays)
+      if (!isNaN(days) && days > 0) {
+        const e = new Date()
+        e.setDate(e.getDate() + Math.min(Math.floor(days), 30))
+        e.setHours(23, 59, 59, 999)
+        expiresAt = e
+      }
+    }
+    if (!expiresAt) {
+      const defaultExpiry = new Date()
+      defaultExpiry.setDate(defaultExpiry.getDate() + 7)
+      defaultExpiry.setHours(23, 59, 59, 999)
+      expiresAt = defaultExpiry
+    }
+
     const task = new Task({
       title: title.trim(),
       description: description.trim(),
@@ -175,6 +195,7 @@ const createTask = async (req, res) => {
       budget: budgetNumber,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
       expectedDuration: expectedDurationNumber,
+      expiresAt,
       location: {
         type: 'Point',
         coordinates: normalizedCoordinates,
@@ -182,7 +203,7 @@ const createTask = async (req, res) => {
         city: location.city ? location.city.trim() : null,
         fullAddress: location.fullAddress ? location.fullAddress.trim() : null
       },
-      postedBy: postedBy, // Pass as string, Mongoose will cast to ObjectId
+      postedBy: postedBy,
       status: 'OPEN',
       acceptedBy: null
     })
@@ -498,18 +519,32 @@ const acceptTask = async (req, res) => {
 
 const getAvailableTasks = async (req, res) => {
   try {
-    // Get worker location from query params (optional)
+    // Get worker location and filters from query params
     const workerLat = req.query.lat ? parseFloat(req.query.lat) : null
     const workerLng = req.query.lng ? parseFloat(req.query.lng) : null
     const radiusKm = req.query.radius ? parseFloat(req.query.radius) : 5
+    const category = req.query.category && String(req.query.category).trim() ? String(req.query.category).trim() : null
+    const minBudget = req.query.minBudget != null && req.query.minBudget !== '' ? Number(req.query.minBudget) : null
+    const maxBudget = req.query.maxBudget != null && req.query.maxBudget !== '' ? Number(req.query.maxBudget) : null
 
-    // Fetch tasks with status "OPEN" or "SEARCHING" and not hidden
-    // Both statuses indicate tasks available for workers
-    let tasks = await Task.find({
-      status: { $in: ['OPEN', 'SEARCHING'] }, // Include both OPEN and SEARCHING tasks
-      isHidden: { $ne: true } // Exclude hidden tasks
-    })
-      .lean()
+    const now = new Date()
+    const query = {
+      status: { $in: ['OPEN', 'SEARCHING'] },
+      isHidden: { $ne: true },
+      $or: [
+        { expiresAt: { $exists: false } },
+        { expiresAt: null },
+        { expiresAt: { $gt: now } }
+      ]
+    }
+    if (category) query.category = category
+    if (minBudget != null && !isNaN(minBudget) || maxBudget != null && !isNaN(maxBudget)) {
+      query.budget = {}
+      if (minBudget != null && !isNaN(minBudget)) query.budget.$gte = minBudget
+      if (maxBudget != null && !isNaN(maxBudget)) query.budget.$lte = maxBudget
+    }
+
+    let tasks = await Task.find(query).lean()
 
     // Calculate distances and filter if worker location is provided
     if (workerLat !== null && workerLng !== null && !isNaN(workerLat) && !isNaN(workerLng)) {

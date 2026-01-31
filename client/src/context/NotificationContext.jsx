@@ -5,6 +5,8 @@ const NotificationContext = createContext()
 export function NotificationProvider({ children }) {
   const [notification, setNotification] = useState(null)
   const [alertedTaskIds, setAlertedTaskIds] = useState(new Set())
+  const [reminder, setReminder] = useState(null)
+  const [reminderCooldown, setReminderCooldown] = useState(new Set()) // taskIds we've reminded in this session
 
   const showNotification = useCallback((taskData) => {
     // Prevent duplicate alerts
@@ -43,6 +45,17 @@ export function NotificationProvider({ children }) {
     setNotification(null)
   }, [])
 
+  const showReminder = useCallback(({ title, message, taskId }) => {
+    if (taskId && reminderCooldown.has(taskId)) return
+    setReminder({ title, message, taskId })
+    if (taskId) setReminderCooldown(prev => new Set([...prev, taskId]))
+    setTimeout(() => setReminder(null), 8000)
+  }, [reminderCooldown])
+
+  const hideReminder = useCallback(() => {
+    setReminder(null)
+  }, [])
+
   const clearAlertedTasks = useCallback(() => {
     setAlertedTaskIds(new Set())
     setNotification(null)
@@ -54,6 +67,9 @@ export function NotificationProvider({ children }) {
         notification,
         showNotification,
         hideNotification,
+        reminder,
+        showReminder,
+        hideReminder,
         clearAlertedTasks
       }}
     >

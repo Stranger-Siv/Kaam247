@@ -17,6 +17,7 @@ function Tasks() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [hasActiveTask, setHasActiveTask] = useState(false)
+  const [refetchTrigger, setRefetchTrigger] = useState(0)
   const { getSocket } = useSocket()
   const { isOnline, workerLocation } = useAvailability()
   const { user } = useAuth()
@@ -28,7 +29,26 @@ function Tasks() {
   const distances = ['All', 'Within 1 km', 'Within 3 km', 'Within 5 km', 'Within 10 km']
   const budgets = ['All', 'Under ₹500', '₹500 - ₹1000', '₹1000 - ₹2000', 'Above ₹2000']
 
-  // Fetch tasks from API on component mount and when location changes
+  const getRadiusKm = () => {
+    switch (selectedDistance) {
+      case 'Within 1 km': return 1
+      case 'Within 3 km': return 3
+      case 'Within 5 km': return 5
+      case 'Within 10 km': return 10
+      default: return 10
+    }
+  }
+  const getBudgetRange = () => {
+    switch (selectedBudget) {
+      case 'Under ₹500': return { minBudget: null, maxBudget: 500 }
+      case '₹500 - ₹1000': return { minBudget: 500, maxBudget: 1000 }
+      case '₹1000 - ₹2000': return { minBudget: 1000, maxBudget: 2000 }
+      case 'Above ₹2000': return { minBudget: 2000, maxBudget: null }
+      default: return { minBudget: null, maxBudget: null }
+    }
+  }
+
+  // Fetch tasks when location or filters change
   useEffect(() => {
     const fetchTasks = async () => {
       try {
@@ -51,8 +71,12 @@ function Tasks() {
           return
         }
 
-        // Build query string with location (REQUIRED - 5km radius)
-        const url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
+        const radiusKm = getRadiusKm()
+        const { minBudget, maxBudget } = getBudgetRange()
+        let url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=${radiusKm}`
+        if (selectedCategory && selectedCategory !== 'All') url += `&category=${encodeURIComponent(selectedCategory)}`
+        if (minBudget != null) url += `&minBudget=${minBudget}`
+        if (maxBudget != null) url += `&maxBudget=${maxBudget}`
 
         const response = await fetch(url)
 
@@ -72,7 +96,7 @@ function Tasks() {
             const postedById = task.postedBy?._id || task.postedBy
             return String(postedById) !== String(user.id)
           })
-          .filter(task => task.distanceKm !== null && task.distanceKm !== undefined && task.distanceKm <= 5) // Only within 5km
+          .filter(task => task.distanceKm == null || task.distanceKm <= radiusKm)
           .map((task) => ({
             id: task._id,
             title: task.title,
@@ -111,7 +135,7 @@ function Tasks() {
     }
 
     fetchTasks()
-  }, [workerLocation, isOnline, userMode, user?.id]) // include mode/online to stop fetching when OFF DUTY
+  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, refetchTrigger])
 
   // Listen for new tasks via Socket.IO (only when online)
   useEffect(() => {
@@ -187,53 +211,8 @@ function Tasks() {
       setTasks(prev => prev.filter(task => task.id !== data.taskId))
     }
 
-    // DATA CONSISTENCY: Listen for task status changes to refresh task list
-    const handleTaskStatusChanged = async () => {
-      // Refetch tasks to ensure list matches backend state
-      try {
-        let url = `${API_BASE_URL}/api/tasks`
-        if (workerLocation && workerLocation.lat && workerLocation.lng) {
-          url += `?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
-        }
-
-        const response = await fetch(url)
-        if (response.ok) {
-          const data = await response.json()
-          const transformedTasks = (data.tasks || [])
-            // Hide tasks posted by the current user (don't show your own tasks in worker list)
-            .filter(task => {
-              if (!user?.id) return true
-              // Handle both object format (task.postedBy._id) and string format (task.postedBy)
-              const postedById = task.postedBy?._id || task.postedBy
-              return String(postedById) !== String(user.id)
-            })
-            .map((task) => ({
-              id: task._id,
-              title: task.title,
-              description: task.description,
-              location: task.location?.area
-                ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
-                : 'Location not specified',
-              distance: task.distanceKm !== null && task.distanceKm !== undefined
-                ? `${task.distanceKm} km away`
-                : 'Distance unavailable',
-              distanceKm: task.distanceKm,
-              budget: `₹${task.budget}`,
-              category: task.category,
-              time: task.scheduledAt
-                ? new Date(task.scheduledAt).toLocaleString('en-IN', {
-                  weekday: 'short',
-                  hour: 'numeric',
-                  minute: '2-digit'
-                })
-                : 'Flexible',
-              status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
-            }))
-          setTasks(transformedTasks)
-        }
-      } catch (err) {
-        // Silent fail
-      }
+    const handleTaskStatusChanged = () => {
+      setRefetchTrigger(prev => prev + 1)
     }
 
     socket.on('new_task', handleNewTask)
@@ -265,159 +244,32 @@ function Tasks() {
     recoverState()
   }, [user?.id])
 
-  // STATE RECOVERY: Listen for socket reconnection
   useEffect(() => {
-    const handleReconnect = async () => {
-      // Refetch tasks on reconnection
-      const fetchTasks = async () => {
-        try {
-          let url = `${API_BASE_URL}/api/tasks`
-          if (workerLocation && workerLocation.lat && workerLocation.lng) {
-            url += `?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
-          }
-
-          const response = await fetch(url)
-          if (response.ok) {
-            const data = await response.json()
-            const transformedTasks = data.tasks.map((task) => ({
-              id: task._id,
-              title: task.title,
-              description: task.description,
-              location: task.location?.area
-                ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
-                : 'Location not specified',
-              distance: task.distanceKm !== null && task.distanceKm !== undefined
-                ? `${task.distanceKm} km away`
-                : 'Distance unavailable',
-              distanceKm: task.distanceKm,
-              budget: `₹${task.budget}`,
-              category: task.category,
-              time: task.scheduledAt
-                ? new Date(task.scheduledAt).toLocaleString('en-IN', {
-                  weekday: 'short',
-                  hour: 'numeric',
-                  minute: '2-digit'
-                })
-                : 'Flexible',
-              status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
-            }))
-            setTasks(transformedTasks)
-          }
-        } catch (err) {
-        }
-      }
-      fetchTasks()
-    }
-
+    const handleReconnect = () => setRefetchTrigger(prev => prev + 1)
     window.addEventListener('socket_reconnected', handleReconnect)
-    return () => {
-      window.removeEventListener('socket_reconnected', handleReconnect)
-    }
-  }, [workerLocation])
+    return () => window.removeEventListener('socket_reconnected', handleReconnect)
+  }, [])
 
-  // STATE RECOVERY: Tab visibility change recovery
   useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && isOnline) {
-        // Refetch tasks when tab becomes visible
-        try {
-          let url = `${API_BASE_URL}/api/tasks`
-          if (workerLocation && workerLocation.lat && workerLocation.lng) {
-            url += `?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
-          }
-
-          const response = await fetch(url)
-          if (response.ok) {
-            const data = await response.json()
-            const transformedTasks = (data.tasks || []).map((task) => ({
-              id: task._id,
-              title: task.title,
-              description: task.description,
-              location: task.location?.area
-                ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
-                : 'Location not specified',
-              distance: task.distanceKm !== null && task.distanceKm !== undefined
-                ? `${task.distanceKm} km away`
-                : 'Distance unavailable',
-              distanceKm: task.distanceKm,
-              budget: `₹${task.budget}`,
-              category: task.category,
-              time: task.scheduledAt
-                ? new Date(task.scheduledAt).toLocaleString('en-IN', {
-                  weekday: 'short',
-                  hour: 'numeric',
-                  minute: '2-digit'
-                })
-                : 'Flexible',
-              status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
-            }))
-            setTasks(transformedTasks)
-          }
-        } catch (err) {
-          // Silent fail
-        }
-      }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isOnline) setRefetchTrigger(prev => prev + 1)
     }
-
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [isOnline, workerLocation])
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [isOnline])
 
-  // STATE RECOVERY: Listen for refetch_required events (from socket events)
   useEffect(() => {
-    const handleRefetch = async (event) => {
-      const { type } = event.detail
-
+    const handleRefetch = (event) => {
+      const { type } = event.detail || {}
       if (type === 'task_updated' || type === 'task_status_changed' || type === 'task_cancelled') {
-        // Silent refetch tasks
-        try {
-          let url = `${API_BASE_URL}/api/tasks`
-          if (workerLocation && workerLocation.lat && workerLocation.lng) {
-            url += `?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
-          }
-
-          const response = await fetch(url)
-          if (response.ok) {
-            const data = await response.json()
-            const transformedTasks = (data.tasks || []).map((task) => ({
-              id: task._id,
-              title: task.title,
-              description: task.description,
-              location: task.location?.area
-                ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
-                : 'Location not specified',
-              distance: task.distanceKm !== null && task.distanceKm !== undefined
-                ? `${task.distanceKm} km away`
-                : 'Distance unavailable',
-              distanceKm: task.distanceKm,
-              budget: `₹${task.budget}`,
-              category: task.category,
-              time: task.scheduledAt
-                ? new Date(task.scheduledAt).toLocaleString('en-IN', {
-                  weekday: 'short',
-                  hour: 'numeric',
-                  minute: '2-digit'
-                })
-                : 'Flexible',
-              status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
-            }))
-            setTasks(transformedTasks)
-          }
-        } catch (err) {
-          // Silent fail
-        }
+        setRefetchTrigger(prev => prev + 1)
       }
     }
-
     window.addEventListener('refetch_required', handleRefetch)
-    return () => {
-      window.removeEventListener('refetch_required', handleRefetch)
-    }
-  }, [workerLocation])
+    return () => window.removeEventListener('refetch_required', handleRefetch)
+  }, [])
 
-  const filteredTasks = tasks // In real app, apply filters here
+  const filteredTasks = tasks
 
   // Worker OFF DUTY: hide task feed completely
   if (userMode === 'worker' && !isOnline) {

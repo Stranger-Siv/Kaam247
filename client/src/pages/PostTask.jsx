@@ -23,7 +23,8 @@ function PostTask() {
     budget: '',
     date: '',
     time: '',
-    hours: ''
+    hours: '',
+    validForDays: '7'
   })
   const [locationData, setLocationData] = useState({
     coordinates: null,
@@ -46,6 +47,14 @@ function PostTask() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const { categories } = useCategories()
+
+  const validForDaysOptions = [
+    { value: '1', label: '1 day' },
+    { value: '3', label: '3 days' },
+    { value: '7', label: '7 days (default)' },
+    { value: '14', label: '14 days' },
+    { value: '30', label: '30 days' }
+  ]
 
   const hoursOptions = [
     { value: '', label: 'Select duration' },
@@ -325,7 +334,8 @@ function PostTask() {
         scheduledAt: scheduledAt,
         expectedDuration: formData.hours ? parseInt(formData.hours) : null, // Store hours as number
         location: finalLocation,
-        postedBy: userId
+        postedBy: userId,
+        validForDays: formData.validForDays ? parseInt(formData.validForDays, 10) : 7
       }
 
       // Submit task to backend
@@ -638,6 +648,24 @@ function PostTask() {
                 ) : (
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">How long do you expect this task to take?</p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                  Task listing valid for
+                </label>
+                <select
+                  value={formData.validForDays}
+                  onChange={(e) => handleInputChange('validForDays', e.target.value)}
+                  className="w-full px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                >
+                  {validForDaysOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">After this period the task will no longer appear in search</p>
               </div>
             </div>
 

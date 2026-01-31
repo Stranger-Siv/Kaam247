@@ -5,6 +5,7 @@ import { useSocket } from '../context/SocketContext'
 import { useAvailability } from '../context/AvailabilityContext'
 import { useAuth } from '../context/AuthContext'
 import { useCancellation } from '../context/CancellationContext'
+import { useNotification } from '../context/NotificationContext'
 import StatusBadge from '../components/StatusBadge'
 import { API_BASE_URL } from '../config/env'
 import { performStateRecovery } from '../utils/stateRecovery'
@@ -16,6 +17,7 @@ function Dashboard() {
     const { isOnline, workerLocation, setOnline } = useAvailability()
     const { user } = useAuth()
     const { cancellationStatus } = useCancellation()
+    const { showReminder } = useNotification()
     const [availableTasks, setAvailableTasks] = useState([])
     const [locationError, setLocationError] = useState(null)
     const [requestingLocation, setRequestingLocation] = useState(false)
@@ -150,6 +152,45 @@ function Dashboard() {
     useEffect(() => {
         fetchPendingConfirmations()
     }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Reminders: task due soon (1 hour) and confirm completion
+    useEffect(() => {
+        if (!user?.id || !showReminder) return
+
+        const runReminders = () => {
+            const now = Date.now()
+            const oneHourMs = 60 * 60 * 1000
+
+            // Worker: task in under 1 hour
+            acceptedTasks.forEach((task) => {
+                if (!task.scheduledAt) return
+                const at = task.scheduledAt.getTime()
+                if (at > now && at - now <= oneHourMs) {
+                    showReminder({
+                        title: 'Task in 1 hour',
+                        message: `"${task.title}" is scheduled in under 1 hour`,
+                        taskId: task.id
+                    })
+                }
+            })
+
+            // Poster: confirm completion
+            if (pendingConfirmations.length > 0) {
+                const first = pendingConfirmations[0]
+                const taskId = first._id || first.id
+                const title = first.title || 'Task'
+                showReminder({
+                    title: 'Confirm completion',
+                    message: `Worker marked "${title}" as done. Please confirm.`,
+                    taskId
+                })
+            }
+        }
+
+        runReminders()
+        const interval = setInterval(runReminders, 60 * 1000)
+        return () => clearInterval(interval)
+    }, [user?.id, showReminder, acceptedTasks, pendingConfirmations])
 
     // STATE RECOVERY: Page load recovery sequence (only on initial mount, skip if stats already fetched)
     useEffect(() => {
@@ -370,6 +411,7 @@ function Dashboard() {
                             : 'Location not specified',
                         budget: `₹${task.budget}`,
                         category: task.category,
+                        scheduledAt: task.scheduledAt ? new Date(task.scheduledAt) : null,
                         time: task.scheduledAt
                             ? new Date(task.scheduledAt).toLocaleString('en-IN', {
                                 weekday: 'short',
@@ -577,7 +619,7 @@ function Dashboard() {
 
             const lat = position.coords.latitude
             const lng = position.coords.longitude
-            
+
             const location = {
                 lat,
                 lng
@@ -588,7 +630,7 @@ function Dashboard() {
 
             // Update availability context by triggering a location update event
             window.dispatchEvent(new CustomEvent('location_updated', { detail: location }))
-            
+
             // Reverse geocode via backend (avoids browser CORS + Nominatim 403) and persist location
             try {
                 const { area, city } = await reverseGeocode(lat, lng)

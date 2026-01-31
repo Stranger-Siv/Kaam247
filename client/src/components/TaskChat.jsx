@@ -151,6 +151,56 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
     return d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true })
   }
 
+  const quickReplies = [
+    'On my way',
+    'Reached',
+    'Running a bit late',
+    'Done, please confirm',
+    'Will complete in 10 mins',
+    'Need a few more details'
+  ]
+
+  const sendQuickReply = (text) => {
+    setInputText(text)
+    // Optionally send immediately: simulate submit
+    if (!sending && !isReadOnly) {
+      setInputText('')
+      const token = localStorage.getItem('kaam247_token')
+      const optimistic = {
+        _id: 'opt-' + Date.now(),
+        senderId: user?.id,
+        text,
+        createdAt: new Date().toISOString()
+      }
+      setMessages((prev) => [...prev, optimistic])
+      setSending(true)
+      fetch(`${API_BASE_URL}/api/tasks/${taskId}/chat`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ text })
+      })
+        .then((res) => {
+          if (!res.ok) return res.json().then((d) => { throw new Error(d.message || 'Failed to send') })
+          return res.json()
+        })
+        .then((data) => {
+          setMessages((prev) =>
+            prev.map((m) => (m._id === optimistic._id ? { ...m, _id: data.data?._id || m._id, createdAt: data.data?.createdAt || m.createdAt } : m))
+          )
+        })
+        .catch(() => {
+          setMessages((prev) => prev.filter((m) => m._id !== optimistic._id))
+          setInputText(text)
+          setError('Failed to send. Please try again.')
+        })
+        .finally(() => setSending(false))
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -217,6 +267,19 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
               </div>
             ) : (
               <form onSubmit={handleSend} className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {quickReplies.map((text) => (
+                    <button
+                      key={text}
+                      type="button"
+                      disabled={sending}
+                      onClick={() => sendQuickReply(text)}
+                      className="px-2.5 py-1.5 text-xs font-medium rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {text}
+                    </button>
+                  ))}
+                </div>
                 <div className="flex gap-2">
                   <input
                     type="text"
