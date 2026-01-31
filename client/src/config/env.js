@@ -58,6 +58,9 @@ const getSocketUrl = () => {
 export const API_BASE_URL = getApiBaseUrl()
 export const SOCKET_URL = getSocketUrl()
 
+// Google OAuth Client ID (Web application) - from Google Cloud Console > APIs & Credentials
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+
 // Socket.IO is ENABLED - real-time features are active
 // App uses Socket.IO for real-time updates and falls back to REST APIs if socket fails
 export const SOCKET_ENABLED = true

@@ -50,7 +50,8 @@ export function AuthProvider({ children }) {
         email: data.user.email,
         phone: data.user.phone,
         role: data.user.role,
-        roleMode: data.user.roleMode ?? 'worker'
+        roleMode: data.user.roleMode ?? 'worker',
+        profileSetupCompleted: data.user.profileSetupCompleted !== false
       }
       localStorage.setItem('kaam247_token', data.token)
       localStorage.setItem('kaam247_user', JSON.stringify(userData))
@@ -86,6 +87,82 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const loginWithGoogle = async (idToken) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ idToken })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Google sign-in failed')
+      }
+
+      const data = await response.json()
+
+      const userData = {
+        id: data.user._id || data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone,
+        role: data.user.role,
+        roleMode: data.user.roleMode ?? 'worker',
+        profileSetupCompleted: data.user.profileSetupCompleted === true,
+        profilePhoto: data.user.profilePhoto
+      }
+      localStorage.setItem('kaam247_token', data.token)
+      localStorage.setItem('kaam247_user', JSON.stringify(userData))
+      localStorage.setItem('kaam247_userMode', userData.roleMode)
+      setUser(userData)
+      setIsAuthenticated(true)
+
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          })
+        })
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+        try {
+          const { area, city } = await reverseGeocode(lat, lng)
+          await persistUserLocation(lat, lng, area, city)
+        } catch {
+          await persistUserLocation(lat, lng, null, null)
+        }
+        localStorage.setItem('kaam247_workerLocation', JSON.stringify({ lat, lng }))
+        window.dispatchEvent(new CustomEvent('location_updated', { detail: { lat, lng } }))
+      } catch {
+        // Location optional
+      }
+
+      return { success: true, profileSetupRequired: data.profileSetupRequired === true }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
+  const updateUserInContext = (updatedUser) => {
+    if (!updatedUser) return
+    const userData = {
+      id: updatedUser._id || updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      role: updatedUser.role,
+      roleMode: updatedUser.roleMode ?? user?.roleMode ?? 'worker',
+      profileSetupCompleted: updatedUser.profileSetupCompleted === true,
+      profilePhoto: updatedUser.profilePhoto
+    }
+    setUser(userData)
+    localStorage.setItem('kaam247_user', JSON.stringify(userData))
+  }
+
   const register = async (name, email, phone, password) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -108,7 +185,8 @@ export function AuthProvider({ children }) {
         email: data.user.email,
         phone: data.user.phone,
         role: data.user.role,
-        roleMode: data.user.roleMode ?? 'worker'
+        roleMode: data.user.roleMode ?? 'worker',
+        profileSetupCompleted: data.user.profileSetupCompleted !== false
       }
       localStorage.setItem('kaam247_token', data.token)
       localStorage.setItem('kaam247_user', JSON.stringify(userData))
@@ -192,7 +270,9 @@ export function AuthProvider({ children }) {
       loading,
       login,
       register,
-      logout
+      logout,
+      loginWithGoogle,
+      updateUserInContext
     }}>
       {children}
     </AuthContext.Provider>

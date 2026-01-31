@@ -1,6 +1,7 @@
 const User = require('../models/User')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const { OAuth2Client } = require('google-auth-library')
 
 const JWT_SECRET = process.env.JWT_SECRET
 const isProduction = process.env.NODE_ENV === 'production'
@@ -102,7 +103,7 @@ const register = async (req, res) => {
     // Return user data (without password) and token
     return res.status(201).json({
       message: 'User registered successfully',
-      token, // Also return in response for backward compatibility
+      token,
       user: {
         _id: savedUser._id,
         id: savedUser._id,
@@ -110,7 +111,8 @@ const register = async (req, res) => {
         email: savedUser.email,
         phone: savedUser.phone,
         role: savedUser.role,
-        roleMode: savedUser.roleMode
+        roleMode: savedUser.roleMode,
+        profileSetupCompleted: true // Email/phone signup has full details
       }
     })
   } catch (error) {
@@ -196,7 +198,7 @@ const login = async (req, res) => {
     // Return user data (without password) and token
     return res.status(200).json({
       message: 'Login successful',
-      token, // Also return in response for backward compatibility
+      token,
       user: {
         _id: user._id,
         id: user._id,
@@ -204,7 +206,8 @@ const login = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        roleMode: user.roleMode
+        roleMode: user.roleMode,
+        profileSetupCompleted: user.profileSetupCompleted !== false
       }
     })
   } catch (error) {
@@ -235,9 +238,194 @@ const logout = async (req, res) => {
   }
 }
 
+// POST /api/auth/google - Google Sign-In: verify idToken, create/find user, return JWT
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+const googleLogin = async (req, res) => {
+  try {
+    const { idToken } = req.body
+    if (!idToken || typeof idToken !== 'string') {
+      return res.status(400).json({
+        error: 'Missing idToken',
+        message: 'Google idToken is required'
+      })
+    }
+    if (!GOOGLE_CLIENT_ID) {
+      return res.status(503).json({
+        error: 'Google auth not configured',
+        message: 'GOOGLE_CLIENT_ID is not set on the server'
+      })
+    }
+
+    const client = new OAuth2Client(GOOGLE_CLIENT_ID)
+    const ticket = await client.verifyIdToken({
+      idToken: idToken.trim(),
+      audience: GOOGLE_CLIENT_ID
+    })
+    const payload = ticket.getPayload()
+    if (!payload || !payload.sub) {
+      return res.status(401).json({
+        error: 'Invalid token',
+        message: 'Could not verify Google token'
+      })
+    }
+
+    const googleId = payload.sub
+    const email = payload.email ? payload.email.toLowerCase().trim() : null
+    const name = payload.name || payload.given_name || payload.family_name || 'User'
+    const picture = payload.picture || null
+
+    let user = await User.findOne({ googleId })
+    if (!user && email) {
+      user = await User.findOne({ email })
+    }
+    if (!user) {
+      user = new User({
+        name: name.trim() || 'User',
+        email: email || undefined,
+        googleId,
+        profileSetupCompleted: false,
+        role: 'user',
+        roleMode: 'worker',
+        profilePhoto: picture || undefined
+      })
+      await user.save()
+    } else if (!user.googleId) {
+      user.googleId = googleId
+      if (picture) user.profilePhoto = picture
+      await user.save()
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        error: 'Account disabled',
+        message: 'Your account has been disabled. Please contact support.'
+      })
+    }
+
+    const token = generateToken(user._id)
+    res.cookie('token', token, getCookieOptions())
+
+    const profileSetupRequired = user.profileSetupCompleted === false
+
+    return res.status(200).json({
+      message: 'Login successful',
+      token,
+      profileSetupRequired,
+      user: {
+        _id: user._id,
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        roleMode: user.roleMode ?? 'worker',
+        profileSetupCompleted: user.profileSetupCompleted === true,
+        profilePhoto: user.profilePhoto
+      }
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Could not authenticate with Google'
+    })
+  }
+}
+
+// PATCH /api/auth/profile-setup - Complete profile after Google sign-in (authenticated)
+const completeProfileSetup = async (req, res) => {
+  try {
+    const userId = req.userId
+    const { name, phone } = req.body
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Authentication required'
+      })
+    }
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found',
+        message: 'User not found'
+      })
+    }
+
+    if (user.profileSetupCompleted === true) {
+      return res.status(200).json({
+        message: 'Profile already completed',
+        user: {
+          _id: user._id,
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          roleMode: user.roleMode,
+          profileSetupCompleted: true
+        }
+      })
+    }
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Invalid name',
+        message: 'Name is required'
+      })
+    }
+
+    const phoneDigits = String(phone || '').trim().replace(/\D/g, '')
+    if (phoneDigits.length !== 10) {
+      return res.status(400).json({
+        error: 'Invalid phone',
+        message: 'Please provide a valid 10-digit mobile number'
+      })
+    }
+
+    const existingPhone = await User.findOne({ phone: phoneDigits, _id: { $ne: userId } })
+    if (existingPhone) {
+      return res.status(400).json({
+        error: 'Phone already exists',
+        message: 'This phone number is already registered'
+      })
+    }
+
+    user.name = name.trim()
+    user.phone = phoneDigits
+    user.profileSetupCompleted = true
+    await user.save()
+
+    const token = generateToken(user._id)
+    res.cookie('token', token, getCookieOptions())
+
+    return res.status(200).json({
+      message: 'Profile setup completed',
+      user: {
+        _id: user._id,
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        roleMode: user.roleMode,
+        profileSetupCompleted: true,
+        profilePhoto: user.profilePhoto
+      }
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to complete profile setup'
+    })
+  }
+}
+
 module.exports = {
   register,
   login,
-  logout
+  logout,
+  googleLogin,
+  completeProfileSetup
 }
 

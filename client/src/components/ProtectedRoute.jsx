@@ -22,13 +22,29 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/" replace />
   }
 
+  const effectiveUser = user || (() => {
+    try {
+      return userInfo ? JSON.parse(userInfo) : null
+    } catch {
+      return null
+    }
+  })()
+
+  // After Google login: profile not completed → must visit setup first
+  if (effectiveUser?.profileSetupCompleted === false && location.pathname !== '/setup-profile') {
+    return <Navigate to="/setup-profile" replace />
+  }
+  if (effectiveUser?.profileSetupCompleted !== false && location.pathname === '/setup-profile') {
+    return <Navigate to={effectiveUser?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+  }
+
   // Redirect admin users away from regular dashboard to admin dashboard
-  if (user?.role === 'admin' && location.pathname === '/dashboard') {
+  if (effectiveUser?.role === 'admin' && location.pathname === '/dashboard') {
     return <Navigate to="/admin" replace />
   }
 
   // Redirect non-admin users away from admin routes
-  if (user?.role !== 'admin' && location.pathname.startsWith('/admin')) {
+  if (effectiveUser?.role !== 'admin' && location.pathname.startsWith('/admin')) {
     return <Navigate to="/dashboard" replace />
   }
 

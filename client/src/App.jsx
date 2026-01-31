@@ -1,7 +1,9 @@
 import { Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
+import { GOOGLE_CLIENT_ID } from './config/env'
 import { UserModeProvider } from './context/UserModeContext'
 import { AvailabilityProvider } from './context/AvailabilityContext'
 import { SocketProvider } from './context/SocketContext'
@@ -40,6 +42,7 @@ const AdminSettings = lazyWithRetry(() => import('./pages/admin/AdminSettings'))
 const AdminReviews = lazyWithRetry(() => import('./pages/admin/AdminReviews'))
 const AdminLogs = lazyWithRetry(() => import('./pages/admin/AdminLogs'))
 const AdminAnalytics = lazyWithRetry(() => import('./pages/admin/AdminAnalytics'))
+const SetupProfile = lazyWithRetry(() => import('./pages/SetupProfile'))
 
 // Loading component for Suspense fallback
 const PageLoader = () => (
@@ -51,125 +54,148 @@ const PageLoader = () => (
   </div>
 )
 
+const AppContent = () => (
+  <>
+    <AuthProvider>
+      <UserModeProvider>
+        <AvailabilityProvider>
+          <NotificationProvider>
+            <CancellationProvider>
+              <SocketProvider>
+                <Router
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true
+                  }}
+                >
+                  <ErrorBoundary>
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        {/* Public Routes */}
+                        <Route
+                          path="/"
+                          element={
+                            <PublicLayout>
+                              <Home />
+                            </PublicLayout>
+                          }
+                        />
+                        <Route
+                          path="/login"
+                          element={
+                            <PublicLayout>
+                              <Login />
+                            </PublicLayout>
+                          }
+                        />
+                        <Route
+                          path="/register"
+                          element={
+                            <PublicLayout>
+                              <Register />
+                            </PublicLayout>
+                          }
+                        />
+
+                        {/* Setup profile (after Google sign-in) - protected, no MainLayout */}
+                        <Route
+                          path="/setup-profile"
+                          element={
+                            <ProtectedRoute>
+                              <SetupProfile />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        {/* Authenticated Routes */}
+                        <Route
+                          element={
+                            <ProtectedRoute>
+                              <MainLayout />
+                            </ProtectedRoute>
+                          }
+                        >
+                          <Route path="/dashboard" element={<Dashboard />} />
+                          <Route
+                            path="/tasks"
+                            element={
+                              <ModeProtectedRoute allowedMode="worker">
+                                <Tasks />
+                              </ModeProtectedRoute>
+                            }
+                          />
+                          <Route path="/tasks/:id" element={<TaskDetail />} />
+                          <Route
+                            path="/post-task"
+                            element={
+                              <ModeProtectedRoute allowedMode="poster">
+                                <PostTask />
+                              </ModeProtectedRoute>
+                            }
+                          />
+                          <Route path="/profile" element={<Profile />} />
+                          <Route path="/activity" element={<Activity />} />
+                          <Route
+                            path="/earnings"
+                            element={
+                              <ModeProtectedRoute allowedMode="worker">
+                                <Earnings />
+                              </ModeProtectedRoute>
+                            }
+                          />
+                        </Route>
+
+                        {/* Admin Routes */}
+                        <Route
+                          element={
+                            <AdminRoute>
+                              <AdminLayout />
+                            </AdminRoute>
+                          }
+                        >
+                          <Route path="/admin" element={<AdminOverview />} />
+                          <Route path="/admin/users" element={<AdminUsers />} />
+                          <Route path="/admin/workers" element={<AdminWorkers />} />
+                          <Route path="/admin/users/:userId" element={<AdminUserDetail />} />
+                          <Route path="/admin/tasks" element={<AdminTasks />} />
+                          <Route path="/admin/tasks/:taskId" element={<AdminTaskDetail />} />
+                          <Route path="/admin/chats" element={<AdminChats />} />
+                          <Route path="/admin/settings" element={<AdminSettings />} />
+                          <Route path="/admin/reviews" element={<AdminReviews />} />
+                          <Route path="/admin/logs" element={<AdminLogs />} />
+                          <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                          <Route path="/admin/reports" element={<AdminReports />} />
+                        </Route>
+                      </Routes>
+                    </Suspense>
+                  </ErrorBoundary>
+                </Router>
+              </SocketProvider>
+            </CancellationProvider>
+          </NotificationProvider>
+        </AvailabilityProvider>
+      </UserModeProvider>
+    </AuthProvider>
+  </>
+)
+
 function App() {
-  return (
+  const content = (
     <ThemeProvider>
       <ErrorBoundary>
         <ColdStartChecker>
-          <AuthProvider>
-            <UserModeProvider>
-              <AvailabilityProvider>
-                <NotificationProvider>
-                  <CancellationProvider>
-                    <SocketProvider>
-                      <Router
-                        future={{
-                          v7_startTransition: true,
-                          v7_relativeSplatPath: true
-                        }}
-                      >
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageLoader />}>
-                            <Routes>
-                              {/* Public Routes */}
-                              <Route
-                                path="/"
-                                element={
-                                  <PublicLayout>
-                                    <Home />
-                                  </PublicLayout>
-                                }
-                              />
-                              <Route
-                                path="/login"
-                                element={
-                                  <PublicLayout>
-                                    <Login />
-                                  </PublicLayout>
-                                }
-                              />
-                              <Route
-                                path="/register"
-                                element={
-                                  <PublicLayout>
-                                    <Register />
-                                  </PublicLayout>
-                                }
-                              />
-
-                              {/* Authenticated Routes */}
-                              <Route
-                                element={
-                                  <ProtectedRoute>
-                                    <MainLayout />
-                                  </ProtectedRoute>
-                                }
-                              >
-                                <Route path="/dashboard" element={<Dashboard />} />
-                                <Route
-                                  path="/tasks"
-                                  element={
-                                    <ModeProtectedRoute allowedMode="worker">
-                                      <Tasks />
-                                    </ModeProtectedRoute>
-                                  }
-                                />
-                                <Route path="/tasks/:id" element={<TaskDetail />} />
-                                <Route
-                                  path="/post-task"
-                                  element={
-                                    <ModeProtectedRoute allowedMode="poster">
-                                      <PostTask />
-                                    </ModeProtectedRoute>
-                                  }
-                                />
-                                <Route path="/profile" element={<Profile />} />
-                                <Route path="/activity" element={<Activity />} />
-                                <Route
-                                  path="/earnings"
-                                  element={
-                                    <ModeProtectedRoute allowedMode="worker">
-                                      <Earnings />
-                                    </ModeProtectedRoute>
-                                  }
-                                />
-                              </Route>
-
-                              {/* Admin Routes */}
-                              <Route
-                                element={
-                                  <AdminRoute>
-                                    <AdminLayout />
-                                  </AdminRoute>
-                                }
-                              >
-                                <Route path="/admin" element={<AdminOverview />} />
-                                <Route path="/admin/users" element={<AdminUsers />} />
-                                <Route path="/admin/workers" element={<AdminWorkers />} />
-                                <Route path="/admin/users/:userId" element={<AdminUserDetail />} />
-                                <Route path="/admin/tasks" element={<AdminTasks />} />
-                                <Route path="/admin/tasks/:taskId" element={<AdminTaskDetail />} />
-                                <Route path="/admin/chats" element={<AdminChats />} />
-                                <Route path="/admin/settings" element={<AdminSettings />} />
-                                <Route path="/admin/reviews" element={<AdminReviews />} />
-                                <Route path="/admin/logs" element={<AdminLogs />} />
-                                <Route path="/admin/analytics" element={<AdminAnalytics />} />
-                                <Route path="/admin/reports" element={<AdminReports />} />
-                              </Route>
-                            </Routes>
-                          </Suspense>
-                        </ErrorBoundary>
-                      </Router>
-                    </SocketProvider>
-                  </CancellationProvider>
-                </NotificationProvider>
-              </AvailabilityProvider>
-            </UserModeProvider>
-          </AuthProvider>
+          {GOOGLE_CLIENT_ID ? (
+            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+              <AppContent />
+            </GoogleOAuthProvider>
+          ) : (
+            <AppContent />
+          )}
         </ColdStartChecker>
       </ErrorBoundary>
     </ThemeProvider>
   )
+  return content
 }
 
 export default App

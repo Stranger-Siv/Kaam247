@@ -1,10 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../context/AuthContext'
+import { GOOGLE_CLIENT_ID } from '../../config/env'
 
 function Login() {
     const navigate = useNavigate()
-    const { login, isAuthenticated, loading } = useAuth()
+    const { login, loginWithGoogle, isAuthenticated, loading } = useAuth()
 
     // Redirect if already authenticated (check both state and localStorage as fallback)
     useEffect(() => {
@@ -211,8 +213,8 @@ function Login() {
                                 type="submit"
                                 disabled={isLoading}
                                 className={`w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white font-semibold rounded-lg transition-colors text-base min-h-[48px] ${isLoading
-                                        ? 'bg-blue-400 dark:bg-blue-600 cursor-not-allowed'
-                                        : 'hover:bg-blue-700 dark:hover:bg-blue-600'
+                                    ? 'bg-blue-400 dark:bg-blue-600 cursor-not-allowed'
+                                    : 'hover:bg-blue-700 dark:hover:bg-blue-600'
                                     }`}
                             >
                                 {isLoading ? (
@@ -224,6 +226,48 @@ function Login() {
                                     'Login'
                                 )}
                             </button>
+
+                            {GOOGLE_CLIENT_ID && (
+                                <div className="mt-4">
+                                    <div className="relative my-4">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <div className="w-full border-t border-gray-200 dark:border-gray-600" />
+                                        </div>
+                                        <div className="relative flex justify-center text-sm">
+                                            <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <GoogleLogin
+                                            onSuccess={async (credentialResponse) => {
+                                                if (!credentialResponse?.credential) return
+                                                const result = await loginWithGoogle(credentialResponse.credential)
+                                                if (result?.success) {
+                                                    if (result.profileSetupRequired) {
+                                                        navigate('/setup-profile', { replace: true })
+                                                    } else {
+                                                        const userInfo = localStorage.getItem('kaam247_user')
+                                                        try {
+                                                            const parsed = userInfo ? JSON.parse(userInfo) : null
+                                                            navigate(parsed?.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
+                                                        } catch {
+                                                            navigate('/dashboard', { replace: true })
+                                                        }
+                                                    }
+                                                }
+                                            }}
+                                            onError={() => {
+                                                setError('Google sign-in failed. Please try again.')
+                                            }}
+                                            theme="outline"
+                                            size="large"
+                                            text="continue_with"
+                                            shape="rectangular"
+                                            width="320"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </form>
 
                         <div className="mt-6 text-center">
