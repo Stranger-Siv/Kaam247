@@ -376,8 +376,9 @@ const broadcastNewTask = (taskData, postedByUserId) => {
                     workerSocket.alertedTaskIds.add(taskData.taskId)
                 }
 
-                // Push notification (non-blocking)
-                sendPushToUser(worker.userId, 'New task near you', taskData.title, { taskId: taskData.taskId }).catch(() => { })
+                // Push notification – alarm-style; keep body short for small screens so multiple notifications stay readable
+                const shortTitle = (taskData.title || '').length > 50 ? (taskData.title || '').slice(0, 47) + '...' : (taskData.title || '')
+                sendPushToUser(worker.userId, 'New task near you', shortTitle, { taskId: taskData.taskId, type: 'new_task' }).catch(() => { })
 
                 emittedCount++
             } catch (emitError) {

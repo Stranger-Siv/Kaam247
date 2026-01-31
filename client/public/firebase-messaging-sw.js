@@ -15,17 +15,37 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
+// Keep text short for small screens so multiple notifications each show clearly without overflow
+function shortText(str, maxLen) {
+  if (typeof str !== 'string') return ''
+  return str.length <= maxLen ? str : str.slice(0, maxLen - 3) + '...'
+}
+
 messaging.onBackgroundMessage(function (payload) {
-  const title = payload.notification?.title || payload.data?.title || 'Kaam247'
+  const rawTitle = payload.notification?.title || payload.data?.title || 'Kaam247'
+  const rawBody = payload.notification?.body || payload.data?.body || ''
+  const title = shortText(rawTitle, 45)
+  const body = shortText(rawBody, 60)
+  const data = payload.data || {}
+  const taskId = data.taskId
+  const isNewTask = data.type === 'new_task'
+
+  // Unique tag per notification so multiple notifications show separately on small screens (no grouping/replace)
+  const tag = taskId
+    ? (isNewTask ? 'newtask-' + taskId : 'task-' + taskId)
+    : 'kaam247-' + Date.now()
+
   const options = {
-    body: payload.notification?.body || payload.data?.body || '',
+    body: body,
     icon: '/icons/icon-192.png',
-    data: payload.data || {},
-    tag: payload.data?.taskId ? 'task-' + payload.data.taskId : 'kaam247',
-    requireInteraction: false
+    data: Object.assign({}, data, taskId ? { url: '/tasks/' + taskId } : {}),
+    tag: tag,
+    requireInteraction: isNewTask,
+    silent: false
   }
-  if (payload.data?.taskId) {
-    options.data.url = '/tasks/' + payload.data.taskId
+  // Alarm-style for new tasks: vibrate on supported devices (mobile)
+  if (isNewTask && 'vibrate' in navigator) {
+    options.vibrate = [200, 100, 200, 100, 200]
   }
   return self.registration.showNotification(title, options)
 })
