@@ -170,6 +170,20 @@ const userSchema = new mongoose.Schema({
         default: {},
         description: 'Map of action types to last execution timestamp (for throttling)'
     },
+    workerPreferences: {
+        preferredCategories: {
+            type: [String],
+            default: [],
+            description: 'Categories the worker prefers to see first (e.g. Cleaning, Delivery)'
+        },
+        defaultRadiusKm: {
+            type: Number,
+            default: 5,
+            min: 1,
+            max: 10,
+            description: 'Default search radius in km when browsing tasks'
+        }
+    },
     createdAt: {
         type: Date,
         default: Date.now

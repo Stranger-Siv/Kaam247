@@ -9,6 +9,14 @@ import { API_BASE_URL } from '../config/env'
 import { useCategories } from '../hooks/useCategories'
 import { fetchActiveTask } from '../utils/stateRecovery'
 
+const DISTANCE_OPTIONS = [
+  { label: 'All', km: 10 },
+  { label: 'Within 1 km', km: 1 },
+  { label: 'Within 3 km', km: 3 },
+  { label: 'Within 5 km', km: 5 },
+  { label: 'Within 10 km', km: 10 }
+]
+
 function Tasks() {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedDistance, setSelectedDistance] = useState('All')
@@ -18,6 +26,8 @@ function Tasks() {
   const [error, setError] = useState(null)
   const [hasActiveTask, setHasActiveTask] = useState(false)
   const [refetchTrigger, setRefetchTrigger] = useState(0)
+  const [workerPreferredCategories, setWorkerPreferredCategories] = useState([])
+  const preferencesAppliedRef = useRef(false)
   const { getSocket } = useSocket()
   const { isOnline, workerLocation } = useAvailability()
   const { user } = useAuth()
@@ -26,7 +36,7 @@ function Tasks() {
   const { categories: categoriesList } = useCategories()
   const categories = ['All', ...categoriesList]
 
-  const distances = ['All', 'Within 1 km', 'Within 3 km', 'Within 5 km', 'Within 10 km']
+  const distances = DISTANCE_OPTIONS.map(d => d.label)
   const budgets = ['All', 'Under ₹500', '₹500 - ₹1000', '₹1000 - ₹2000', 'Above ₹2000']
 
   const getRadiusKm = () => {
@@ -47,6 +57,28 @@ function Tasks() {
       default: return { minBudget: null, maxBudget: null }
     }
   }
+
+  // Load worker preferences once (default radius + preferred categories for sorting)
+  useEffect(() => {
+    if (userMode !== 'worker' || !user?.id || preferencesAppliedRef.current) return
+    const token = localStorage.getItem('kaam247_token')
+    fetch(`${API_BASE_URL}/api/users/me`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => {
+        const prefs = data.user?.workerPreferences
+        if (!prefs) return
+        preferencesAppliedRef.current = true
+        if (Array.isArray(prefs.preferredCategories) && prefs.preferredCategories.length > 0) {
+          setWorkerPreferredCategories(prefs.preferredCategories)
+        }
+        const defaultKm = prefs.defaultRadiusKm
+        if (typeof defaultKm === 'number' && defaultKm >= 1 && defaultKm <= 10) {
+          const option = DISTANCE_OPTIONS.find(o => o.km === defaultKm) || DISTANCE_OPTIONS.find(o => o.km === 5)
+          if (option) setSelectedDistance(option.label)
+        }
+      })
+      .catch(() => { })
+  }, [userMode, user?.id])
 
   // Fetch tasks when location or filters change
   useEffect(() => {
@@ -119,8 +151,12 @@ function Tasks() {
               : 'Flexible',
             status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase()
           }))
-          // Sort by distance (nearest first)
+          // Sort: preferred categories first, then by distance (nearest first)
           .sort((a, b) => {
+            const aPreferred = workerPreferredCategories.length > 0 && workerPreferredCategories.includes(a.category)
+            const bPreferred = workerPreferredCategories.length > 0 && workerPreferredCategories.includes(b.category)
+            if (aPreferred && !bPreferred) return -1
+            if (!aPreferred && bPreferred) return 1
             if (a.distanceKm === null || a.distanceKm === undefined) return 1
             if (b.distanceKm === null || b.distanceKm === undefined) return -1
             return a.distanceKm - b.distanceKm
@@ -135,7 +171,7 @@ function Tasks() {
     }
 
     fetchTasks()
-  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, refetchTrigger])
+  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, refetchTrigger, workerPreferredCategories])
 
   // Listen for new tasks via Socket.IO (only when online)
   useEffect(() => {

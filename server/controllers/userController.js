@@ -114,7 +114,7 @@ const createUser = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.userId // From auth middleware
-    const { name, phone, profilePhoto, location } = req.body
+    const { name, phone, profilePhoto, location, workerPreferences } = req.body
 
     // Validate userId
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -155,6 +155,26 @@ const updateProfile = async (req, res) => {
 
     if (profilePhoto !== undefined) {
       updateData.profilePhoto = profilePhoto || null
+    }
+
+    // Handle worker preferences (worker-only; applied for any user for simplicity)
+    if (workerPreferences !== undefined && workerPreferences !== null) {
+      const prefs = {}
+      if (Array.isArray(workerPreferences.preferredCategories)) {
+        prefs['workerPreferences.preferredCategories'] = workerPreferences.preferredCategories
+          .filter(c => typeof c === 'string' && c.trim())
+          .map(c => c.trim())
+          .slice(0, 20) // cap at 20
+      }
+      if (workerPreferences.defaultRadiusKm != null) {
+        const km = Number(workerPreferences.defaultRadiusKm)
+        if (!isNaN(km) && km >= 1 && km <= 10) {
+          prefs['workerPreferences.defaultRadiusKm'] = Math.floor(km)
+        }
+      }
+      if (Object.keys(prefs).length > 0) {
+        Object.assign(updateData, prefs)
+      }
     }
 
     // Handle location update
