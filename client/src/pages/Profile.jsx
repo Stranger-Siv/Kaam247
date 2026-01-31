@@ -54,7 +54,8 @@ function Profile() {
                             ? `${userData.location.area}${userData.location.city ? `, ${userData.location.city}` : ''}`
                             : 'Location not set',
                         profilePhoto: userData.profilePhoto || null,
-                        locationUpdatedAt: userData.locationUpdatedAt || null
+                        locationUpdatedAt: userData.locationUpdatedAt || null,
+                        createdAt: userData.createdAt || null
                     })
 
                     // Set stats based on mode
@@ -106,7 +107,8 @@ function Profile() {
                             location: userData.location?.area
                                 ? `${userData.location.area}${userData.location.city ? `, ${userData.location.city}` : ''}`
                                 : 'Location not set',
-                            locationUpdatedAt: userData.locationUpdatedAt || prev?.locationUpdatedAt || null
+                            locationUpdatedAt: userData.locationUpdatedAt || prev?.locationUpdatedAt || null,
+                            createdAt: userData.createdAt || prev?.createdAt || null
                         }))
                     }
                 } catch (err) {
@@ -275,7 +277,7 @@ function Profile() {
 
     if (loading || !profile) {
         return (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-6xl mx-auto w-full px-4 sm:px-6">
                 <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
                     <p className="text-gray-600 dark:text-gray-400">Loading profile...</p>
@@ -284,145 +286,193 @@ function Profile() {
         )
     }
 
+    const memberSince = profile.createdAt
+        ? new Date(profile.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+        : null
+
     return (
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
-            <div className="hidden sm:block mb-6 sm:mb-8">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">Profile</h1>
-                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed">Manage your account and view your activity</p>
+        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
+            {/* Page header - same as Activity / Earnings */}
+            <div className="mb-4 sm:mb-6">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-1 sm:mb-2 break-words">Profile</h1>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 break-words">Manage your account and view your activity</p>
             </div>
 
-            {/* Profile Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-5 sm:p-6 lg:p-8 mb-6 sm:mb-8">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+            {/* Overview card - avatar, name, location, member since, quick actions */}
+            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
                     <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-full flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
                             {profile.profilePhoto ? (
-                                <img src={profile.profilePhoto} alt={profile.name} className="w-full h-full rounded-full object-cover" />
+                                <img src={profile.profilePhoto} alt={profile.name} className="w-full h-full object-cover" />
                             ) : (
                                 <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-700 dark:text-blue-300">
-                                    {profile.name.charAt(0).toUpperCase()}
+                                    {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
                                 </span>
                             )}
                         </div>
-                        <div>
-                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">{profile.name}</h2>
+                        <div className="min-w-0">
+                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight break-words">{profile.name || 'No name'}</h2>
                             <p className="mt-1.5 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 flex items-start gap-1.5 leading-relaxed">
                                 <svg className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                {profile.location}
+                                <span className="break-words">{profile.location}</span>
                             </p>
+                            {memberSince && (
+                                <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-500">Member since {memberSince}</p>
+                            )}
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 sm:flex gap-2.5 sm:gap-3 w-full sm:w-auto">
+                    <div className="flex flex-wrap gap-2.5 sm:gap-3 w-full sm:w-auto">
                         <Link
                             to="/activity"
                             className="h-11 sm:h-12 inline-flex items-center justify-center px-4 sm:px-5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 active:scale-[0.98] text-center touch-manipulation"
                         >
                             Activity
                         </Link>
-                        {userMode === 'worker' ? (
+                        {userMode === 'worker' && (
                             <Link
                                 to="/earnings"
                                 className="h-11 sm:h-12 inline-flex items-center justify-center px-4 sm:px-5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 active:scale-[0.98] text-center touch-manipulation"
                             >
                                 Earnings
                             </Link>
-                        ) : (
-                            // Poster mode: show Edit Profile as second button
-                            <button
-                                onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                                disabled={isSaving}
-                                className="h-11 sm:h-12 inline-flex items-center justify-center px-4 sm:px-5 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 touch-manipulation"
-                            >
-                                {isEditing ? (isSaving ? 'Saving...' : 'Save Changes') : 'Edit Profile'}
-                            </button>
                         )}
-                        {userMode === 'worker' && (
-                            <button
-                                onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                                disabled={isSaving}
-                                className="h-11 sm:h-12 col-span-2 sm:col-auto inline-flex items-center justify-center px-4 sm:px-5 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 touch-manipulation"
-                            >
-                                {isEditing ? (isSaving ? 'Saving...' : 'Save Changes') : 'Edit Profile'}
-                            </button>
-                        )}
+                        <button
+                            onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+                            disabled={isSaving}
+                            className="h-11 sm:h-12 inline-flex items-center justify-center px-4 sm:px-5 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 touch-manipulation"
+                        >
+                            {isEditing ? (isSaving ? 'Saving...' : 'Save') : 'Edit Profile'}
+                        </button>
                     </div>
                 </div>
+            </div>
 
-                {/* Profile Stats - Mode Specific */}
-                <div className={`grid gap-4 sm:gap-5 lg:gap-6 mb-6 sm:mb-8 ${userMode === 'worker' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-2'}`}>
+            {/* Stats - same card style as Dashboard */}
+            <div className="mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Overview</h2>
+                <div className={`grid gap-4 sm:gap-5 ${userMode === 'worker' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'}`}>
                     {userMode === 'worker' ? (
                         <>
-                            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl p-5 sm:p-6 lg:p-7 border border-blue-200 dark:border-blue-800">
-                                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                                    <div className="p-2 sm:p-2.5 bg-blue-200 dark:bg-blue-800 rounded-xl flex-shrink-0">
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700 dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
+                                        <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </div>
-                                    <p className="text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Tasks Completed</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Tasks Completed</p>
                                 </div>
-                                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.tasksCompleted}</p>
+                                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.tasksCompleted}</p>
                             </div>
-                            <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 rounded-xl p-5 sm:p-6 lg:p-7 border border-green-200 dark:border-green-800">
-                                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                                    <div className="p-2 sm:p-2.5 bg-green-200 dark:bg-green-800 rounded-xl flex-shrink-0">
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-700 dark:text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl flex-shrink-0">
+                                        <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </div>
-                                    <p className="text-xs sm:text-sm font-bold text-green-700 dark:text-green-300 uppercase tracking-wide">Total Earnings</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Total Earnings</p>
                                 </div>
-                                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">₹{stats.earnings}</p>
+                                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">₹{stats.earnings}</p>
                             </div>
-                            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-900/30 dark:to-yellow-800/20 rounded-xl p-5 sm:p-6 lg:p-7 border border-yellow-200 dark:border-yellow-800">
-                                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                                    <div className="p-2 sm:p-2.5 bg-yellow-200 dark:bg-yellow-800 rounded-xl flex-shrink-0">
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-700 dark:text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200 sm:col-span-1 col-span-2">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="p-2.5 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl flex-shrink-0">
+                                        <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                         </svg>
                                     </div>
-                                    <p className="text-xs sm:text-sm font-bold text-yellow-700 dark:text-yellow-300 uppercase tracking-wide">Rating</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Rating</p>
                                 </div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.rating}</span>
-                                    <svg className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 dark:text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                    </svg>
+                                    <span className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.rating}</span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">/ 5</span>
                                 </div>
                             </div>
                         </>
                     ) : (
                         <>
-                            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-xl p-5 sm:p-6 lg:p-7 border border-blue-200 dark:border-blue-800">
-                                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                                    <div className="p-2 sm:p-2.5 bg-blue-200 dark:bg-blue-800 rounded-xl flex-shrink-0">
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700 dark:text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
+                                        <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                         </svg>
                                     </div>
-                                    <p className="text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">Tasks Posted</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Tasks Posted</p>
                                 </div>
-                                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.tasksPosted}</p>
+                                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.tasksPosted}</p>
                             </div>
-                            <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 rounded-xl p-5 sm:p-6 lg:p-7 border border-green-200 dark:border-green-800">
-                                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                                    <div className="p-2 sm:p-2.5 bg-green-200 dark:bg-green-800 rounded-xl flex-shrink-0">
-                                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-700 dark:text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl flex-shrink-0">
+                                        <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                     </div>
-                                    <p className="text-xs sm:text-sm font-bold text-green-700 dark:text-green-300 uppercase tracking-wide">Tasks Completed</p>
+                                    <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">Tasks Completed</p>
                                 </div>
-                                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.tasksCompleted}</p>
+                                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.tasksCompleted}</p>
                             </div>
                         </>
                     )}
                 </div>
+            </div>
 
-                {/* Profile Details */}
+            {/* Quick links - same card style as Activity */}
+            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Quick links</h2>
+                <div className="flex flex-wrap gap-3">
+                    <Link
+                        to="/dashboard"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 6h6m-3 3v6" /></svg>
+                        Dashboard
+                    </Link>
+                    {userMode === 'poster' ? (
+                        <Link
+                            to="/post-task"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                            Post a task
+                        </Link>
+                    ) : (
+                        <Link
+                            to="/tasks"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                            Browse tasks
+                        </Link>
+                    )}
+                    <Link
+                        to="/activity"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                        Activity
+                    </Link>
+                    {userMode === 'worker' && (
+                        <Link
+                            to="/earnings"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Earnings
+                        </Link>
+                    )}
+                </div>
+            </div>
+
+            {/* Account details card */}
+            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Account details</h2>
                 <div className="space-y-4 sm:space-y-5">
                     <div>
                         <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Name</label>
@@ -434,16 +484,14 @@ function Profile() {
                                 className="w-full h-11 sm:h-12 px-4 sm:px-5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors"
                             />
                         ) : (
-                            <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.name}</p>
+                            <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.name || '—'}</p>
                         )}
                     </div>
-
                     <div>
                         <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Email</label>
-                        <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.email}</p>
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1.5 leading-relaxed">Email cannot be changed</p>
+                        <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.email || '—'}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1.5">Email cannot be changed</p>
                     </div>
-
                     <div>
                         <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Phone</label>
                         {isEditing ? (
@@ -454,42 +502,36 @@ function Profile() {
                                 className="w-full h-11 sm:h-12 px-4 sm:px-5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors"
                             />
                         ) : (
-                            <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.phone}</p>
+                            <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.phone || '—'}</p>
                         )}
                     </div>
-
                     <div>
                         <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Location</label>
-                        <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.location}</p>
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1.5 leading-relaxed">Location is read-only</p>
+                        <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.location || '—'}</p>
                         {profile.locationUpdatedAt && (
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1 leading-relaxed">
-                                Last updated:{' '}
-                                {new Date(profile.locationUpdatedAt).toLocaleString('en-IN', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1.5">
+                                Last updated {new Date(profile.locationUpdatedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </p>
                         )}
                     </div>
                     {saveError && (
-                        <div className="p-4 sm:p-5 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">
-                            <p className="text-sm sm:text-base text-red-700 dark:text-red-400 leading-relaxed">{saveError}</p>
+                        <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">
+                            <p className="text-sm text-red-700 dark:text-red-400">{saveError}</p>
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* Mobile Only: Mode Toggle & Logout */}
-                <div className="md:hidden mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700 space-y-4">
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 sm:p-5">
+            {/* Account actions: Mode toggle + Logout - visible on all screens */}
+            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-5 sm:p-6">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Account</h2>
+                <div className="space-y-4">
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
                         <ModeToggle isMobile={true} />
                     </div>
                     <button
                         onClick={handleLogout}
-                        className="w-full px-5 py-3 sm:py-3.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm sm:text-base font-semibold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 active:bg-red-200 dark:active:bg-red-900/60 transition-all duration-200 active:scale-[0.98] border border-red-200 dark:border-red-800 touch-manipulation min-h-[44px]"
+                        className="w-full sm:w-auto min-w-[140px] px-5 py-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm sm:text-base font-semibold rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 active:bg-red-200 dark:active:bg-red-900/60 transition-all duration-200 active:scale-[0.98] border border-red-200 dark:border-red-800 touch-manipulation min-h-[44px]"
                     >
                         Logout
                     </button>
