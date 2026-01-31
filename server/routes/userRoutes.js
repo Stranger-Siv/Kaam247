@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { createUser, updateProfile, getActivity, getEarnings, getProfile, getCancellationStatus, getActiveTask } = require('../controllers/userController')
+const { createTicket, getMyTickets } = require('../controllers/supportTicketController')
 const { authenticate } = require('../middleware/auth')
 
 // POST /api/users - Create user (public)
@@ -23,6 +24,12 @@ router.get('/users/me/cancellation-status', authenticate, getCancellationStatus)
 
 // GET /api/users/me/active-task - Check if user has active tasks (authenticated)
 router.get('/users/me/active-task', authenticate, getActiveTask)
+
+// POST /api/users/me/tickets - Create support ticket (e.g. mobile number change)
+router.post('/users/me/tickets', authenticate, createTicket)
+
+// GET /api/users/me/tickets - List current user's tickets
+router.get('/users/me/tickets', authenticate, getMyTickets)
 
 module.exports = router
 

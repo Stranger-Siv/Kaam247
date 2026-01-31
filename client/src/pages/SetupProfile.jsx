@@ -132,6 +132,11 @@ function SetupProfile() {
                   )}
                 </div>
 
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 mb-4">
+                  <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                    Mobile number cannot be edited later (security). Enter your 10-digit number carefully. To change it later, request via Profile → Request mobile number change.
+                  </p>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Mobile number

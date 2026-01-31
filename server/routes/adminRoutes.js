@@ -5,6 +5,7 @@ const { adminMiddleware } = require('../middleware/admin')
 const {
   getUsers,
   getUserById,
+  updateUser,
   blockUser,
   unblockUser,
   banUser,
@@ -29,6 +30,7 @@ const {
   getLogs,
   getAnalytics
 } = require('../controllers/adminController')
+const { getTickets, resolveTicket } = require('../controllers/supportTicketController')
 
 // All admin routes require authentication AND admin role
 // Apply both middlewares to all routes
@@ -44,6 +46,9 @@ router.get('/users', getUsers)
 
 // GET /api/admin/users/:userId - Get user details
 router.get('/users/:userId', getUserById)
+
+// PATCH /api/admin/users/:userId - Update user (name, phone)
+router.patch('/users/:userId', updateUser)
 
 // PATCH /api/admin/users/:userId/block - Block user
 router.patch('/users/:userId/block', blockUser)
@@ -133,6 +138,12 @@ router.get('/logs', getLogs)
 // ANALYTICS
 // ============================================
 router.get('/analytics', getAnalytics)
+
+// ============================================
+// SUPPORT TICKETS (mobile number change etc.)
+// ============================================
+router.get('/tickets', getTickets)
+router.patch('/tickets/:ticketId/resolve', resolveTicket)
 
 module.exports = router
 

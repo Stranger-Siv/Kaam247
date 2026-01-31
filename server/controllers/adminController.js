@@ -223,6 +223,74 @@ const getUserById = async (req, res) => {
   }
 }
 
+// PATCH /api/admin/users/:userId - Update user (admin only: name, phone)
+const updateUser = async (req, res) => {
+  try {
+    const { userId } = req.params
+    const { name, phone } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        error: 'Invalid user ID',
+        message: 'Invalid user ID format'
+      })
+    }
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found',
+        message: 'User does not exist'
+      })
+    }
+
+    const updateData = {}
+    if (name !== undefined && name !== null && String(name).trim()) {
+      updateData.name = String(name).trim()
+    }
+    if (phone !== undefined && phone !== null) {
+      const digits = String(phone).replace(/\D/g, '')
+      if (digits.length !== 10) {
+        return res.status(400).json({
+          error: 'Invalid phone',
+          message: 'Provide a valid 10-digit mobile number'
+        })
+      }
+      const existing = await User.findOne({ phone: digits, _id: { $ne: userId } })
+      if (existing) {
+        return res.status(400).json({
+          error: 'Phone taken',
+          message: 'This phone number is already registered to another user'
+        })
+      }
+      updateData.phone = digits
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        error: 'No updates',
+        message: 'Provide name and/or phone to update'
+      })
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select('-password')
+
+    return res.status(200).json({
+      message: 'User updated successfully',
+      user: updated
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to update user'
+    })
+  }
+}
+
 // PATCH /api/admin/users/:userId/block - Block user
 const blockUser = async (req, res) => {
   try {
@@ -1605,6 +1673,7 @@ module.exports = {
   // User management
   getUsers,
   getUserById,
+  updateUser,
   blockUser,
   unblockUser,
   banUser,

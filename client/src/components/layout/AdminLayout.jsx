@@ -21,6 +21,7 @@ function AdminLayout() {
     { path: '/admin/tasks', label: 'Tasks', icon: '📋' },
     { path: '/admin/chats', label: 'Chats', icon: '💬' },
     { path: '/admin/reports', label: 'Reports', icon: '🚨' },
+    { path: '/admin/tickets', label: 'Tickets', icon: '🎫' },
     { path: '/admin/reviews', label: 'Reviews', icon: '⭐' },
     { path: '/admin/logs', label: 'Logs', icon: '📜' },
     { path: '/admin/analytics', label: 'Analytics', icon: '📈' },

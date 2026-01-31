@@ -17,6 +17,9 @@ function AdminUserDetail() {
   const [showEditLimitModal, setShowEditLimitModal] = useState(false)
   const [newCancelLimit, setNewCancelLimit] = useState(2)
   const [isUpdatingLimit, setIsUpdatingLimit] = useState(false)
+  const [editUserForm, setEditUserForm] = useState({ name: '', phone: '' })
+  const [isUpdatingUser, setIsUpdatingUser] = useState(false)
+  const [editUserError, setEditUserError] = useState(null)
 
   useEffect(() => {
     fetchUserDetails()
@@ -58,6 +61,7 @@ function AdminUserDetail() {
         }
         setUser(userData)
         setNewCancelLimit(data.user.totalCancelLimit ?? 2)
+        setEditUserForm({ name: data.user.name || '', phone: data.user.phone || '' })
       } else {
         throw new Error('User data not found in response')
       }
@@ -386,6 +390,68 @@ function AdminUserDetail() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Update user (name, phone) - admin only */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Update user</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Users cannot change their mobile number. Admin can update it here when they reach out.</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editUserForm.name}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                  placeholder="User name"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mobile number (10 digits)</label>
+                <input
+                  type="tel"
+                  value={editUserForm.phone}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                  placeholder="10-digit mobile"
+                  maxLength={10}
+                />
+              </div>
+              {editUserError && <p className="text-xs text-red-600 dark:text-red-400">{editUserError}</p>}
+              <button
+                onClick={async () => {
+                  setEditUserError(null)
+                  const name = (editUserForm.name || '').trim()
+                  const digits = (editUserForm.phone || '').replace(/\D/g, '')
+                  if (!name || digits.length !== 10) {
+                    setEditUserError('Name and a valid 10-digit mobile are required.')
+                    return
+                  }
+                  setIsUpdatingUser(true)
+                  try {
+                    const token = localStorage.getItem('kaam247_token')
+                    const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                      body: JSON.stringify({ name, phone: digits })
+                    })
+                    const data = await res.json().catch(() => ({}))
+                    if (!res.ok) throw new Error(data.message || 'Update failed')
+                    showToast('User updated successfully')
+                    fetchUserDetails()
+                  } catch (err) {
+                    setEditUserError(err.message || 'Update failed')
+                  } finally {
+                    setIsUpdatingUser(false)
+                  }
+                }}
+                disabled={isUpdatingUser}
+                className="w-full px-4 py-2.5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 min-h-[44px]"
+              >
+                {isUpdatingUser ? 'Saving...' : 'Save name & phone'}
+              </button>
             </div>
           </div>
 

@@ -26,6 +26,12 @@ function Profile() {
         tasksPosted: 0
     })
     const [loading, setLoading] = useState(true)
+    const [showMobileTicketModal, setShowMobileTicketModal] = useState(false)
+    const [ticketRequestedPhone, setTicketRequestedPhone] = useState('')
+    const [ticketReason, setTicketReason] = useState('')
+    const [ticketSubmitting, setTicketSubmitting] = useState(false)
+    const [ticketError, setTicketError] = useState(null)
+    const [ticketSuccess, setTicketSuccess] = useState(false)
 
     // Fetch profile data
     useEffect(() => {
@@ -257,7 +263,6 @@ function Profile() {
                 },
                 body: JSON.stringify({
                     name: profile.name,
-                    phone: profile.phone,
                     profilePhoto: profile.profilePhoto || null
                 })
             })
@@ -272,6 +277,47 @@ function Profile() {
             setSaveError(err.message || 'Failed to save profile. Please try again.')
         } finally {
             setIsSaving(false)
+        }
+    }
+
+    const handleSubmitTicket = async (e) => {
+        e.preventDefault()
+        setTicketError(null)
+        const digits = (ticketRequestedPhone || '').replace(/\D/g, '')
+        if (digits.length !== 10) {
+            setTicketError('Enter a valid 10-digit mobile number.')
+            return
+        }
+        setTicketSubmitting(true)
+        try {
+            const token = localStorage.getItem('kaam247_token')
+            const response = await fetch(`${API_BASE_URL}/api/users/me/tickets`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    type: 'MOBILE_UPDATE',
+                    requestedPhone: digits,
+                    reason: ticketReason.trim()
+                })
+            })
+            const data = await response.json().catch(() => ({}))
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to submit request')
+            }
+            setTicketSuccess(true)
+            setTicketRequestedPhone('')
+            setTicketReason('')
+            setTimeout(() => {
+                setShowMobileTicketModal(false)
+                setTicketSuccess(false)
+            }, 2000)
+        } catch (err) {
+            setTicketError(err.message || 'Failed to submit. Try again.')
+        } finally {
+            setTicketSubmitting(false)
         }
     }
 
@@ -446,17 +492,16 @@ function Profile() {
                         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1.5">Email cannot be changed</p>
                     </div>
                     <div>
-                        <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Phone</label>
-                        {isEditing ? (
-                            <input
-                                type="tel"
-                                value={profile.phone}
-                                onChange={(e) => handleInputChange('phone', e.target.value)}
-                                className="w-full h-11 sm:h-12 px-4 sm:px-5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors"
-                            />
-                        ) : (
-                            <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.phone || '—'}</p>
-                        )}
+                        <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Mobile number</label>
+                        <p className="text-base sm:text-lg text-gray-900 dark:text-gray-100 font-medium leading-relaxed">{profile.phone || '—'}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-1.5">Mobile number cannot be edited by you (security). Request a change below; admin will review.</p>
+                        <button
+                            type="button"
+                            onClick={() => setShowMobileTicketModal(true)}
+                            className="mt-3 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 transition-colors"
+                        >
+                            Request mobile number change
+                        </button>
                     </div>
                     <div>
                         <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Location</label>
@@ -490,6 +535,63 @@ function Profile() {
                     </button>
                 </div>
             </div>
+
+            {/* Request mobile number change modal */}
+            {showMobileTicketModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/60" onClick={() => !ticketSubmitting && setShowMobileTicketModal(false)}>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Request mobile number change</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Admin will review and update your number. Enter the new 10-digit mobile number and optional reason.</p>
+                        {ticketSuccess ? (
+                            <p className="text-green-600 dark:text-green-400 font-medium">Request submitted. Admin will review and fix as soon as possible.</p>
+                        ) : (
+                            <form onSubmit={handleSubmitTicket} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New 10-digit mobile number</label>
+                                    <input
+                                        type="tel"
+                                        value={ticketRequestedPhone}
+                                        onChange={(e) => setTicketRequestedPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                        placeholder="10-digit number"
+                                        className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                                        maxLength={10}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason (optional)</label>
+                                    <textarea
+                                        value={ticketReason}
+                                        onChange={(e) => setTicketReason(e.target.value.slice(0, 500))}
+                                        placeholder="Why you need to change your number"
+                                        className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 resize-none"
+                                        rows={3}
+                                        maxLength={500}
+                                    />
+                                </div>
+                                {ticketError && <p className="text-sm text-red-600 dark:text-red-400">{ticketError}</p>}
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowMobileTicketModal(false)}
+                                        disabled={ticketSubmitting}
+                                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={ticketSubmitting}
+                                        className="flex-1 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
+                                    >
+                                        {ticketSubmitting ? 'Submitting...' : 'Submit request'}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

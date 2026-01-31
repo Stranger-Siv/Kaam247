@@ -198,8 +198,11 @@ function Register() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Phone
+                                    Mobile number
                                 </label>
+                                <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2 mb-2">
+                                    Enter your 10-digit mobile number properly. It cannot be changed later. Contact admin if you need to update it.
+                                </p>
                                 <input
                                     type="tel"
                                     inputMode="numeric"

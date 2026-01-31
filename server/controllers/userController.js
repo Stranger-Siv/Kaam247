@@ -145,22 +145,12 @@ const updateProfile = async (req, res) => {
       updateData.name = name.trim()
     }
 
+    // Phone cannot be updated by user (security). Use "Request mobile number change" ticket; admin can update.
     if (phone !== undefined) {
-      if (!phone || phone.trim().length === 0) {
-        return res.status(400).json({
-          error: 'Invalid phone',
-          message: 'Phone cannot be empty'
-        })
-      }
-      // Check if phone is already taken by another user
-      const existingUser = await User.findOne({ phone: phone.trim(), _id: { $ne: userId } })
-      if (existingUser) {
-        return res.status(400).json({
-          error: 'Phone already exists',
-          message: 'This phone number is already registered'
-        })
-      }
-      updateData.phone = phone.trim()
+      return res.status(403).json({
+        error: 'Phone update not allowed',
+        message: 'Mobile number cannot be changed by you. Request a change via Profile → Request mobile number change; admin will review.'
+      })
     }
 
     if (profilePhoto !== undefined) {
@@ -373,7 +363,7 @@ const getEarnings = async (req, res) => {
 
     // Calculate earnings by time period
     const now = new Date()
-    
+
     // Today
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const todayTasks = completedTasks.filter(task => {

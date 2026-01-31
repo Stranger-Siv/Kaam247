@@ -42,6 +42,7 @@ const AdminSettings = lazyWithRetry(() => import('./pages/admin/AdminSettings'))
 const AdminReviews = lazyWithRetry(() => import('./pages/admin/AdminReviews'))
 const AdminLogs = lazyWithRetry(() => import('./pages/admin/AdminLogs'))
 const AdminAnalytics = lazyWithRetry(() => import('./pages/admin/AdminAnalytics'))
+const AdminTickets = lazyWithRetry(() => import('./pages/admin/AdminTickets'))
 const SetupProfile = lazyWithRetry(() => import('./pages/SetupProfile'))
 
 // Loading component for Suspense fallback
@@ -165,6 +166,7 @@ const AppContent = () => (
                           <Route path="/admin/logs" element={<AdminLogs />} />
                           <Route path="/admin/analytics" element={<AdminAnalytics />} />
                           <Route path="/admin/reports" element={<AdminReports />} />
+                          <Route path="/admin/tickets" element={<AdminTickets />} />
                         </Route>
                       </Routes>
                     </Suspense>
