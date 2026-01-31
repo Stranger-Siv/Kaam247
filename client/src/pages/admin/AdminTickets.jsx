@@ -38,7 +38,7 @@ function AdminTickets() {
     const action = actionOverride || resolveForm.action
     const digits = (resolveForm.newPhone || '').replace(/\D/g, '')
     if (action === 'RESOLVED' && digits.length !== 10) {
-      setError('Enter a valid 10-digit mobile number to resolve.')
+      setError('Enter a valid 10-digit phone to resolve.')
       return
     }
     setResolvingId(ticketId)
@@ -75,7 +75,7 @@ function AdminTickets() {
     <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Support tickets</h1>
-        <p className="text-gray-600 dark:text-gray-400">Mobile number change requests. Resolve to update the user&apos;s phone.</p>
+        <p className="text-gray-600 dark:text-gray-400">Phone change requests. Resolve to update the user&apos;s phone.</p>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -118,8 +118,8 @@ function AdminTickets() {
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="font-medium text-gray-900 dark:text-gray-100">{t.type}</span>
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${t.status === 'PENDING' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200' :
-                        t.status === 'RESOLVED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
-                          'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                      t.status === 'RESOLVED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
+                        'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                       }`}>
                       {t.status}
                     </span>

@@ -27,7 +27,7 @@ function SetupProfile() {
     }
     const digits = (formData.phone || '').replace(/\D/g, '')
     if (digits.length !== 10) {
-      errors.phone = 'Enter a valid 10-digit mobile number'
+      errors.phone = 'Enter a valid 10-digit phone'
     }
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
@@ -82,7 +82,7 @@ function SetupProfile() {
             Almost there!
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-md">
-            You signed in with Google. Add your name and 10-digit mobile number so others can reach you and you can use Kaam247.
+            You signed in with Google. Add your name and 10-digit phone so others can reach you and you can use Kaam247.
           </p>
         </div>
 
@@ -109,7 +109,7 @@ function SetupProfile() {
                     Complete your profile
                   </h1>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Name and 10-digit mobile number
+                    Name and 10-digit phone
                   </p>
                 </div>
               </div>
@@ -134,18 +134,18 @@ function SetupProfile() {
 
                 <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 mb-4">
                   <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                    Mobile number cannot be edited later (security). Enter your 10-digit number carefully. To change it later, request via Profile → Request mobile number change.
+                    Phone cannot be edited later (security). Enter your 10-digit number carefully. To change it later, request via Profile → Request phone change.
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Mobile number
+                    Phone
                   </label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => handleChange('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="10-digit mobile number"
+                    placeholder="10-digit phone"
                     className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-base ${fieldErrors.phone ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                     autoComplete="tel"
                     maxLength={10}

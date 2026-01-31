@@ -2,7 +2,7 @@ const SupportTicket = require('../models/SupportTicket')
 const User = require('../models/User')
 const mongoose = require('mongoose')
 
-// POST /api/users/me/tickets - Create a support ticket (e.g. mobile number change request)
+// POST /api/users/me/tickets - Create a support ticket (e.g. phone change request)
 const createTicket = async (req, res) => {
   try {
     const userId = req.userId
@@ -12,7 +12,7 @@ const createTicket = async (req, res) => {
     if (digits.length !== 10) {
       return res.status(400).json({
         error: 'Invalid phone',
-        message: 'Enter a valid 10-digit mobile number for the change request'
+        message: 'Enter a valid 10-digit phone for the change request'
       })
     }
 
@@ -27,7 +27,7 @@ const createTicket = async (req, res) => {
     const populated = await SupportTicket.findById(ticket._id).populate('user', 'name email phone')
 
     return res.status(201).json({
-      message: 'Request submitted. Admin will review and update your mobile number as soon as possible.',
+      message: 'Request submitted. Admin will review and update your phone as soon as possible.',
       ticket: {
         _id: populated._id,
         type: populated.type,
@@ -113,7 +113,7 @@ const resolveTicket = async (req, res) => {
       if (digits.length !== 10) {
         return res.status(400).json({
           error: 'Invalid phone',
-          message: 'Provide a valid 10-digit mobile number to resolve'
+          message: 'Provide a valid 10-digit phone to resolve'
         })
       }
       const existingUser = await User.findOne({ phone: digits, _id: { $ne: ticket.user._id } })
@@ -138,7 +138,7 @@ const resolveTicket = async (req, res) => {
       .populate('resolvedBy', 'name email')
 
     return res.status(200).json({
-      message: resolvedStatus === 'RESOLVED' ? 'Ticket resolved and user mobile number updated.' : 'Ticket rejected.',
+      message: resolvedStatus === 'RESOLVED' ? 'Ticket resolved and user phone updated.' : 'Ticket rejected.',
       ticket: updated
     })
   } catch (error) {

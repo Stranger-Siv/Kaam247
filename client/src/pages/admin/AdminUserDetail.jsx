@@ -396,7 +396,7 @@ function AdminUserDetail() {
           {/* Update user (name, phone) - admin only */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Update user</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Users cannot change their mobile number. Admin can update it here when they reach out.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Users cannot change their phone. Admin can update it here when they reach out.</p>
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Name</label>
@@ -409,7 +409,7 @@ function AdminUserDetail() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mobile number (10 digits)</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Phone (10 digits)</label>
                 <input
                   type="tel"
                   value={editUserForm.phone}

@@ -15,7 +15,7 @@ const supportTicketSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: 15,
-    description: 'New 10-digit mobile number requested by user'
+    description: 'New 10-digit phone requested by user'
   },
   reason: {
     type: String,

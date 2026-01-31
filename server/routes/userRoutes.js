@@ -25,7 +25,7 @@ router.get('/users/me/cancellation-status', authenticate, getCancellationStatus)
 // GET /api/users/me/active-task - Check if user has active tasks (authenticated)
 router.get('/users/me/active-task', authenticate, getActiveTask)
 
-// POST /api/users/me/tickets - Create support ticket (e.g. mobile number change)
+// POST /api/users/me/tickets - Create support ticket (e.g. phone change)
 router.post('/users/me/tickets', authenticate, createTicket)
 
 // GET /api/users/me/tickets - List current user's tickets

@@ -145,11 +145,11 @@ const updateProfile = async (req, res) => {
       updateData.name = name.trim()
     }
 
-    // Phone cannot be updated by user (security). Use "Request mobile number change" ticket; admin can update.
+    // Phone cannot be updated by user (security). Use "Request phone change" ticket; admin can update.
     if (phone !== undefined) {
       return res.status(403).json({
         error: 'Phone update not allowed',
-        message: 'Mobile number cannot be changed by you. Request a change via Profile → Request mobile number change; admin will review.'
+        message: 'Phone cannot be changed by you. Request a change via Profile → Request phone change; admin will review.'
       })
     }
 

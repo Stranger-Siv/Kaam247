@@ -253,7 +253,7 @@ const updateUser = async (req, res) => {
       if (digits.length !== 10) {
         return res.status(400).json({
           error: 'Invalid phone',
-          message: 'Provide a valid 10-digit mobile number'
+          message: 'Provide a valid 10-digit phone'
         })
       }
       const existing = await User.findOne({ phone: digits, _id: { $ne: userId } })

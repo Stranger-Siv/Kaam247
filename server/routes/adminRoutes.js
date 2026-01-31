@@ -140,7 +140,7 @@ router.get('/logs', getLogs)
 router.get('/analytics', getAnalytics)
 
 // ============================================
-// SUPPORT TICKETS (mobile number change etc.)
+// SUPPORT TICKETS (phone change etc.)
 // ============================================
 router.get('/tickets', getTickets)
 router.patch('/tickets/:ticketId/resolve', resolveTicket)

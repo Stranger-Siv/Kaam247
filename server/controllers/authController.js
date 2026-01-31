@@ -56,12 +56,12 @@ const register = async (req, res) => {
       })
     }
 
-    // Validate phone: 10-digit mobile number (digits only)
+    // Validate phone: 10-digit (digits only)
     const phoneDigits = phone.trim().replace(/\D/g, '')
     if (phoneDigits.length !== 10) {
       return res.status(400).json({
         error: 'Invalid phone',
-        message: 'Please provide a valid 10-digit mobile number'
+        message: 'Please provide a valid 10-digit phone'
       })
     }
 
@@ -379,7 +379,7 @@ const completeProfileSetup = async (req, res) => {
     if (phoneDigits.length !== 10) {
       return res.status(400).json({
         error: 'Invalid phone',
-        message: 'Please provide a valid 10-digit mobile number'
+        message: 'Please provide a valid 10-digit phone'
       })
     }
 
