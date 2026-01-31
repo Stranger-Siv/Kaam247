@@ -67,16 +67,25 @@ async function sendPushToToken(token, title, body, data = {}) {
 }
 
 /**
- * Send push to a user by userId (loads fcmToken from DB).
+ * Send push to a user by userId (all registered devices: phone, Chrome, etc.).
+ * Uses fcmTokens array; falls back to fcmToken for backward compatibility.
  */
 async function sendPushToUser(userId, title, body, data = {}) {
   if (!userId) return false
   const User = require('../models/User')
-  const user = await User.findById(userId).select('fcmToken').lean()
-  if (!user || !user.fcmToken) return false
-  const sent = await sendPushToToken(user.fcmToken, title, body, data)
-  if (!sent) return false
-  return true
+  const user = await User.findById(userId).select('fcmToken fcmTokens').lean()
+  if (!user) return false
+  const tokens = (user.fcmTokens && user.fcmTokens.length)
+    ? user.fcmTokens
+    : (user.fcmToken ? [user.fcmToken] : [])
+  if (tokens.length === 0) return false
+  let anySent = false
+  for (const token of tokens) {
+    if (!token || !token.trim()) continue
+    const sent = await sendPushToToken(token.trim(), title, body, data)
+    if (sent) anySent = true
+  }
+  return anySent
 }
 
 module.exports = {

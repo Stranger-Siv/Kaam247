@@ -551,7 +551,10 @@ const getActiveTask = async (req, res) => {
   }
 }
 
-// POST /api/users/me/push-subscription - Save FCM token for push notifications
+// Max FCM tokens per user (phone + tablet + 2 browsers, etc.)
+const MAX_FCM_TOKENS = 10
+
+// POST /api/users/me/push-subscription - Save FCM token for push notifications (multi-device)
 const savePushSubscription = async (req, res) => {
   try {
     const userId = req.userId
@@ -560,7 +563,19 @@ const savePushSubscription = async (req, res) => {
       return res.status(400).json({ error: 'Invalid user' })
     }
     const fcmToken = token && typeof token === 'string' ? token.trim() : null
-    await User.findByIdAndUpdate(userId, { $set: { fcmToken: fcmToken || null } })
+    if (fcmToken) {
+      const user = await User.findById(userId).select('fcmTokens').lean()
+      let tokens = (user && user.fcmTokens) ? [...user.fcmTokens] : []
+      if (!tokens.includes(fcmToken)) {
+        tokens.push(fcmToken)
+        if (tokens.length > MAX_FCM_TOKENS) tokens = tokens.slice(-MAX_FCM_TOKENS)
+      }
+      await User.findByIdAndUpdate(userId, {
+        $set: { fcmToken: fcmToken, fcmTokens: tokens }
+      })
+    } else {
+      await User.findByIdAndUpdate(userId, { $set: { fcmToken: null, fcmTokens: [] } })
+    }
     return res.status(200).json({
       message: fcmToken ? 'Push subscription saved' : 'Push subscription cleared'
     })

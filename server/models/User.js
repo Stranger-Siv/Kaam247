@@ -188,7 +188,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null,
         trim: true,
-        description: 'FCM token for push notifications (web/mobile)'
+        description: 'FCM token for push notifications (legacy single device)'
+    },
+    fcmTokens: {
+        type: [String],
+        default: [],
+        trim: true,
+        description: 'FCM tokens for push notifications (multiple devices: phone + Chrome, etc.)'
     },
     createdAt: {
         type: Date,
