@@ -2,6 +2,7 @@ const Chat = require('../models/Chat')
 const Task = require('../models/Task')
 const mongoose = require('mongoose')
 const { emitReceiveMessage } = require('../socket/socketHandler')
+const { sendPushToUser } = require('../utils/pushNotifications')
 
 const ALLOW_READ_STATUSES = ['ACCEPTED', 'IN_PROGRESS', 'COMPLETED']
 const ALLOW_SEND_STATUSES = ['ACCEPTED', 'IN_PROGRESS']
@@ -141,6 +142,15 @@ const sendMessage = async (req, res) => {
     }
 
     emitReceiveMessage(taskId, payload.message)
+
+    // Push notification to the other participant (when they're not in app / on homescreen)
+    const posterId = result.task.postedBy?.toString()
+    const workerId = result.task.acceptedBy?.toString()
+    const recipientId = String(userId) === posterId ? workerId : posterId
+    const snippet = trimmed.length > 50 ? trimmed.slice(0, 47) + '...' : trimmed
+    if (recipientId) {
+      sendPushToUser(recipientId, 'New message', snippet, { taskId: taskId.toString(), type: 'chat' }).catch(() => { })
+    }
 
     return res.status(201).json({
       message: 'Message sent',

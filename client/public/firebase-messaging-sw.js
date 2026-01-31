@@ -21,7 +21,7 @@ messaging.onBackgroundMessage(function (payload) {
     body: payload.notification?.body || payload.data?.body || '',
     icon: '/icons/icon-192.png',
     data: payload.data || {},
-    tag: payload.data?.taskId || 'kaam247',
+    tag: payload.data?.taskId ? 'task-' + payload.data.taskId : 'kaam247',
     requireInteraction: false
   }
   if (payload.data?.taskId) {
