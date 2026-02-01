@@ -25,7 +25,7 @@ const configSchema = new mongoose.Schema({
   }
 })
 
-configSchema.index({ key: 1 }, { unique: true })
+// unique: true on key above already creates { key: 1 } unique index; no need to add again
 
 const Config = mongoose.model('Config', configSchema)
 module.exports = Config
