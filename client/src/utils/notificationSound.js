@@ -96,6 +96,10 @@ export function playNotificationBell() {
 export function startNotificationAlertLoop() {
   if (typeof window === 'undefined') return
   stopNotificationAlertLoop()
+  const ctx = getAudioContext()
+  if (ctx && ctx.state === 'suspended') {
+    ctx.resume().catch(() => { })
+  }
   playNotificationBell()
   alertLoopIntervalId = setInterval(playNotificationBell, BELL_REPEAT_INTERVAL_MS)
 }

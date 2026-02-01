@@ -23,6 +23,8 @@ export function SocketProvider({ children }) {
   const { isOnline, workerLocation } = useAvailability()
   const { showNotification, clearAlertedTasks } = useNotification()
   const socketRef = useRef(null)
+  const showNotificationRef = useRef(showNotification)
+  showNotificationRef.current = showNotification
 
   useEffect(() => {
     // Skip socket initialization if disabled
@@ -239,40 +241,30 @@ export function SocketProvider({ children }) {
     const handleNewTask = async (taskData) => {
       // Double-check mode and online status before showing alert
       if (userMode !== 'worker' || !isOnline) {
-        return // Ignore if mode changed or went offline
-      }
-
-      // Only alert truly idle workers: online + NO active task.
-      // We re-check via backend in case local state is stale.
-      try {
-        const token = localStorage.getItem('kaam247_token')
-        if (!token) {
-          return
-        }
-
-        const res = await fetch(`${API_BASE_URL}/api/users/me/active-task`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-
-        if (res.ok) {
-          const data = await res.json()
-          if (data?.hasActiveTask) {
-            // Worker already busy on another task → skip alert
-            return
-          }
-        }
-      } catch (e) {
-        // If the check fails, fail safe by NOT spamming alerts
         return
       }
 
-      // Show global notification (NotificationContext handles duplicates)
-      showNotification(taskData)
+      // Only alert truly idle workers: online + NO active task
+      try {
+        const token = localStorage.getItem('kaam247_token')
+        if (!token) return
+
+        const res = await fetch(`${API_BASE_URL}/api/users/me/active-task`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (!res.ok) return
+
+        const data = await res.json()
+        if (data?.hasActiveTask) return
+      } catch (e) {
+        return
+      }
+
+      // Always use latest showNotification via ref (avoids listener re-subscribe on every notification)
+      const show = showNotificationRef.current
+      if (show) show(taskData)
     }
 
-    // Set up listener when socket connects
     const setupListener = () => {
       if (socket.connected && isAuthenticated && userMode === 'worker' && isOnline) {
         socket.on('new_task', handleNewTask)
@@ -290,12 +282,10 @@ export function SocketProvider({ children }) {
         try {
           socket.off('new_task', handleNewTask)
           socket.off('connect', setupListener)
-        } catch (error) {
-          // Ignore cleanup errors
-        }
+        } catch (e) { }
       }
     }
-  }, [isAuthenticated, userMode, isOnline, showNotification])
+  }, [isAuthenticated, userMode, isOnline])
 
   const getSocket = () => {
     // Socket.IO is DISABLED - always return null

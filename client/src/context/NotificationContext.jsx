@@ -20,13 +20,11 @@ export function NotificationProvider({ children }) {
   const notification = notificationQueue[0] ?? null
 
   const showNotification = useCallback((taskData) => {
-    const taskId = taskData.taskId ?? taskData._id ?? taskData.id
+    const rawId = taskData.taskId ?? taskData._id ?? taskData.id
+    const taskId = rawId != null ? String(rawId) : ''
     if (!taskId) return
 
-    // Prevent duplicate alerts for the same task
-    if (alertedTaskIds.has(taskId)) {
-      return
-    }
+    if (alertedTaskIds.has(taskId)) return
 
     // Format task data for notification
     const formattedTask = {
