@@ -1,6 +1,6 @@
 /**
- * Play a short bell/ding sound for new task notifications using Web Audio API.
- * No external audio file required. Safe to call repeatedly; plays at most one at a time.
+ * Urgent alarm sound for new task notifications using Web Audio API.
+ * No external audio file required. Safe to call repeatedly.
  */
 
 let audioContext = null
@@ -32,65 +32,78 @@ function getAudioContext() {
 
 /**
  * Initialize the audio context and register unlock listeners.
- * Call once when the app loads (e.g. NotificationProvider mount) so the bell
+ * Call once when the app loads (e.g. NotificationProvider mount) so the alarm
  * can play after the user has interacted with the page.
  */
 export function initNotificationSound() {
   getAudioContext()
 }
 
-/** How often to repeat the bell while the new-task alert is visible (ms). */
+/** How often to repeat the alarm while the new-task alert is visible (ms). */
 const BELL_REPEAT_INTERVAL_MS = 3500
 let alertLoopIntervalId = null
 
+/** Urgent alarm: 3 sharp beeps (beep-beep-beep) then a higher warning tone. */
+const BEEP_DURATION = 0.12
+const BEEP_GAP = 0.08
+const BEEP_FREQ = 880
+const WARNING_FREQ = 1320
+const GAIN_LEVEL = 0.28
+
+function playBeep(ctx, startTime, freq, duration) {
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.type = 'square'
+  osc.frequency.setValueAtTime(freq, startTime)
+  gain.gain.setValueAtTime(0, startTime)
+  gain.gain.linearRampToValueAtTime(GAIN_LEVEL, startTime + 0.01)
+  gain.gain.setValueAtTime(GAIN_LEVEL, startTime + duration * 0.3)
+  gain.gain.linearRampToValueAtTime(0.01, startTime + duration)
+  osc.connect(gain)
+  gain.connect(ctx.destination)
+  osc.start(startTime)
+  osc.stop(startTime + duration)
+}
+
 /**
- * Play a two-tone "ding" (bell-like) notification sound.
- * Safe to call repeatedly.
+ * Play an urgent alarm (3 quick beeps + warning tone). Safe to call repeatedly.
  */
 export function playNotificationBell() {
   try {
     const ctx = getAudioContext()
     if (!ctx) return
 
-    // Resume context if suspended (browser autoplay policy)
     if (ctx.state === 'suspended') {
       ctx.resume().catch(() => { })
     }
 
     const t = ctx.currentTime
 
-    // First tone - higher ding
-    const osc1 = ctx.createOscillator()
-    const gain1 = ctx.createGain()
-    osc1.type = 'sine'
-    osc1.frequency.setValueAtTime(880, t)
-    osc1.frequency.exponentialRampToValueAtTime(1100, t + 0.08)
-    gain1.gain.setValueAtTime(0.25, t)
-    gain1.gain.exponentialRampToValueAtTime(0.01, t + 0.25)
-    osc1.connect(gain1)
-    gain1.connect(ctx.destination)
-    osc1.start(t)
-    osc1.stop(t + 0.25)
+    // Three sharp beeps - urgent "attention" pattern
+    playBeep(ctx, t, BEEP_FREQ, BEEP_DURATION)
+    playBeep(ctx, t + BEEP_DURATION + BEEP_GAP, BEEP_FREQ, BEEP_DURATION)
+    playBeep(ctx, t + 2 * (BEEP_DURATION + BEEP_GAP), BEEP_FREQ, BEEP_DURATION)
 
-    // Second tone - lower ding (bell pair)
-    const osc2 = ctx.createOscillator()
-    const gain2 = ctx.createGain()
-    osc2.type = 'sine'
-    osc2.frequency.setValueAtTime(660, t + 0.12)
-    osc2.frequency.exponentialRampToValueAtTime(880, t + 0.2)
-    gain2.gain.setValueAtTime(0.2, t + 0.12)
-    gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.4)
-    osc2.connect(gain2)
-    gain2.connect(ctx.destination)
-    osc2.start(t + 0.12)
-    osc2.stop(t + 0.4)
+    // Higher warning tone - "urgent"
+    const warnStart = t + 3 * (BEEP_DURATION + BEEP_GAP) + 0.05
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(WARNING_FREQ, warnStart)
+    osc.frequency.setValueAtTime(WARNING_FREQ * 1.2, warnStart + 0.08)
+    gain.gain.setValueAtTime(GAIN_LEVEL * 0.9, warnStart)
+    gain.gain.exponentialRampToValueAtTime(0.01, warnStart + 0.25)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start(warnStart)
+    osc.stop(warnStart + 0.25)
   } catch (_) {
     // Ignore errors (e.g. autoplay blocked, no Web Audio)
   }
 }
 
 /**
- * Start repeating the bell until the user accepts/rejects or dismisses the notification.
+ * Start repeating the alarm until the user accepts/rejects or dismisses the notification.
  * Plays once immediately, then every BELL_REPEAT_INTERVAL_MS.
  */
 export function startNotificationAlertLoop() {
@@ -105,7 +118,7 @@ export function startNotificationAlertLoop() {
 }
 
 /**
- * Stop the repeating bell (call when user dismisses notification or accepts/rejects task).
+ * Stop the repeating alarm (call when user dismisses notification or accepts/rejects task).
  */
 export function stopNotificationAlertLoop() {
   if (alertLoopIntervalId != null) {
