@@ -45,10 +45,30 @@ export function NotificationProvider({ children }) {
     // Mark as alerted
     setAlertedTaskIds(prev => new Set([...prev, taskId]))
 
+    // System notification (shows over other apps / when PWA in background) if permission granted
+    if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        const body = [formattedTask.title, formattedTask.distance].filter(Boolean).join(' • ')
+        const sys = new Notification('🔔 New Task Available', {
+          body: body || formattedTask.title,
+          icon: '/icons/icon-192.png',
+          tag: 'new-task-' + taskId,
+          requireInteraction: true
+        })
+        sys.onclick = () => {
+          window.focus()
+          sys.close()
+          if (window.location.pathname !== `/tasks/${taskId}`) {
+            window.location.href = `/tasks/${taskId}`
+          }
+        }
+      } catch (_) { }
+    }
+
     // Keep ringing until user accepts, rejects, or dismisses
     startNotificationAlertLoop()
 
-    // Add to queue; toast shows one at a time, dismiss shows next
+    // Add to queue; in-app panel shows full-screen overlay
     setNotificationQueue(prev => [...prev, formattedTask])
   }, [alertedTaskIds])
 
