@@ -45,16 +45,18 @@ async function sendPushToToken(token, title, body, data = {}) {
   const m = getAdmin() && messaging
   if (!m) return false
   try {
+    const dataPayload = Object.fromEntries(
+      Object.entries(data).map(([k, v]) => [String(k), String(v)])
+    )
+    const link = data.url || (data.taskId ? `/tasks/${data.taskId}` : '')
     await m.send({
       token: token.trim(),
       notification: { title, body },
-      data: Object.fromEntries(
-        Object.entries(data).map(([k, v]) => [String(k), String(v)])
-      ),
+      data: dataPayload,
+      // High priority so OS shows as heads-up / banner over other apps (like delivery apps)
       webpush: {
-        fcmOptions: {
-          link: data.url || data.taskId ? `/tasks/${data.taskId || ''}` : undefined
-        }
+        headers: { Urgency: 'high' },
+        fcmOptions: link ? { link } : undefined
       }
     })
     return true
