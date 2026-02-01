@@ -1,42 +1,59 @@
 /**
- * Urgent alarm sound for new task notifications using Web Audio API.
- * No external audio file required. Safe to call repeatedly.
+ * Urgent alarm sound for new task notifications.
+ * AudioContext is created and resumed on first user gesture (required on iOS/mobile).
  */
 
 let audioContext = null
 let unlocked = false
+let unlockListenersAdded = false
 
 function getAudioContext() {
   if (audioContext) return audioContext
   if (typeof window === 'undefined') return null
   const Ctx = window.AudioContext || window.webkitAudioContext
   if (!Ctx) return null
-  audioContext = new Ctx()
-  // Unlock on first user interaction (required by many browsers for playback)
-  if (!unlocked) {
-    const unlock = () => {
-      if (!audioContext || unlocked) return
-      audioContext.resume().then(() => {
-        unlocked = true
-        document.removeEventListener('click', unlock)
-        document.removeEventListener('touchstart', unlock)
-        document.removeEventListener('keydown', unlock)
-      }).catch(() => { })
-    }
-    document.addEventListener('click', unlock, { once: true })
-    document.addEventListener('touchstart', unlock, { once: true })
-    document.addEventListener('keydown', unlock, { once: true })
+  try {
+    audioContext = new Ctx()
+    addUnlockListeners()
+    audioContext.resume().catch(() => { })
+  } catch (_) {
+    return null
   }
   return audioContext
 }
 
+function addUnlockListeners() {
+  if (typeof window === 'undefined' || unlockListenersAdded) return
+  unlockListenersAdded = true
+  const Ctx = window.AudioContext || window.webkitAudioContext
+  if (!Ctx) return
+
+  const unlock = () => {
+    if (!audioContext) {
+      try {
+        audioContext = new Ctx()
+        audioContext.resume().then(() => { unlocked = true }).catch(() => { })
+      } catch (_) { }
+      return
+    }
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => { })
+    }
+  }
+
+  const opts = { capture: true }
+  document.addEventListener('click', unlock, opts)
+  document.addEventListener('touchstart', unlock, opts)
+  document.addEventListener('touchend', unlock, opts)
+  document.addEventListener('keydown', unlock, opts)
+}
+
 /**
- * Initialize the audio context and register unlock listeners.
- * Call once when the app loads (e.g. NotificationProvider mount) so the alarm
- * can play after the user has interacted with the page.
+ * Call once when the app loads. Registers listeners so the first tap/click
+ * creates and unlocks the AudioContext (required on mobile).
  */
 export function initNotificationSound() {
-  getAudioContext()
+  addUnlockListeners()
 }
 
 /** Buzz every 2 seconds while the new-task alert is visible. */
@@ -65,26 +82,28 @@ function playBuzzNow(ctx) {
 }
 
 /**
- * Play one buzz at once (0th sec). Schedules immediately; resumes context in background if needed.
+ * Play one buzz. If context is suspended (e.g. mobile), resume then play so it actually sounds.
  */
 export function playNotificationBell() {
   try {
     const ctx = getAudioContext()
     if (!ctx) return
 
-    playBuzzNow(ctx)
     if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => { })
+      ctx.resume().then(() => playBuzzNow(ctx)).catch(() => { })
+    } else {
+      playBuzzNow(ctx)
     }
   } catch (_) { }
 }
 
 /**
- * Start buzz at 0th sec, then every 2 sec until the user accepts/rejects or dismisses.
+ * Start buzz immediately (0th sec), then every 2 sec until the user accepts/rejects or dismisses.
  */
 export function startNotificationAlertLoop() {
   if (typeof window === 'undefined') return
   stopNotificationAlertLoop()
+  addUnlockListeners()
   const ctx = getAudioContext()
   if (!ctx) return
 
