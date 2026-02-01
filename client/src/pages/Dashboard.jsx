@@ -165,8 +165,9 @@ function Dashboard() {
 
             // Worker: task in under 1 hour
             acceptedTasks.forEach((task) => {
-                if (!task.scheduledAt) return
-                const at = task.scheduledAt.getTime()
+                const atTime = task.scheduledAt || task.createdAt
+                if (!atTime) return
+                const at = new Date(atTime).getTime()
                 if (at > now && at - now <= oneHourMs) {
                     showReminder({
                         title: 'Task in 1 hour',
@@ -414,8 +415,8 @@ function Dashboard() {
                         budget: `₹${task.budget}`,
                         category: task.category,
                         scheduledAt: task.scheduledAt ? new Date(task.scheduledAt) : null,
-                        time: task.scheduledAt
-                            ? new Date(task.scheduledAt).toLocaleString('en-IN', {
+                        time: (task.scheduledAt || task.createdAt)
+                            ? new Date(task.scheduledAt || task.createdAt).toLocaleString('en-IN', {
                                 weekday: 'short',
                                 hour: 'numeric',
                                 minute: '2-digit'
@@ -719,8 +720,8 @@ function Dashboard() {
                         distanceKm: task.distanceKm,
                         budget: `₹${task.budget}`,
                         category: task.category,
-                        time: task.scheduledAt
-                            ? new Date(task.scheduledAt).toLocaleString('en-IN', {
+                        time: (task.scheduledAt || task.createdAt)
+                            ? new Date(task.scheduledAt || task.createdAt).toLocaleString('en-IN', {
                                 weekday: 'short',
                                 hour: 'numeric',
                                 minute: '2-digit'

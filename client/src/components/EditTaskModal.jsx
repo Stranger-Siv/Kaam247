@@ -11,8 +11,6 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
     description: '',
     category: '',
     budget: '',
-    date: '',
-    time: '',
     hours: '',
     fullAddress: ''
   })
@@ -48,14 +46,11 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   // Initialize form data when task changes
   useEffect(() => {
     if (task && isOpen) {
-      const scheduledDate = task.scheduledAt ? new Date(task.scheduledAt) : null
       setFormData({
         title: task.title || '',
         description: task.description || '',
         category: task.category || '',
         budget: task.budget?.toString() || '',
-        date: scheduledDate ? scheduledDate.toISOString().split('T')[0] : '',
-        time: scheduledDate ? scheduledDate.toTimeString().slice(0, 5) : '',
         hours: task.expectedDuration?.toString() || '',
         fullAddress: task.fullAddress || task.location?.fullAddress || ''
       })
@@ -149,19 +144,6 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
     if (!formData.budget || Number(formData.budget) <= 0) errors.budget = 'Budget must be greater than 0'
     if (!locationData.coordinates) errors.location = 'Location is required'
 
-    // If a date is provided, it cannot be in the past
-    if (formData.date) {
-      const selectedDate = new Date(formData.date)
-      const today = new Date()
-      // Normalize both to midnight so we only compare calendar dates
-      selectedDate.setHours(0, 0, 0, 0)
-      today.setHours(0, 0, 0, 0)
-
-      if (selectedDate < today) {
-        errors.date = 'Date cannot be in the past'
-      }
-    }
-
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -192,16 +174,6 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
         throw new Error('User ID not found')
       }
 
-      // Build scheduledAt from date and time
-      let scheduledAt = null
-      if (formData.date) {
-        if (formData.time) {
-          scheduledAt = new Date(`${formData.date}T${formData.time}`).toISOString()
-        } else {
-          scheduledAt = new Date(`${formData.date}T12:00:00`).toISOString()
-        }
-      }
-
       const updateData = {
         posterId: user.id,
         title: formData.title.trim(),
@@ -214,7 +186,6 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
           city: locationData.city,
           fullAddress: formData.fullAddress?.trim() || null
         },
-        scheduledAt: scheduledAt || null,
         expectedDuration: formData.hours ? Number(formData.hours) : null,
         shouldReAlert: shouldReAlert
       }
@@ -252,9 +223,6 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   }
 
   if (!isOpen) return null
-
-  // Today's date in YYYY-MM-DD format for the date input min attribute
-  const todayStr = new Date().toISOString().split('T')[0]
 
   return (
     <div className="fixed inset-0 z-[2000] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
@@ -399,36 +367,6 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
             {fieldErrors.location && (
               <p className="mt-1 text-sm text-red-600">{fieldErrors.location}</p>
             )}
-          </div>
-
-          {/* Date & Time */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date (Optional)
-              </label>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => handleInputChange('date', e.target.value)}
-                min={todayStr}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              {fieldErrors.date && (
-                <p className="mt-1 text-sm text-red-600">{fieldErrors.date}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Time (Optional)
-              </label>
-              <input
-                type="time"
-                value={formData.time}
-                onChange={(e) => handleInputChange('time', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
           </div>
 
           {/* Expected Duration */}

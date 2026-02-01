@@ -145,8 +145,8 @@ function Tasks() {
             distanceKm: task.distanceKm,
             budget: `₹${task.budget}`,
             category: task.category,
-            time: task.scheduledAt
-              ? new Date(task.scheduledAt).toLocaleString('en-IN', {
+            time: (task.scheduledAt || task.createdAt)
+              ? new Date(task.scheduledAt || task.createdAt).toLocaleString('en-IN', {
                 weekday: 'short',
                 hour: 'numeric',
                 minute: '2-digit'

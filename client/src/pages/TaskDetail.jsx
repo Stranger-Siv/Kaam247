@@ -137,8 +137,8 @@ function TaskDetail() {
         distanceKm: backendTask.distanceKm,
         budget: `₹${backendTask.budget}`,
         category: backendTask.category,
-        time: backendTask.scheduledAt
-          ? new Date(backendTask.scheduledAt).toLocaleString('en-IN', {
+        time: (backendTask.scheduledAt || backendTask.createdAt)
+          ? new Date(backendTask.scheduledAt || backendTask.createdAt).toLocaleString('en-IN', {
             weekday: 'short',
             hour: 'numeric',
             minute: '2-digit',

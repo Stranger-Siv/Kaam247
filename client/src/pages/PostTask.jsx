@@ -305,16 +305,12 @@ function PostTask() {
         // This is non-fatal, continue with task creation using map-selected location
       }
 
-      // Use current time for task (no date/time picker)
-      const scheduledAt = new Date(Date.now()).toISOString()
-
-      // Prepare task data with fresh location
+      // Prepare task data with fresh location (createdAt is set by the server)
       const taskData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
         budget: budgetAmount,
-        scheduledAt,
         expectedDuration: formData.hours ? parseInt(formData.hours) : null, // Store hours as number
         location: finalLocation,
         postedBy: userId,

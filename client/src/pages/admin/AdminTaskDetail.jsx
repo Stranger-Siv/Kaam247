@@ -226,12 +226,10 @@ function AdminTaskDetail() {
                   </p>
                 </div>
               )}
-              {task.scheduledAt && (
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Scheduled At</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(task.scheduledAt)}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Posted at</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatDate(task.createdAt)}</p>
+              </div>
               {task.expectedDuration && (
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Expected Duration</p>
@@ -282,11 +280,10 @@ function AdminTaskDetail() {
                 {task.postedBy.status && (
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mt-1 ${
-                      task.postedBy.status === 'active' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' :
-                      task.postedBy.status === 'blocked' ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800' :
-                      'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mt-1 ${task.postedBy.status === 'active' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' :
+                        task.postedBy.status === 'blocked' ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800' :
+                          'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600'
+                      }`}>
                       {task.postedBy.status}
                     </span>
                   </div>
@@ -315,11 +312,10 @@ function AdminTaskDetail() {
                 {task.acceptedBy.status && (
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mt-1 ${
-                      task.acceptedBy.status === 'active' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' :
-                      task.acceptedBy.status === 'blocked' ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800' :
-                      'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border mt-1 ${task.acceptedBy.status === 'active' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' :
+                        task.acceptedBy.status === 'blocked' ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800' :
+                          'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600'
+                      }`}>
                       {task.acceptedBy.status}
                     </span>
                   </div>
