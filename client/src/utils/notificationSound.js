@@ -39,82 +39,68 @@ export function initNotificationSound() {
   getAudioContext()
 }
 
-/** How often to repeat the alarm while the new-task alert is visible (ms). */
-const BELL_REPEAT_INTERVAL_MS = 3500
+/** Buzz every 2 seconds while the new-task alert is visible. */
+const BUZZ_REPEAT_INTERVAL_MS = 2000
 let alertLoopIntervalId = null
 
-/** Urgent alarm: 3 sharp beeps (beep-beep-beep) then a higher warning tone. */
-const BEEP_DURATION = 0.12
-const BEEP_GAP = 0.08
-const BEEP_FREQ = 880
-const WARNING_FREQ = 1320
-const GAIN_LEVEL = 0.28
+/** Single short buzz: 800 Hz, 0.2 s, sine (reliable on all devices). */
+const BUZZ_FREQ = 800
+const BUZZ_DURATION = 0.2
+const BUZZ_GAIN = 0.3
 
-function playBeep(ctx, startTime, freq, duration) {
+function playBuzzNow(ctx) {
+  const t = ctx.currentTime
   const osc = ctx.createOscillator()
   const gain = ctx.createGain()
-  osc.type = 'square'
-  osc.frequency.setValueAtTime(freq, startTime)
-  gain.gain.setValueAtTime(0, startTime)
-  gain.gain.linearRampToValueAtTime(GAIN_LEVEL, startTime + 0.01)
-  gain.gain.setValueAtTime(GAIN_LEVEL, startTime + duration * 0.3)
-  gain.gain.linearRampToValueAtTime(0.01, startTime + duration)
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(BUZZ_FREQ, t)
+  gain.gain.setValueAtTime(0, t)
+  gain.gain.linearRampToValueAtTime(BUZZ_GAIN, t + 0.02)
+  gain.gain.setValueAtTime(BUZZ_GAIN, t + BUZZ_DURATION * 0.5)
+  gain.gain.linearRampToValueAtTime(0.01, t + BUZZ_DURATION)
   osc.connect(gain)
   gain.connect(ctx.destination)
-  osc.start(startTime)
-  osc.stop(startTime + duration)
+  osc.start(t)
+  osc.stop(t + BUZZ_DURATION)
 }
 
 /**
- * Play an urgent alarm (3 quick beeps + warning tone). Safe to call repeatedly.
+ * Play one buzz. Resumes AudioContext first so it actually plays (browsers block until user interaction).
  */
 export function playNotificationBell() {
   try {
     const ctx = getAudioContext()
     if (!ctx) return
 
+    const doPlay = () => playBuzzNow(ctx)
     if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => { })
+      ctx.resume().then(doPlay).catch(() => { })
+    } else {
+      doPlay()
     }
-
-    const t = ctx.currentTime
-
-    // Three sharp beeps - urgent "attention" pattern
-    playBeep(ctx, t, BEEP_FREQ, BEEP_DURATION)
-    playBeep(ctx, t + BEEP_DURATION + BEEP_GAP, BEEP_FREQ, BEEP_DURATION)
-    playBeep(ctx, t + 2 * (BEEP_DURATION + BEEP_GAP), BEEP_FREQ, BEEP_DURATION)
-
-    // Higher warning tone - "urgent"
-    const warnStart = t + 3 * (BEEP_DURATION + BEEP_GAP) + 0.05
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(WARNING_FREQ, warnStart)
-    osc.frequency.setValueAtTime(WARNING_FREQ * 1.2, warnStart + 0.08)
-    gain.gain.setValueAtTime(GAIN_LEVEL * 0.9, warnStart)
-    gain.gain.exponentialRampToValueAtTime(0.01, warnStart + 0.25)
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.start(warnStart)
-    osc.stop(warnStart + 0.25)
-  } catch (_) {
-    // Ignore errors (e.g. autoplay blocked, no Web Audio)
-  }
+  } catch (_) { }
 }
 
 /**
- * Start repeating the alarm until the user accepts/rejects or dismisses the notification.
- * Plays once immediately, then every BELL_REPEAT_INTERVAL_MS.
+ * Start repeating the buzz every 2 sec until the user accepts/rejects or dismisses.
+ * Resumes AudioContext first so the first buzz plays.
  */
 export function startNotificationAlertLoop() {
   if (typeof window === 'undefined') return
   stopNotificationAlertLoop()
   const ctx = getAudioContext()
-  if (ctx && ctx.state === 'suspended') {
-    ctx.resume().catch(() => { })
+  if (!ctx) return
+
+  const scheduleLoop = () => {
+    playNotificationBell()
+    alertLoopIntervalId = setInterval(playNotificationBell, BUZZ_REPEAT_INTERVAL_MS)
   }
-  playNotificationBell()
-  alertLoopIntervalId = setInterval(playNotificationBell, BELL_REPEAT_INTERVAL_MS)
+
+  if (ctx.state === 'suspended') {
+    ctx.resume().then(scheduleLoop).catch(() => { })
+  } else {
+    scheduleLoop()
+  }
 }
 
 /**
