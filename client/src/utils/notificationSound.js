@@ -39,21 +39,15 @@ export function initNotificationSound() {
   getAudioContext()
 }
 
-const BELL_COOLDOWN_MS = 4000
-let lastBellPlayedAt = 0
+/** How often to repeat the bell while the new-task alert is visible (ms). */
+const BELL_REPEAT_INTERVAL_MS = 3500
+let alertLoopIntervalId = null
 
 /**
  * Play a two-tone "ding" (bell-like) notification sound.
- * Call when a new task notification is shown.
- * Throttled: plays at most once every BELL_COOLDOWN_MS so it doesn't keep ringing.
+ * Safe to call repeatedly.
  */
 export function playNotificationBell() {
-  const now = Date.now()
-  if (now - lastBellPlayedAt < BELL_COOLDOWN_MS) {
-    return
-  }
-  lastBellPlayedAt = now
-
   try {
     const ctx = getAudioContext()
     if (!ctx) return
@@ -92,5 +86,26 @@ export function playNotificationBell() {
     osc2.stop(t + 0.4)
   } catch (_) {
     // Ignore errors (e.g. autoplay blocked, no Web Audio)
+  }
+}
+
+/**
+ * Start repeating the bell until the user accepts/rejects or dismisses the notification.
+ * Plays once immediately, then every BELL_REPEAT_INTERVAL_MS.
+ */
+export function startNotificationAlertLoop() {
+  if (typeof window === 'undefined') return
+  stopNotificationAlertLoop()
+  playNotificationBell()
+  alertLoopIntervalId = setInterval(playNotificationBell, BELL_REPEAT_INTERVAL_MS)
+}
+
+/**
+ * Stop the repeating bell (call when user dismisses notification or accepts/rejects task).
+ */
+export function stopNotificationAlertLoop() {
+  if (alertLoopIntervalId != null) {
+    clearInterval(alertLoopIntervalId)
+    alertLoopIntervalId = null
   }
 }

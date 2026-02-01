@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { playNotificationBell, initNotificationSound } from '../utils/notificationSound'
+import { initNotificationSound, startNotificationAlertLoop, stopNotificationAlertLoop } from '../utils/notificationSound'
 
 const NotificationContext = createContext()
 
@@ -44,21 +44,26 @@ export function NotificationProvider({ children }) {
       createdAt: taskData.createdAt || new Date().toISOString()
     }
 
-    // Mark as alerted (so we don't ring again for this task)
+    // Mark as alerted
     setAlertedTaskIds(prev => new Set([...prev, taskId]))
 
-    // Play ringing bell once for this new task
-    playNotificationBell()
+    // Keep ringing until user accepts, rejects, or dismisses
+    startNotificationAlertLoop()
 
     // Add to queue; toast shows one at a time, dismiss shows next
     setNotificationQueue(prev => [...prev, formattedTask])
   }, [alertedTaskIds])
 
   const hideNotification = useCallback(() => {
-    setNotificationQueue(prev => prev.slice(1))
+    setNotificationQueue(prev => {
+      const next = prev.slice(1)
+      if (next.length === 0) stopNotificationAlertLoop()
+      return next
+    })
   }, [])
 
   const dismissAllNotifications = useCallback(() => {
+    stopNotificationAlertLoop()
     setNotificationQueue([])
   }, [])
 
@@ -74,6 +79,7 @@ export function NotificationProvider({ children }) {
   }, [])
 
   const clearAlertedTasks = useCallback(() => {
+    stopNotificationAlertLoop()
     setAlertedTaskIds(new Set())
     setNotificationQueue([])
   }, [])
