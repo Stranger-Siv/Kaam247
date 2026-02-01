@@ -21,8 +21,6 @@ function PostTask() {
     location: '',
     fullAddress: '',
     budget: '',
-    date: '',
-    time: '',
     hours: '',
     validForDays: '7'
   })
@@ -195,18 +193,7 @@ function PostTask() {
       if (!formData.category) errors.category = 'Please select a category'
     } else if (stepNum === 2) {
       if (!formData.location?.trim() && !locationData.coordinates) errors.location = 'Location is required'
-      if (!formData.date) errors.date = 'Date is required'
-      if (!formData.time) errors.time = 'Time is required'
       if (!formData.hours) errors.hours = 'Duration is required'
-
-      // Prevent selecting past date/time
-      if (formData.date && formData.time) {
-        const selected = new Date(`${formData.date}T${formData.time}:00`)
-        const now = new Date()
-        if (selected.getTime() < now.getTime()) {
-          errors.time = 'Time cannot be in the past'
-        }
-      }
     }
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
@@ -246,7 +233,7 @@ function PostTask() {
       return
     }
 
-    // Validate all steps before submit (includes date/time in future check)
+    // Validate all steps before submit
     const step1Valid = validateStep(1)
     const step2Valid = validateStep(2)
     if (!step1Valid || !step2Valid || !formData.budget) {
@@ -318,12 +305,8 @@ function PostTask() {
         // This is non-fatal, continue with task creation using map-selected location
       }
 
-      // Combine date and time into scheduledAt
-      let scheduledAt = null
-      if (formData.date && formData.time) {
-        const dateTimeString = `${formData.date}T${formData.time}:00`
-        scheduledAt = new Date(dateTimeString).toISOString()
-      }
+      // Use current time for task (no date/time picker)
+      const scheduledAt = new Date(Date.now()).toISOString()
 
       // Prepare task data with fresh location
       const taskData = {
@@ -331,7 +314,7 @@ function PostTask() {
         description: formData.description.trim(),
         category: formData.category,
         budget: budgetAmount,
-        scheduledAt: scheduledAt,
+        scheduledAt,
         expectedDuration: formData.hours ? parseInt(formData.hours) : null, // Store hours as number
         location: finalLocation,
         postedBy: userId,
@@ -479,7 +462,7 @@ function PostTask() {
         {/* Step 2: Location & Time */}
         {step === 2 && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">Where and when?</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">Where?</h2>
 
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
@@ -562,63 +545,6 @@ function PostTask() {
                     Drag the marker to set the exact location
                   </p>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
-                  Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => {
-                    handleInputChange('date', e.target.value)
-                    if (fieldErrors.date) setFieldErrors(prev => ({ ...prev, date: null }))
-                  }}
-                  min={new Date().toISOString().split('T')[0]}
-                  max={(() => {
-                    const maxDate = new Date()
-                    maxDate.setDate(maxDate.getDate() + 2)
-                    return maxDate.toISOString().split('T')[0]
-                  })()}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.date
-                    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
-                    : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
-                    }`}
-                  required
-                />
-                {fieldErrors.date ? (
-                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1.5 leading-relaxed">{fieldErrors.date}</p>
-                ) : (
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">Select a date within the next 2 days</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
-                  Time <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="time"
-                  value={formData.time}
-                  onChange={(e) => {
-                    handleInputChange('time', e.target.value)
-                    if (fieldErrors.time) setFieldErrors(prev => ({ ...prev, time: null }))
-                  }}
-                  min={formData.date === new Date().toISOString().split('T')[0]
-                    ? `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`
-                    : undefined}
-                  className={`w-full px-4 sm:px-5 py-3 sm:py-3.5 border rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation ${fieldErrors.time
-                    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
-                    : 'border-gray-200 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400'
-                    }`}
-                  required
-                />
-                {fieldErrors.time ? (
-                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1.5 leading-relaxed">{fieldErrors.time}</p>
-                ) : (
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">Select the preferred time</p>
-                )}
               </div>
 
               <div>

@@ -141,29 +141,33 @@ const createTask = async (req, res) => {
       }
     }
 
-    // Validate scheduledAt date (must be within 2 days from now)
+    // scheduledAt: use provided value or default to now (task is "for now")
+    const now = new Date()
+    let scheduledAtDate = null
     if (scheduledAt) {
-      const scheduledDate = new Date(scheduledAt)
-      const now = new Date()
-      const maxDate = new Date(now)
-      maxDate.setDate(maxDate.getDate() + 2)
-      maxDate.setHours(23, 59, 59, 999) // End of day, 2 days from now
-
-      // Check if scheduled date is in the past
-      if (scheduledDate < now) {
+      scheduledAtDate = new Date(scheduledAt)
+      if (isNaN(scheduledAtDate.getTime())) {
+        return res.status(400).json({
+          error: 'Invalid scheduled date',
+          message: 'scheduledAt must be a valid date'
+        })
+      }
+      // Allow current time only (small tolerance for clock/network delay)
+      const diffMs = scheduledAtDate.getTime() - now.getTime()
+      if (diffMs < -60000) {
         return res.status(400).json({
           error: 'Invalid scheduled date',
           message: 'Task cannot be scheduled in the past'
         })
       }
-
-      // Check if scheduled date is more than 2 days from now
-      if (scheduledDate > maxDate) {
+      if (diffMs > 120000) {
         return res.status(400).json({
           error: 'Invalid scheduled date',
-          message: 'Task can only be scheduled within the next 2 days'
+          message: 'Task must be scheduled for now (no future date/time)'
         })
       }
+    } else {
+      scheduledAtDate = now
     }
 
     // Expiry: every task must have an expiry so it stops showing after that
@@ -193,7 +197,7 @@ const createTask = async (req, res) => {
       description: description.trim(),
       category: category.trim(),
       budget: budgetNumber,
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+      scheduledAt: scheduledAtDate,
       expectedDuration: expectedDurationNumber,
       expiresAt,
       location: {
