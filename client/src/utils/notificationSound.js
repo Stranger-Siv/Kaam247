@@ -1,11 +1,9 @@
 /**
- * Urgent alarm sound for new task notifications.
- * AudioContext is created and resumed on first user gesture (required on iOS/mobile).
+ * Notification buzz for new tasks. Plays without requiring tap/click when the browser allows.
+ * Context is created at load and we try to resume immediately so sound can play on new task.
  */
 
 let audioContext = null
-let unlocked = false
-let unlockListenersAdded = false
 
 function getAudioContext() {
   if (audioContext) return audioContext
@@ -14,7 +12,6 @@ function getAudioContext() {
   if (!Ctx) return null
   try {
     audioContext = new Ctx()
-    addUnlockListeners()
     audioContext.resume().catch(() => { })
   } catch (_) {
     return null
@@ -22,38 +19,12 @@ function getAudioContext() {
   return audioContext
 }
 
-function addUnlockListeners() {
-  if (typeof window === 'undefined' || unlockListenersAdded) return
-  unlockListenersAdded = true
-  const Ctx = window.AudioContext || window.webkitAudioContext
-  if (!Ctx) return
-
-  const unlock = () => {
-    if (!audioContext) {
-      try {
-        audioContext = new Ctx()
-        audioContext.resume().then(() => { unlocked = true }).catch(() => { })
-      } catch (_) { }
-      return
-    }
-    if (audioContext.state === 'suspended') {
-      audioContext.resume().catch(() => { })
-    }
-  }
-
-  const opts = { capture: true }
-  document.addEventListener('click', unlock, opts)
-  document.addEventListener('touchstart', unlock, opts)
-  document.addEventListener('touchend', unlock, opts)
-  document.addEventListener('keydown', unlock, opts)
-}
-
 /**
- * Call once when the app loads. Registers listeners so the first tap/click
- * creates and unlocks the AudioContext (required on mobile).
+ * Call once when the app loads. Creates AudioContext and tries to resume so
+ * notification sound can play without user tap/click when the browser allows it.
  */
 export function initNotificationSound() {
-  addUnlockListeners()
+  getAudioContext()
 }
 
 /** Buzz every 2 seconds while the new-task alert is visible. */
@@ -103,7 +74,6 @@ export function playNotificationBell() {
 export function startNotificationAlertLoop() {
   if (typeof window === 'undefined') return
   stopNotificationAlertLoop()
-  addUnlockListeners()
   const ctx = getAudioContext()
   if (!ctx) return
 
