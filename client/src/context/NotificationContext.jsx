@@ -20,14 +20,17 @@ export function NotificationProvider({ children }) {
   const notification = notificationQueue[0] ?? null
 
   const showNotification = useCallback((taskData) => {
-    // Prevent duplicate alerts
-    if (alertedTaskIds.has(taskData.taskId)) {
-      return // Already alerted, ignore
+    const taskId = taskData.taskId ?? taskData._id ?? taskData.id
+    if (!taskId) return
+
+    // Prevent duplicate alerts for the same task
+    if (alertedTaskIds.has(taskId)) {
+      return
     }
 
     // Format task data for notification
     const formattedTask = {
-      id: taskData.taskId,
+      id: taskId,
       title: taskData.title,
       category: taskData.category,
       budget: taskData.budget,
@@ -41,10 +44,10 @@ export function NotificationProvider({ children }) {
       createdAt: taskData.createdAt || new Date().toISOString()
     }
 
-    // Mark as alerted
-    setAlertedTaskIds(prev => new Set([...prev, taskData.taskId]))
+    // Mark as alerted (so we don't ring again for this task)
+    setAlertedTaskIds(prev => new Set([...prev, taskId]))
 
-    // Play ringing bell for new task
+    // Play ringing bell once for this new task
     playNotificationBell()
 
     // Add to queue; toast shows one at a time, dismiss shows next
