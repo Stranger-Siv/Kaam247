@@ -65,25 +65,22 @@ function playBuzzNow(ctx) {
 }
 
 /**
- * Play one buzz. Resumes AudioContext first so it actually plays (browsers block until user interaction).
+ * Play one buzz at once (0th sec). Schedules immediately; resumes context in background if needed.
  */
 export function playNotificationBell() {
   try {
     const ctx = getAudioContext()
     if (!ctx) return
 
-    const doPlay = () => playBuzzNow(ctx)
+    playBuzzNow(ctx)
     if (ctx.state === 'suspended') {
-      ctx.resume().then(doPlay).catch(() => { })
-    } else {
-      doPlay()
+      ctx.resume().catch(() => { })
     }
   } catch (_) { }
 }
 
 /**
- * Start repeating the buzz every 2 sec until the user accepts/rejects or dismisses.
- * Resumes AudioContext first so the first buzz plays.
+ * Start buzz at 0th sec, then every 2 sec until the user accepts/rejects or dismisses.
  */
 export function startNotificationAlertLoop() {
   if (typeof window === 'undefined') return
@@ -91,16 +88,8 @@ export function startNotificationAlertLoop() {
   const ctx = getAudioContext()
   if (!ctx) return
 
-  const scheduleLoop = () => {
-    playNotificationBell()
-    alertLoopIntervalId = setInterval(playNotificationBell, BUZZ_REPEAT_INTERVAL_MS)
-  }
-
-  if (ctx.state === 'suspended') {
-    ctx.resume().then(scheduleLoop).catch(() => { })
-  } else {
-    scheduleLoop()
-  }
+  playNotificationBell()
+  alertLoopIntervalId = setInterval(playNotificationBell, BUZZ_REPEAT_INTERVAL_MS)
 }
 
 /**
