@@ -11,6 +11,7 @@ import TaskCardSkeleton from '../components/TaskCardSkeleton'
 import { API_BASE_URL } from '../config/env'
 import { performStateRecovery } from '../utils/stateRecovery'
 import { reverseGeocode } from '../utils/geocoding'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 
 function Dashboard() {
     const { userMode } = useUserMode()
@@ -990,8 +991,26 @@ function Dashboard() {
         }
     }, [isOnline, userMode, getSocket])
 
+    // Pull-to-refresh handler
+    const handleRefresh = useCallback(() => {
+        if (userMode === 'worker') {
+            fetchAcceptedTasks()
+            fetchAvailableTasks()
+        } else {
+            fetchPostedTasks()
+            fetchPosterStats()
+        }
+    }, [userMode, fetchAcceptedTasks, fetchAvailableTasks, fetchPostedTasks, fetchPosterStats])
+
+    // Pull-to-refresh hook
+    const pullToRefreshRef = usePullToRefresh(handleRefresh, 80)
+
     return (
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 overflow-x-hidden">
+        <div
+            ref={pullToRefreshRef}
+            className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 overflow-x-hidden"
+            style={{ touchAction: 'pan-y' }}
+        >
             {userMode === 'worker' ? (
                 <>
                     {/* Location Requirement Block */}

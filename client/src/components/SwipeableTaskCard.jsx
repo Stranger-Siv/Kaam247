@@ -1,0 +1,216 @@
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import StatusBadge from './StatusBadge'
+import { API_BASE_URL } from '../config/env'
+import { useAuth } from '../context/AuthContext'
+import { useAvailability } from '../context/AvailabilityContext'
+import { useUserMode } from '../context/UserModeContext'
+
+function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved }) {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const { userMode } = useUserMode()
+  const { isOnline, checkActiveTask } = useAvailability()
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const [isAccepting, setIsAccepting] = useState(false)
+  const [isBookmarking, setIsBookmarking] = useState(false)
+  const cardRef = useRef(null)
+  const touchStartRef = useRef(null)
+  const touchStartTimeRef = useRef(null)
+  const currentSwipeOffsetRef = useRef(0)
+
+  // Handle accept task
+  const handleAcceptTask = useCallback(async () => {
+    if (isAccepting || userMode !== 'worker' || !isOnline) return
+
+    // Check if user has active task
+    try {
+      const activeTask = await checkActiveTask()
+      if (activeTask?.hasActiveTask) {
+        setSwipeOffset(0)
+        return
+      }
+    } catch {
+      setSwipeOffset(0)
+      return
+    }
+
+    setIsAccepting(true)
+    try {
+      const token = localStorage.getItem('kaam247_token')
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${task.id}/accept`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ workerId: user?.id })
+      })
+
+      if (response.ok) {
+        if (onTaskAccepted) onTaskAccepted(task.id)
+        navigate(`/tasks/${task.id}`)
+      } else {
+        setSwipeOffset(0)
+      }
+    } catch (err) {
+      setSwipeOffset(0)
+    } finally {
+      setIsAccepting(false)
+    }
+  }, [userMode, isOnline, isAccepting, task.id, user?.id, navigate, onTaskAccepted, checkActiveTask])
+
+  // Handle swipe gestures manually for better control
+  useEffect(() => {
+    const card = cardRef.current
+    if (!card || userMode !== 'worker') return
+
+    const handleTouchStart = (e) => {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      }
+      touchStartTimeRef.current = Date.now()
+      currentSwipeOffsetRef.current = swipeOffset
+    }
+
+    const handleTouchMove = (e) => {
+      if (!touchStartRef.current) return
+
+      const deltaX = e.touches[0].clientX - touchStartRef.current.x
+      const deltaY = Math.abs(e.touches[0].clientY - touchStartRef.current.y)
+
+      // Only allow horizontal swipe if it's more horizontal than vertical
+      if (Math.abs(deltaX) > deltaY && Math.abs(deltaX) > 10) {
+        e.preventDefault()
+        // Limit swipe distance
+        const maxSwipe = 120
+        const clampedX = Math.max(-maxSwipe, Math.min(maxSwipe, deltaX))
+        setSwipeOffset(clampedX)
+        currentSwipeOffsetRef.current = clampedX
+      }
+    }
+
+    const handleTouchEnd = () => {
+      if (!touchStartRef.current) return
+
+      const deltaX = currentSwipeOffsetRef.current
+      const deltaTime = Date.now() - (touchStartTimeRef.current || Date.now())
+      const velocity = deltaTime > 0 ? Math.abs(deltaX) / deltaTime : 0
+
+      // Swipe right (accept) - only for workers
+      if (deltaX > 80 && velocity > 0.3 && userMode === 'worker' && isOnline && !isAccepting) {
+        handleAcceptTask()
+      } else {
+        // Snap back
+        setSwipeOffset(0)
+        currentSwipeOffsetRef.current = 0
+      }
+
+      touchStartRef.current = null
+      touchStartTimeRef.current = null
+    }
+
+    card.addEventListener('touchstart', handleTouchStart, { passive: true })
+    card.addEventListener('touchmove', handleTouchMove, { passive: false })
+    card.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      card.removeEventListener('touchstart', handleTouchStart)
+      card.removeEventListener('touchmove', handleTouchMove)
+      card.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [userMode, isOnline, isAccepting, handleAcceptTask])
+
+  return (
+    <div
+      ref={cardRef}
+      className="relative overflow-hidden"
+      style={{
+        transform: `translateX(${swipeOffset}px)`,
+        transition: swipeOffset === 0 ? 'transform 0.3s ease-out' : 'none'
+      }}
+    >
+      {/* Swipe indicators */}
+      {swipeOffset > 0 && (
+        <div className="absolute left-0 top-0 bottom-0 w-20 bg-green-500 dark:bg-green-600 flex items-center justify-center z-10">
+          <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      )}
+      {swipeOffset < 0 && (
+        <div className="absolute right-0 top-0 bottom-0 w-20 bg-blue-500 dark:bg-blue-600 flex items-center justify-center z-10">
+          <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+          </svg>
+        </div>
+      )}
+
+      <Link
+        to={`/tasks/${task.id}`}
+        className={`group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 active:bg-gray-50 dark:active:bg-gray-700 w-full overflow-hidden block ${task.isNew
+            ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20'
+            : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
+          }`}
+      >
+        <div className="flex items-start justify-between mb-4 sm:mb-5 gap-2 sm:gap-3 w-full min-w-0">
+          <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-gray-100 flex-1 pr-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 break-words min-w-0 leading-tight">
+            {task.title}
+          </h3>
+          <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
+            {task.category}
+          </span>
+        </div>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 sm:mb-5 line-clamp-2 leading-relaxed break-words w-full">
+          {task.description}
+        </p>
+        <div className="space-y-2.5 sm:space-y-3 mb-4 sm:mb-5 w-full">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-300 w-full">
+            <svg className="h-4 w-4 text-gray-400 dark:text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {task.distance && task.distance !== 'Distance unavailable' && (
+              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-lg whitespace-nowrap border border-blue-100 dark:border-blue-800">
+                {task.distance}
+              </span>
+            )}
+            <span className="break-words min-w-0">{task.location}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full">
+            <div className="flex items-center gap-1.5 text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
+              <svg className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {task.budget}
+            </div>
+            <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+              <svg className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{task.time}</span>
+            </div>
+          </div>
+        </div>
+        <div className="pt-4 sm:pt-5 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between w-full">
+          <StatusBadge status={task.status} />
+          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </Link>
+
+      {/* Mobile swipe hint (only show on mobile, first few times) */}
+      {userMode === 'worker' && typeof window !== 'undefined' && window.innerWidth < 768 && (
+        <div className="md:hidden mt-2 text-center">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Swipe right to accept • Swipe left to view
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default SwipeableTaskCard
