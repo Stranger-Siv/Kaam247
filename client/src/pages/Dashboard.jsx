@@ -956,7 +956,7 @@ function Dashboard() {
 
                     {/* Task Stats - Worker Mode */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6 mb-10 sm:mb-12 lg:mb-14">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -969,7 +969,7 @@ function Dashboard() {
                                 {isOnline ? availableTasks.length : 0}
                             </p>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-orange-50 dark:bg-orange-900/30 rounded-xl flex-shrink-0">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -980,7 +980,7 @@ function Dashboard() {
                             </div>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{acceptedTasks.filter(t => t.status === 'accepted' || t.status === 'in_progress').length}</p>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl flex-shrink-0">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -991,7 +991,7 @@ function Dashboard() {
                             </div>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{acceptedTasks.filter(t => t.status === 'completed').length}</p>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-purple-50 dark:bg-purple-900/30 rounded-xl flex-shrink-0">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1002,7 +1002,7 @@ function Dashboard() {
                             </div>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">₹{workerStats.earningsThisMonth}</p>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl flex-shrink-0">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -1085,7 +1085,7 @@ function Dashboard() {
                                         to={`/tasks/${task.id}`}
                                         className={`group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 ${task.isNew || newTaskHighlightRef.current.has(task.id)
                                             ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20'
-                                            : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
                                             }`}
                                     >
                                         <div className="flex items-start justify-between mb-4">
@@ -1113,7 +1113,7 @@ function Dashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                                             <StatusBadge status="open" />
                                             <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -1123,7 +1123,7 @@ function Dashboard() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-200 dark:border-gray-700">
                                 <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
@@ -1167,7 +1167,7 @@ function Dashboard() {
                                     <Link
                                         key={task.id}
                                         to={`/tasks/${task.id}`}
-                                        className="group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600"
+                                        className="group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 border-gray-200 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600"
                                     >
                                         <div className="flex items-start justify-between mb-4">
                                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1 pr-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
@@ -1194,7 +1194,7 @@ function Dashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                                             <StatusBadge status={task.status} />
                                             <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -1204,7 +1204,7 @@ function Dashboard() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-200 dark:border-gray-700">
                                 <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -1240,7 +1240,7 @@ function Dashboard() {
 
                     {/* Task Stats - Poster Mode */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mb-10 sm:mb-12 lg:mb-14">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1251,7 +1251,7 @@ function Dashboard() {
                             </div>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{posterStats.tasksPosted}</p>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-orange-50 dark:bg-orange-900/30 rounded-xl flex-shrink-0">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1262,7 +1262,7 @@ function Dashboard() {
                             </div>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{posterStats.inProgress}</p>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl flex-shrink-0">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1273,7 +1273,7 @@ function Dashboard() {
                             </div>
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{posterStats.completed}</p>
                         </div>
-                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-red-50 dark:bg-red-900/30 rounded-xl flex-shrink-0">
                                     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1299,7 +1299,7 @@ function Dashboard() {
                                     <Link
                                         key={task.id}
                                         to={`/tasks/${task.id}`}
-                                        className="group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600"
+                                        className="group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 border-gray-200 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600"
                                     >
                                         <div className="flex items-start justify-between mb-4">
                                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1 pr-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
@@ -1326,7 +1326,7 @@ function Dashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <StatusBadge status={task.status} />
                                                 {task.status === 'open' && (
@@ -1348,7 +1348,7 @@ function Dashboard() {
                                 ))}
                             </div>
                         ) : (
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-200 dark:border-gray-700">
                                 <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>

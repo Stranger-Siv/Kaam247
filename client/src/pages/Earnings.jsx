@@ -62,7 +62,7 @@ function Earnings() {
         if (!response.ok) throw new Error('Failed to fetch earnings')
         const data = await response.json()
         setEarnings(data.earnings)
-        } catch (err) {
+      } catch (err) {
         setError(err.message || 'Failed to load earnings')
       } finally {
         setLoading(false)
@@ -181,7 +181,7 @@ function Earnings() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Calendar */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {viewMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
@@ -259,7 +259,7 @@ function Earnings() {
 
         {/* Earnings & Activity for selected date */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-6">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Earnings on {formatDateLabel(selectedDate)}</p>
             <p className="text-3xl font-bold text-green-600 dark:text-green-400">₹{earningsForSelected}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -267,7 +267,7 @@ function Earnings() {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Activity on {formatDateLabel(selectedDate)}</h2>
             </div>

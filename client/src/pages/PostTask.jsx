@@ -364,7 +364,7 @@ function PostTask() {
 
         {/* Step 1: Basic Details */}
         {step === 1 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">What task do you need help with?</h2>
 
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
@@ -457,7 +457,7 @@ function PostTask() {
 
         {/* Step 2: Location & Time */}
         {step === 2 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">Where?</h2>
 
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
@@ -612,7 +612,7 @@ function PostTask() {
 
         {/* Step 3: Budget */}
         {step === 3 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">Set your budget</h2>
 
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">

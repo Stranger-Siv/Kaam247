@@ -152,7 +152,7 @@ function Login() {
 
                 {/* Right Side - Login Form */}
                 <div className="w-full">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 sm:p-8 lg:p-10 border border-gray-100 dark:border-gray-700">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 sm:p-8 lg:p-10 border border-gray-200 dark:border-gray-700">
                         <div className="text-center mb-8">
                             <div className="lg:hidden mb-4">
                                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">

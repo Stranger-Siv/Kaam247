@@ -433,7 +433,7 @@ function Profile() {
             </div>
 
             {/* Overview card - avatar, name, location, member since, quick actions */}
-            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
                     <div className="flex items-center gap-3 sm:gap-4">
                         <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-full flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
@@ -491,7 +491,7 @@ function Profile() {
                 <div className={`grid gap-4 sm:gap-5 ${userMode === 'worker' ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'}`}>
                     {userMode === 'worker' ? (
                         <>
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
                                         <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -502,7 +502,7 @@ function Profile() {
                                 </div>
                                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.tasksCompleted}</p>
                             </div>
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl flex-shrink-0">
                                         <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -513,7 +513,7 @@ function Profile() {
                                 </div>
                                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">₹{stats.earnings}</p>
                             </div>
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200 sm:col-span-1 col-span-2">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200 sm:col-span-1 col-span-2">
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2.5 bg-yellow-50 dark:bg-yellow-900/30 rounded-xl flex-shrink-0">
                                         <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -530,7 +530,7 @@ function Profile() {
                         </>
                     ) : (
                         <>
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
                                         <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -541,7 +541,7 @@ function Profile() {
                                 </div>
                                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-none">{stats.tasksPosted}</p>
                             </div>
-                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl flex-shrink-0">
                                         <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -561,7 +561,7 @@ function Profile() {
             {userMode === 'worker' && profile?.workerPreferences && (
                 <div className="mb-4 sm:mb-6">
                     <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Worker preferences</h2>
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-5 sm:p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Customise how tasks are shown on the Tasks page. Your default radius is used when you open Tasks; preferred categories are shown first.</p>
                         <div className="space-y-4 sm:space-y-5">
                             <div>
@@ -626,7 +626,7 @@ function Profile() {
             {/* Push notifications */}
             <div className="mb-4 sm:mb-6">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">Notifications</h2>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 p-5 sm:p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Get push notifications for new tasks, when someone accepts your task, and reminders (e.g. task in 1 hour).</p>
                     {pushPermission === 'granted' ? (
                         <p className="text-sm text-green-600 dark:text-green-400 font-medium">Push notifications are enabled.</p>
@@ -647,7 +647,7 @@ function Profile() {
             </div>
 
             {/* Account details card */}
-            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Account details</h2>
                 <div className="space-y-4 sm:space-y-5">
                     <div>
@@ -698,7 +698,7 @@ function Profile() {
             </div>
 
             {/* Account actions: Mode toggle + Logout - visible on all screens */}
-            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-5 sm:p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Account</h2>
                 <div className="space-y-4">
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">

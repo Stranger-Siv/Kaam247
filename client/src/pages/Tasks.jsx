@@ -317,7 +317,7 @@ function Tasks() {
           <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-relaxed break-words">Go online (ON DUTY) to see tasks near you</p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-200 dark:border-gray-700">
           <svg className="w-14 h-14 sm:w-16 sm:h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6l4 2" />
           </svg>
@@ -394,7 +394,7 @@ function Tasks() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm dark:shadow-gray-900/50 sm:shadow-md p-4 sm:p-5 lg:p-6 mb-5 sm:mb-6 lg:mb-8 border border-gray-100 dark:border-gray-700 w-full">
+      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm dark:shadow-gray-900/50 sm:shadow-md p-4 sm:p-5 lg:p-6 mb-5 sm:mb-6 lg:mb-8 border border-gray-200 dark:border-gray-700 w-full">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
           {/* Category Filter */}
           <div className="flex flex-col gap-2">
@@ -507,7 +507,7 @@ function Tasks() {
           ))}
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-200 dark:border-gray-700">
           {error ? (
             <>
               <svg className="h-14 w-14 sm:h-16 sm:w-16 text-red-300 dark:text-red-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

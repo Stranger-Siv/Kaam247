@@ -46,7 +46,7 @@ function Activity() {
 
       // Use backend data as-is - backend already categorizes and assigns roles correctly
       setActivity(apiActivity)
-      } catch (err) {
+    } catch (err) {
       setError(err.message || 'Failed to load activity')
     } finally {
       setLoading(false)
@@ -166,7 +166,7 @@ function Activity() {
       </div>
 
       {/* Tabs - Mobile Scrollable (contained) */}
-      <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-lg shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 mb-4 sm:mb-6 overflow-hidden w-full">
+      <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-lg shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 mb-4 sm:mb-6 overflow-hidden w-full">
         <div className="flex overflow-x-auto scrollbar-hide w-full">
           {tabs.map((tab) => (
             <button
@@ -186,7 +186,7 @@ function Activity() {
 
       {/* Task List */}
       {currentTasks.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-100 dark:border-gray-700 p-16 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 p-16 text-center">
           <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
@@ -199,7 +199,7 @@ function Activity() {
             <Link
               key={task.id}
               to={`/tasks/${task.id}`}
-              className="group block bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-2 border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-md transition-all duration-200 p-4 sm:p-6 active:bg-gray-50 dark:active:bg-gray-700 w-full overflow-hidden"
+              className="group block bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-2 border-gray-200 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-md transition-all duration-200 p-4 sm:p-6 active:bg-gray-50 dark:active:bg-gray-700 w-full overflow-hidden"
             >
               {/* Title and Badges Row */}
               <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 w-full min-w-0">

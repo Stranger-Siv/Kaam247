@@ -226,7 +226,7 @@ function ColdStartChecker({ children }) {
 
                 <div className="max-w-2xl w-full relative z-10">
                     {/* Main Card */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl dark:shadow-gray-900/50 p-6 sm:p-8 md:p-10 lg:p-12 text-center border border-gray-100 dark:border-gray-700 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl dark:shadow-gray-900/50 p-6 sm:p-8 md:p-10 lg:p-12 text-center border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
                         {/* Logo/Icon with Animation */}
                         <div className="mb-6 sm:mb-8">
                             <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300">
@@ -261,7 +261,7 @@ function ColdStartChecker({ children }) {
                         {/* Progress Bar */}
                         <div className="mb-6 sm:mb-8">
                             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 sm:h-2.5 mb-2 overflow-hidden">
-                                <div 
+                                <div
                                     className="bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-400 dark:to-purple-500 h-2 sm:h-2.5 rounded-full transition-all duration-500 ease-out shadow-lg"
                                     style={{ width: `${progress}%` }}
                                 >
@@ -275,7 +275,7 @@ function ColdStartChecker({ children }) {
 
                         {/* Feature Card with Animation */}
                         <div className="mb-6 sm:mb-8">
-                            <div 
+                            <div
                                 key={currentFeatureIndex}
                                 className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-800 rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 border border-blue-100 dark:border-gray-600 shadow-lg transform transition-all duration-500 ease-in-out animate-fade-in"
                             >
@@ -321,11 +321,10 @@ function ColdStartChecker({ children }) {
                         {features.map((_, index) => (
                             <div
                                 key={index}
-                                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
-                                    index === currentFeatureIndex
+                                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${index === currentFeatureIndex
                                         ? 'bg-blue-500 dark:bg-blue-400 w-5 sm:w-6'
                                         : 'bg-gray-300 dark:bg-gray-600 w-1.5 sm:w-2'
-                                }`}
+                                    }`}
                             />
                         ))}
                     </div>

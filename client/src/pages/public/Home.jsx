@@ -7,17 +7,22 @@ function Home() {
   const categories = [
     { name: 'Cleaning', icon: '🧹' },
     { name: 'Delivery', icon: '📦' },
+    { name: 'Helper / Labour', icon: '👷' },
     { name: 'Moving help', icon: '🚚' },
     { name: 'Tech help', icon: '💻' },
     { name: 'Tutoring', icon: '📚' },
     { name: 'Errands', icon: '🏃' },
-    { name: 'Custom tasks', icon: '✨' }
+    {
+      name: 'Custom Task',
+      icon: '✨',
+      description: 'Anything else you need help with',
+    },
   ]
 
   return (
-    <div className="bg-white dark:bg-gray-950">
+    <div className="bg-slate-50 dark:bg-gray-950">
       {/* SECTION 1: HERO */}
-      <section className="bg-white dark:bg-gray-950 py-10 sm:py-14 lg:py-20 px-4 sm:px-6 lg:px-8">
+      <section className="bg-gradient-to-b from-white to-slate-50 dark:from-gray-950 dark:to-gray-950 border-b border-gray-100 dark:border-gray-800 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-5 lg:mb-6 leading-tight tracking-tight">
             Get local help for everyday tasks — fast.
@@ -44,7 +49,7 @@ function Home() {
       </section>
 
       {/* SECTION 2: WHAT IS KAAM247? */}
-      <section className="bg-gray-50 dark:bg-gray-900 py-10 sm:py-14 lg:py-18 px-4 sm:px-6 lg:px-8">
+      <section className="bg-gray-50 dark:bg-gray-900 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-8 sm:mb-10 lg:mb-12">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3 leading-tight">
@@ -65,6 +70,11 @@ function Home() {
                 <span className="text-xs sm:text-sm lg:text-base font-medium text-gray-800 dark:text-gray-100 leading-tight block">
                   {category.name}
                 </span>
+                {category.description && (
+                  <span className="mt-1 text-[10px] sm:text-xs text-gray-500 dark:text-gray-300 leading-snug block">
+                    {category.description}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -72,7 +82,7 @@ function Home() {
       </section>
 
       {/* SECTION 3: HOW IT WORKS (DUAL FLOW) */}
-      <section className="bg-white dark:bg-gray-950 py-10 sm:py-14 lg:py-18 px-4 sm:px-6 lg:px-8">
+      <section className="bg-white dark:bg-gray-950 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8 sm:mb-10 lg:mb-12">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3 leading-tight">
@@ -93,7 +103,7 @@ function Home() {
                 </h3>
               </div>
               <div className="space-y-4 sm:space-y-5">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
                     <span className="text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-300">1</span>
                   </div>
@@ -103,7 +113,7 @@ function Home() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 py-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
                     <span className="text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-300">2</span>
                   </div>
@@ -113,7 +123,7 @@ function Home() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 pt-3">
                   <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
                     <span className="text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-300">3</span>
                   </div>
@@ -135,7 +145,7 @@ function Home() {
                 </h3>
               </div>
               <div className="space-y-4 sm:space-y-5">
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
                     <span className="text-xs sm:text-sm font-bold text-green-700 dark:text-green-300">1</span>
                   </div>
@@ -145,7 +155,7 @@ function Home() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 py-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
                     <span className="text-xs sm:text-sm font-bold text-green-700 dark:text-green-300">2</span>
                   </div>
@@ -155,7 +165,7 @@ function Home() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 pt-3">
                   <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
                     <span className="text-xs sm:text-sm font-bold text-green-700 dark:text-green-300">3</span>
                   </div>
@@ -172,7 +182,7 @@ function Home() {
       </section>
 
       {/* SECTION 4: WHY KAAM247? */}
-      <section className="bg-gray-50 dark:bg-gray-900 py-10 sm:py-14 lg:py-18 px-4 sm:px-6 lg:px-8">
+      <section className="bg-gray-50 dark:bg-gray-900 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8 sm:mb-10 lg:mb-12">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3 leading-tight">
@@ -226,7 +236,7 @@ function Home() {
       </section>
 
       {/* SECTION 5: SAFETY & CONTROL */}
-      <section className="bg-white dark:bg-gray-950 py-10 sm:py-14 lg:py-18 px-4 sm:px-6 lg:px-8">
+      <section className="bg-white dark:bg-gray-950 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8 sm:mb-10">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3 leading-tight">
