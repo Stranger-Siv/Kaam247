@@ -37,11 +37,11 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:flex-col md:w-64 md:fixed md:inset-y-0 md:bg-white dark:md:bg-gray-800 md:border-r md:border-gray-200 dark:md:border-gray-700 md:shadow-sm">
-        <div className="flex-1 flex flex-col pt-6 pb-4 overflow-y-auto">
+      {/* Desktop Sidebar - only on large screens so 11 items fit; scrollable on short viewports */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:bg-white dark:lg:bg-gray-800 lg:border-r lg:border-gray-200 dark:lg:border-gray-700 lg:shadow-sm">
+        <div className="flex-1 flex flex-col min-h-0 pt-6 pb-4">
           {/* Logo */}
-          <div className="flex items-center flex-shrink-0 px-6 mb-8">
+          <div className="flex items-center flex-shrink-0 px-6 mb-4">
             <Link to="/admin" className="flex items-center gap-2.5">
               <img
                 src="/logo.svg"
@@ -52,8 +52,8 @@ function AdminLayout() {
             </Link>
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 px-4 space-y-1">
+          {/* Navigation - scrollable when many items */}
+          <nav className="flex-1 min-h-0 overflow-y-auto px-4 space-y-1">
             {menuItems.map((item) => (
               <Link
                 key={item.path}
@@ -70,7 +70,7 @@ function AdminLayout() {
           </nav>
 
           {/* User Info & Logout */}
-          <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 dark:text-blue-400 text-sm font-semibold">
@@ -95,10 +95,10 @@ function AdminLayout() {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col md:pl-64">
-        {/* Mobile Header */}
-        <header className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm dark:shadow-gray-900/50">
+      {/* Main Content - pl-64 only when sidebar is visible (lg+) */}
+      <div className="flex-1 flex flex-col lg:pl-64">
+        {/* Mobile & medium: Header with hamburger (sidebar is drawer) */}
+        <header className="lg:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm dark:shadow-gray-900/50">
           <div className="flex items-center justify-between px-4 h-16">
             <Link to="/admin" className="flex items-center gap-2.5">
               <img
@@ -140,95 +140,77 @@ function AdminLayout() {
             </div>
           </div>
 
-          {/* Mobile Sidebar Overlay */}
+          {/* Mobile & medium: Sidebar drawer (all 11 items scrollable) */}
           {isSidebarOpen && (
             <>
               <div
-                className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                className="fixed inset-0 bg-black/50 z-40"
                 onClick={() => setIsSidebarOpen(false)}
+                aria-hidden="true"
               />
-              <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-900 z-50 overflow-y-auto">
-                <div className="flex flex-col h-full">
-                  <nav className="flex-1 px-3 py-4 space-y-1">
-                    {menuItems.map((item) => (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setIsSidebarOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive(item.path)
-                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                          }`}
-                      >
-                        <span className="text-lg">{item.icon}</span>
-                        {item.label}
-                      </Link>
-                    ))}
-                  </nav>
-                  <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 dark:text-blue-400 text-sm font-semibold">
-                          {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                          {user?.name || 'Admin'}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Admin</p>
-                      </div>
-                      <ThemeToggle />
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors border border-red-200 dark:border-red-800"
+              <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 z-50 flex flex-col shadow-xl">
+                <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">Menu</span>
+                  <button
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    aria-label="Close menu"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+                <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1">
+                  {menuItems.map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors min-h-[44px] ${isActive(item.path)
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
                     >
-                      Logout
-                    </button>
+                      <span className="text-lg">{item.icon}</span>
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+                <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 dark:text-blue-400 text-sm font-semibold">
+                        {user?.name?.charAt(0)?.toUpperCase() || 'A'}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {user?.name || 'Admin'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Admin</p>
+                    </div>
+                    <ThemeToggle />
                   </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors border border-red-200 dark:border-red-800"
+                  >
+                    Logout
+                  </button>
                 </div>
               </div>
-            </>
-          )}
-        </header>
-
-        {/* Mobile Bottom Tab Bar */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-[999] shadow-lg dark:shadow-gray-900/50 safe-area-inset-bottom">
-          <div className="flex">
-            {menuItems.map((item) => {
-              const active = isActive(item.path)
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex-1 flex flex-col items-center justify-center py-2.5 px-2 text-[10px] font-medium transition-colors min-h-[64px] touch-manipulation ${active
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700'
-                    }`}
-                >
-                  <span className={`text-xl mb-1 transition-transform ${active ? 'scale-110' : ''}`}>
-                    {item.icon}
-                  </span>
-                  <span className="text-[10px] leading-tight">{item.label}</span>
-                </Link>
-              )
-            })}
-            {/* Theme Toggle in Mobile Bottom Nav */}
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <ThemeToggle mobile={true} />
             </div>
-          </div>
-        </nav>
+        </>
+          )}
+      </header>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6 overflow-x-hidden">
-          <div className="max-w-7xl mx-auto px-[6px] sm:px-5 lg:px-7 py-4 sm:py-6 lg:py-8 w-full overflow-x-hidden">
-            <Outlet />
-          </div>
-        </main>
-      </div>
+      {/* Page Content - no bottom nav so no extra pb on mobile */}
+      <main className="flex-1 overflow-y-auto pb-6 overflow-x-hidden">
+        <div className="max-w-7xl mx-auto px-[6px] sm:px-5 lg:px-7 py-4 sm:py-6 lg:py-8 w-full overflow-x-hidden">
+          <Outlet />
+        </div>
+      </main>
     </div>
+    </div >
   )
 }
 
