@@ -15,10 +15,8 @@ function PostTask() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
-  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false)
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
   const [templateName, setTemplateName] = useState('')
-  const [savingTemplate, setSavingTemplate] = useState(false)
-  const [lastCreatedTask, setLastCreatedTask] = useState(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -372,19 +370,37 @@ function PostTask() {
       const data = await response.json()
       const taskId = data.task._id
 
-      // Store task data for potential template saving
-      setLastCreatedTask({
-        id: taskId,
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        category: formData.category,
-        budget: budgetAmount,
-        expectedDuration: formData.hours ? parseInt(formData.hours) : null,
-        location: finalLocation
-      })
+      // Optionally save as template (non-blocking)
+      if (saveAsTemplate) {
+        try {
+          const token = localStorage.getItem('kaam247_token')
+          if (token) {
+            const templatePayload = {
+              name: (templateName || formData.title || 'Task template').trim().slice(0, 50),
+              title: formData.title.trim(),
+              description: formData.description.trim(),
+              category: formData.category,
+              budget: budgetAmount,
+              expectedDuration: formData.hours ? parseInt(formData.hours) : null,
+              location: finalLocation
+            }
 
-      // Show save template option instead of immediate redirect
-      setShowSaveTemplateModal(true)
+            await fetch(`${API_BASE_URL}/api/users/me/templates`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify(templatePayload)
+            }).catch(() => { })
+          }
+        } catch {
+          // Ignore template save errors so posting is not blocked
+        }
+      }
+
+      // Redirect to task detail page
+      navigate(`/tasks/${taskId}`)
     } catch (err) {
       // Provide more specific error messages
       let errorMessage = 'Failed to post task. Please try again.'
@@ -400,49 +416,7 @@ function PostTask() {
     }
   }
 
-  const handleSaveTemplate = async () => {
-    if (!templateName.trim() || !lastCreatedTask) return
-
-    try {
-      setSavingTemplate(true)
-      const token = localStorage.getItem('kaam247_token')
-      const response = await fetch(`${API_BASE_URL}/api/users/me/templates`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: templateName.trim(),
-          ...lastCreatedTask
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || 'Failed to save template')
-      }
-
-      // Close modal and redirect
-      setShowSaveTemplateModal(false)
-      navigate(`/tasks/${lastCreatedTask.id || ''}`)
-    } catch (err) {
-      const errorMsg = err.message || 'Failed to save template'
-      setError(errorMsg)
-      // Keep modal open so user can try again
-    } finally {
-      setSavingTemplate(false)
-    }
-  }
-
-  const handleSkipTemplate = () => {
-    setShowSaveTemplateModal(false)
-    if (lastCreatedTask?.id) {
-      navigate(`/tasks/${lastCreatedTask.id}`)
-    } else {
-      navigate('/dashboard')
-    }
-  }
+  // No separate template save step anymore – handled inside handleSubmit when saveAsTemplate is true
 
   return (
     <div className="max-w-3xl mx-auto w-full overflow-x-hidden px-4 sm:px-6">
@@ -535,7 +509,39 @@ function PostTask() {
               </div>
             </div>
 
-            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:justify-end">
+            {/* Save as template option */}
+            <div className="mt-8 sm:mt-9 border-t border-dashed border-gray-200 dark:border-gray-700 pt-4 sm:pt-5">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={saveAsTemplate}
+                  onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    Save this setup as a template
+                  </p>
+                  <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Next time you can start from this task instead of filling everything again.
+                  </p>
+                  {saveAsTemplate && (
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        value={templateName}
+                        onChange={(e) => setTemplateName(e.target.value)}
+                        placeholder="Template name (optional, e.g., Weekly Cleaning)"
+                        className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                        maxLength={50}
+                      />
+                    </div>
+                  )}
+                </div>
+              </label>
+            </div>
+
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:justify-end">
               <button
                 type="button"
                 onClick={handleNext}
@@ -757,55 +763,6 @@ function PostTask() {
           </div>
         )}
       </form>
-
-      {/* Save Template Modal */}
-      {showSaveTemplateModal && lastCreatedTask && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Save as Template?
-            </h3>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
-              Save this task as a template to quickly repost it later.
-            </p>
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-              </div>
-            )}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Template Name
-              </label>
-              <input
-                type="text"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                placeholder="e.g., Weekly Cleaning"
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base"
-                maxLength={50}
-                autoFocus
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleSkipTemplate}
-                disabled={savingTemplate}
-                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-              >
-                Skip
-              </button>
-              <button
-                onClick={handleSaveTemplate}
-                disabled={savingTemplate || !templateName.trim()}
-                className="flex-1 px-4 py-2.5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {savingTemplate ? 'Saving...' : 'Save Template'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
