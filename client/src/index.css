@@ -26,14 +26,15 @@ html:not(.dark) body {
   /* gray-50 */
 }
 
-/* Dark mode keeps solid background driven by Tailwind classes */
+/* Dark mode - neutral charcoal instead of blue-tinted gray */
 html.dark {
-  background-color: #020617;
-  /* slate-950 */
+  background-color: #0a0a0a;
+  /* True black/charcoal */
+  color-scheme: dark;
 }
 
 html.dark body {
-  background: #020617;
+  background: #0a0a0a;
 }
 
 body {
