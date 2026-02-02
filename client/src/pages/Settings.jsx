@@ -350,7 +350,6 @@ function Settings() {
                   <option value={1}>Within 1 km</option>
                   <option value={3}>Within 3 km</option>
                   <option value={5}>Within 5 km</option>
-                  <option value={10}>Within 10 km</option>
                 </select>
               </div>
               {preferencesError && (

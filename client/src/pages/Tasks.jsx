@@ -11,11 +11,10 @@ import { fetchActiveTask } from '../utils/stateRecovery'
 import TaskCardSkeleton from '../components/TaskCardSkeleton'
 
 const DISTANCE_OPTIONS = [
-  { label: 'All', km: 10 },
+  { label: 'All', km: 5 },
   { label: 'Within 1 km', km: 1 },
   { label: 'Within 3 km', km: 3 },
-  { label: 'Within 5 km', km: 5 },
-  { label: 'Within 10 km', km: 10 }
+  { label: 'Within 5 km', km: 5 }
 ]
 
 function Tasks() {
@@ -47,8 +46,7 @@ function Tasks() {
       case 'Within 1 km': return 1
       case 'Within 3 km': return 3
       case 'Within 5 km': return 5
-      case 'Within 10 km': return 10
-      default: return 10
+      default: return 5
     }
   }
   const getBudgetRange = () => {
