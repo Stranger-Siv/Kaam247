@@ -474,6 +474,41 @@ function Dashboard() {
 
     const [postedTasks, setPostedTasks] = useState([])
 
+    const getPosterStatusLabel = (task) => {
+        switch (task.status) {
+            case 'open':
+                return 'Waiting for worker'
+            case 'accepted':
+                return 'Worker assigned'
+            case 'in_progress':
+                return 'Work in progress'
+            case 'completed':
+                return 'Completed'
+            case 'cancelled':
+            case 'cancelled_by_poster':
+                return 'Cancelled by you'
+            case 'cancelled_by_worker':
+                return 'Cancelled by worker'
+            case 'cancelled_by_admin':
+                return 'Cancelled by admin'
+            default:
+                return 'Status updated'
+        }
+    }
+
+    const getWorkerStatusLabel = (task) => {
+        switch (task.status) {
+            case 'accepted':
+                return 'You accepted this task'
+            case 'in_progress':
+                return 'You are working on this task'
+            case 'completed':
+                return 'Waiting for poster confirmation'
+            default:
+                return 'Status updated'
+        }
+    }
+
     // DATA CONSISTENCY: Fetch posted tasks for poster mode - always fresh from backend
     const fetchPostedTasks = useCallback(async () => {
         if (userMode !== 'poster' || !user?.id || fetchingRef.current.postedTasks) {
@@ -1259,11 +1294,23 @@ function Dashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex items-start justify-between gap-3">
                                             <StatusBadge status={task.status} />
-                                            <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
+                                            <div className="flex flex-col items-end gap-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                                {task.scheduledAt && (
+                                                    <div className="flex items-center gap-1">
+                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <span className="whitespace-nowrap">
+                                                            {task.time || 'Flexible'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <span className="text-right leading-snug">
+                                                    {getWorkerStatusLabel(task)}
+                                                </span>
+                                            </div>
                                         </div>
                                     </Link>
                                 ))}
@@ -1452,44 +1499,26 @@ function Dashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* Status Timeline */}
-                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                                            <div className="flex items-center justify-between mb-3">
-                                                <StatusBadge status={task.status} />
+                                        {/* Compact status row (mobile-friendly) */}
+                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex items-start justify-between gap-3">
+                                            <StatusBadge status={task.status} />
+                                            <div className="flex flex-col items-end gap-0.5 text-xs text-gray-500 dark:text-gray-400">
                                                 {task.scheduledAt && (
-                                                    <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                                                    <div className="flex items-center gap-1">
                                                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                         </svg>
-                                                        <span>{new Date(task.scheduledAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
+                                                        <span className="whitespace-nowrap">
+                                                            {new Date(task.scheduledAt).toLocaleDateString('en-IN', {
+                                                                month: 'short',
+                                                                day: 'numeric'
+                                                            })}
+                                                        </span>
                                                     </div>
                                                 )}
-                                            </div>
-                                            {/* Status Progression Timeline */}
-                                            <div className="flex items-center gap-2 text-xs">
-                                                {/* Posted */}
-                                                <div className="flex items-center gap-1.5 flex-1">
-                                                    <div className={`w-2 h-2 rounded-full ${task.createdAt ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                                                    <span className={`${task.createdAt ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>Posted</span>
-                                                </div>
-                                                {/* Accepted */}
-                                                <div className={`flex-1 h-0.5 ${task.acceptedBy ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
-                                                <div className="flex items-center gap-1.5 flex-1">
-                                                    <div className={`w-2 h-2 rounded-full ${task.acceptedBy ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                                                    <span className={`${task.acceptedBy ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>Accepted</span>
-                                                </div>
-                                                {/* In Progress */}
-                                                <div className={`flex-1 h-0.5 ${task.startedAt ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
-                                                <div className="flex items-center gap-1.5 flex-1">
-                                                    <div className={`w-2 h-2 rounded-full ${task.startedAt ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                                                    <span className={`${task.startedAt ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>Started</span>
-                                                </div>
-                                                {/* Completed */}
-                                                <div className={`flex-1 h-0.5 ${task.completedAt ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className={`w-2 h-2 rounded-full ${task.completedAt ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                                                    <span className={`${task.completedAt ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>Done</span>
-                                                </div>
+                                                <span className="text-right leading-snug">
+                                                    {getPosterStatusLabel(task)}
+                                                </span>
                                             </div>
                                         </div>
                                     </Link>
