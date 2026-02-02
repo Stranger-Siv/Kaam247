@@ -285,14 +285,7 @@ function Profile() {
                             )}
                         </div>
                     </div>
-                    <div className="flex flex-wrap gap-2.5 sm:gap-3 w-full sm:w-auto">
-                        <Link
-                            to="/settings"
-                            className="h-11 sm:h-12 inline-flex items-center justify-center px-4 sm:px-5 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 active:scale-[0.98] text-center touch-manipulation"
-                        >
-                            Settings
-                        </Link>
-                    </div>
+                    <div className="flex flex-wrap gap-2.5 sm:gap-3 w-full sm:w-auto" />
                 </div>
             </div>
 
@@ -398,10 +391,16 @@ function Profile() {
                 </div>
             </div>
 
-            {/* Account actions: Mode toggle + Logout - visible on all screens */}
+            {/* Account actions: Settings, Mode toggle, Logout */}
             <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Account</h2>
                 <div className="space-y-4">
+                    <Link
+                        to="/settings"
+                        className="w-full sm:w-auto min-w-[140px] px-5 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-all duration-200 active:scale-[0.98] text-center touch-manipulation min-h-[44px]"
+                    >
+                        Settings
+                    </Link>
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
                         <ModeToggle isMobile={true} />
                     </div>

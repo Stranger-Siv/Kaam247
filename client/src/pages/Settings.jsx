@@ -31,7 +31,21 @@ function Settings() {
   const [ticketSuccess, setTicketSuccess] = useState(false)
 
   const { categories: categoriesList } = useCategories()
-  const { permission: pushPermission, loading: pushLoading, error: pushError, enable: enablePush } = usePushNotifications()
+  const {
+    permission: pushPermission,
+    loading: pushLoading,
+    error: pushError,
+    enable: enablePush,
+    disable: disablePush
+  } = usePushNotifications()
+  const [pushEnabled, setPushEnabled] = useState(() => {
+    try {
+      const disabled = localStorage.getItem('kaam247_push_disabled') === '1'
+      return pushPermission === 'granted' && !disabled
+    } catch {
+      return pushPermission === 'granted'
+    }
+  })
 
   // Fetch minimal profile data needed for settings
   useEffect(() => {
@@ -163,6 +177,30 @@ function Settings() {
       setPreferencesError(err.message || 'Failed to save preferences')
     } finally {
       setPreferencesSaving(false)
+    }
+  }
+
+  const handleTogglePush = async () => {
+    if (pushEnabled) {
+      const ok = await disablePush()
+      if (ok) {
+        setPushEnabled(false)
+        try {
+          localStorage.setItem('kaam247_push_disabled', '1')
+        } catch {
+          // ignore storage errors
+        }
+      }
+    } else {
+      const ok = await enablePush()
+      if (ok) {
+        setPushEnabled(true)
+        try {
+          localStorage.removeItem('kaam247_push_disabled')
+        } catch {
+          // ignore storage errors
+        }
+      }
     }
   }
 
@@ -314,8 +352,8 @@ function Settings() {
                       <label
                         key={cat}
                         className={`inline-flex items-center px-3 py-2 rounded-lg border text-sm font-medium cursor-pointer transition-colors ${checked
-                            ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200'
-                            : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
+                          ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200'
+                          : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
                           }`}
                       >
                         <input
@@ -374,20 +412,44 @@ function Settings() {
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Get push notifications for new tasks, task updates, and important reminders.
           </p>
-          {pushPermission === 'granted' ? (
-            <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-              Push notifications are enabled.
-            </p>
-          ) : (
+          {pushPermission !== 'granted' ? (
             <>
               <button
                 type="button"
-                onClick={enablePush}
+                onClick={handleTogglePush}
                 disabled={pushLoading}
                 className="h-11 px-5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {pushLoading ? 'Enabling...' : 'Enable push notifications'}
               </button>
+              {pushError && (
+                <p className="mt-2 text-sm text-red-600 dark:text-red-400">{pushError}</p>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Push notifications on this device
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                    Turn this off if you don’t want task alerts on this browser.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleTogglePush}
+                  disabled={pushLoading}
+                  className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 ${pushEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${pushEnabled ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                  />
+                </button>
+              </div>
               {pushError && (
                 <p className="mt-2 text-sm text-red-600 dark:text-red-400">{pushError}</p>
               )}

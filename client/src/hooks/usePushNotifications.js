@@ -87,9 +87,35 @@ export function usePushNotifications() {
     }
   }, [])
 
+  const disable = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const apiUrl = `${API_BASE_URL}/api/users/me/push-subscription`
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('kaam247_token')}`
+        },
+        body: JSON.stringify({ token: null })
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.message || data.error || 'Failed to disable push notifications')
+      }
+      setLoading(false)
+      return true
+    } catch (err) {
+      setError(err.message || 'Failed to disable push notifications')
+      setLoading(false)
+      return false
+    }
+  }, [])
+
   useEffect(() => {
     updatePermission()
   }, [updatePermission])
 
-  return { permission, loading, error, enable, updatePermission }
+  return { permission, loading, error, enable, disable, updatePermission }
 }
