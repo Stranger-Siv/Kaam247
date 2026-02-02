@@ -7,7 +7,7 @@ function ProfileStrength({ userData, userMode, stats }) {
     const calculateStrength = () => {
         const checks = []
         let score = 0
-        const maxScore = 8
+        const maxScore = 7
 
         // 1. Name (required, always present)
         if (userData.name && userData.name.trim()) {
@@ -33,17 +33,7 @@ function ProfileStrength({ userData, userMode, stats }) {
             checks.push({ label: 'Phone number', completed: false, note: 'Optional but recommended' })
         }
 
-        // 4. Phone verified
-        if (userData.phoneVerified) {
-            checks.push({ label: 'Phone verified', completed: true })
-            score += 1
-        } else if (userData.phone) {
-            checks.push({ label: 'Phone verified', completed: false, note: 'Verify your phone number' })
-        } else {
-            checks.push({ label: 'Phone verified', completed: false, note: 'Add phone first' })
-        }
-
-        // 5. Profile photo
+        // 4. Profile photo
         if (userData.profilePhoto) {
             checks.push({ label: 'Profile photo', completed: true })
             score += 1
@@ -136,9 +126,9 @@ function ProfileStrength({ userData, userMode, stats }) {
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 sm:h-3 overflow-hidden">
                     <div
                         className={`h-full transition-all duration-500 ${strengthInfo.color === 'green' ? 'bg-green-500' :
-                                strengthInfo.color === 'blue' ? 'bg-blue-500' :
-                                    strengthInfo.color === 'yellow' ? 'bg-yellow-500' :
-                                        'bg-gray-500'
+                            strengthInfo.color === 'blue' ? 'bg-blue-500' :
+                                strengthInfo.color === 'yellow' ? 'bg-yellow-500' :
+                                    'bg-gray-500'
                             }`}
                         style={{ width: `${percentage}%` }}
                     />
