@@ -98,6 +98,15 @@ const startServer = async () => {
     } catch (dbError) {
     }
 
+    // Start recurring-tasks job (create tasks from recurring templates every 10 min)
+    try {
+      const { runRecurringTasks } = require('./controllers/taskController')
+      setInterval(() => runRecurringTasks(), 10 * 60 * 1000)
+      runRecurringTasks()
+    } catch (e) {
+      // ignore if controller not loaded
+    }
+
     // Start server with Socket.IO
     server.listen(PORT, () => { })
   } catch (error) {

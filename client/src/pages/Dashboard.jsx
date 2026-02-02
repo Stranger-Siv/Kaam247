@@ -8,6 +8,11 @@ import { useCancellation } from '../context/CancellationContext'
 import { useNotification } from '../context/NotificationContext'
 import StatusBadge from '../components/StatusBadge'
 import TaskCardSkeleton from '../components/TaskCardSkeleton'
+import IncreaseBudgetModal from '../components/IncreaseBudgetModal'
+import ExtendValidityModal from '../components/ExtendValidityModal'
+import RecurringModal from '../components/RecurringModal'
+import ConfirmationModal from '../components/ConfirmationModal'
+import { useCategories } from '../hooks/useCategories'
 import { API_BASE_URL } from '../config/env'
 import { performStateRecovery } from '../utils/stateRecovery'
 import { reverseGeocode } from '../utils/geocoding'
@@ -20,6 +25,7 @@ function Dashboard() {
     const { user } = useAuth()
     const { cancellationStatus } = useCancellation()
     const { showReminder } = useNotification()
+    const { categories } = useCategories()
     const [availableTasks, setAvailableTasks] = useState([])
     const [availableTasksLoading, setAvailableTasksLoading] = useState(false)
     const [locationError, setLocationError] = useState(null)
@@ -510,7 +516,22 @@ function Dashboard() {
         }
     }
 
-    // DATA CONSISTENCY: Fetch posted tasks for poster mode - always fresh from backend
+    // Poster filters and bulk selection
+    const [posterStatusFilter, setPosterStatusFilter] = useState('')
+    const [posterCategoryFilter, setPosterCategoryFilter] = useState('')
+    const [posterSearch, setPosterSearch] = useState('')
+    const [posterSort, setPosterSort] = useState('date')
+    const [selectedPosterTaskIds, setSelectedPosterTaskIds] = useState([])
+    const [quickActionTask, setQuickActionTask] = useState(null)
+    const [extendValidityTask, setExtendValidityTask] = useState(null)
+    const [closeConfirmTask, setCloseConfirmTask] = useState(null)
+    const [duplicateConfirmTask, setDuplicateConfirmTask] = useState(null)
+    const [recurringModalTask, setRecurringModalTask] = useState(null)
+    const [bulkExtendDays, setBulkExtendDays] = useState(7)
+    const [bulkActionLoading, setBulkActionLoading] = useState(false)
+    const [posterAnalytics, setPosterAnalytics] = useState(null)
+
+    // DATA CONSISTENCY: Fetch posted tasks for poster mode - with filters
     const fetchPostedTasks = useCallback(async () => {
         if (userMode !== 'poster' || !user?.id || fetchingRef.current.postedTasks) {
             return
@@ -518,7 +539,14 @@ function Dashboard() {
 
         fetchingRef.current.postedTasks = true
         try {
-            const response = await fetch(`${API_BASE_URL}/api/tasks/user/${user.id}`, {
+            const params = new URLSearchParams()
+            if (posterStatusFilter) params.set('status', posterStatusFilter)
+            if (posterCategoryFilter) params.set('category', posterCategoryFilter)
+            if (posterSearch.trim()) params.set('search', posterSearch.trim())
+            if (posterSort) params.set('sort', posterSort)
+            const qs = params.toString()
+            const url = `${API_BASE_URL}/api/tasks/user/${user.id}${qs ? `?${qs}` : ''}`
+            const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('kaam247_token')}`
                 }
@@ -533,8 +561,10 @@ function Dashboard() {
                         ? `${task.location.area}${task.location.city ? `, ${task.location.city}` : ''}`
                         : 'Location not specified',
                     budget: `₹${task.budget}`,
+                    budgetNum: task.budget,
                     category: task.category,
                     status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase(),
+                    statusRaw: task.status,
                     applicants: (task.status === 'SEARCHING' || task.status === 'OPEN') ? 0 : 1,
                     worker: task.acceptedBy ? 'Worker Assigned' : null,
                     scheduledAt: task.scheduledAt,
@@ -542,7 +572,9 @@ function Dashboard() {
                     startedAt: task.startedAt,
                     completedAt: task.completedAt,
                     acceptedBy: task.acceptedBy,
-                    workerCompleted: task.workerCompleted
+                    workerCompleted: task.workerCompleted,
+                    isRecurringTemplate: task.isRecurringTemplate,
+                    recurringSchedule: task.recurringSchedule
                 }))
                 setPostedTasks(transformedTasks)
             }
@@ -550,13 +582,13 @@ function Dashboard() {
         } finally {
             fetchingRef.current.postedTasks = false
         }
-    }, [userMode, user?.id])
+    }, [userMode, user?.id, posterStatusFilter, posterCategoryFilter, posterSearch, posterSort])
 
     useEffect(() => {
         if (userMode === 'poster' && user?.id) {
             fetchPostedTasks()
         }
-    }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [userMode, user?.id, posterStatusFilter, posterCategoryFilter, posterSearch, posterSort, fetchPostedTasks])
 
     // Fetch task templates for poster mode
     const fetchTemplates = useCallback(async () => {
@@ -587,6 +619,133 @@ function Dashboard() {
             fetchTemplates()
         }
     }, [userMode, user?.id, fetchTemplates])
+
+    // Poster: close task (cancel)
+    const handlePosterCloseTask = useCallback(async (task) => {
+        const token = localStorage.getItem('kaam247_token')
+        if (!token || !user?.id) return
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/tasks/${task.id}/cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ userId: user.id, userRole: 'poster' })
+            })
+            if (res.ok) {
+                setCloseConfirmTask(null)
+                fetchPostedTasks()
+                fetchPosterStats()
+            } else {
+                const data = await res.json().catch(() => ({}))
+                alert(data.message || 'Failed to close task')
+            }
+        } catch (e) {
+            alert('Failed to close task')
+        }
+    }, [user?.id])
+
+    // Poster: duplicate task
+    const handlePosterDuplicateTask = useCallback(async (task) => {
+        const token = localStorage.getItem('kaam247_token')
+        if (!token || !user?.id) return
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/tasks/${task.id}/duplicate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ posterId: user.id })
+            })
+            if (res.ok) {
+                setDuplicateConfirmTask(null)
+                fetchPostedTasks()
+                fetchPosterStats()
+            } else {
+                const data = await res.json().catch(() => ({}))
+                alert(data.message || 'Failed to duplicate task')
+            }
+        } catch (e) {
+            alert('Failed to duplicate task')
+        }
+    }, [user?.id])
+
+    // Poster: bulk cancel
+    const handleBulkCancel = useCallback(async () => {
+        if (selectedPosterTaskIds.length === 0) return
+        const token = localStorage.getItem('kaam247_token')
+        if (!token || !user?.id) return
+        setBulkActionLoading(true)
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/tasks/bulk-cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ posterId: user.id, taskIds: selectedPosterTaskIds })
+            })
+            if (res.ok) {
+                setSelectedPosterTaskIds([])
+                fetchPostedTasks()
+                fetchPosterStats()
+            }
+        } catch (e) { }
+        setBulkActionLoading(false)
+    }, [user?.id, selectedPosterTaskIds])
+
+    // Poster: bulk extend validity
+    const handleBulkExtend = useCallback(async () => {
+        if (selectedPosterTaskIds.length === 0) return
+        const token = localStorage.getItem('kaam247_token')
+        if (!token || !user?.id) return
+        setBulkActionLoading(true)
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/tasks/bulk-extend-validity`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ posterId: user.id, taskIds: selectedPosterTaskIds, validForDays: bulkExtendDays })
+            })
+            if (res.ok) {
+                setSelectedPosterTaskIds([])
+                fetchPostedTasks()
+            }
+        } catch (e) { }
+        setBulkActionLoading(false)
+    }, [user?.id, selectedPosterTaskIds, bulkExtendDays])
+
+    // Poster: bulk delete (OPEN/SEARCHING only - backend enforces)
+    const handleBulkDelete = useCallback(async () => {
+        if (selectedPosterTaskIds.length === 0) return
+        const token = localStorage.getItem('kaam247_token')
+        if (!token || !user?.id) return
+        setBulkActionLoading(true)
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/tasks/bulk-delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ posterId: user.id, taskIds: selectedPosterTaskIds })
+            })
+            if (res.ok) {
+                setSelectedPosterTaskIds([])
+                fetchPostedTasks()
+                fetchPosterStats()
+            }
+        } catch (e) { }
+        setBulkActionLoading(false)
+    }, [user?.id, selectedPosterTaskIds])
+
+    // Poster: fetch analytics
+    const fetchPosterAnalytics = useCallback(async () => {
+        if (userMode !== 'poster' || !user?.id) return
+        try {
+            const token = localStorage.getItem('kaam247_token')
+            const res = await fetch(`${API_BASE_URL}/api/tasks/user/${user.id}/analytics`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setPosterAnalytics(data.analytics || null)
+            }
+        } catch (e) { }
+    }, [userMode, user?.id])
+
+    useEffect(() => {
+        if (userMode === 'poster' && user?.id) fetchPosterAnalytics()
+    }, [userMode, user?.id, fetchPosterAnalytics])
 
     // Refresh templates when page becomes visible (user might have saved a template)
     useEffect(() => {
@@ -1505,28 +1664,170 @@ function Dashboard() {
                         )}
                     </div>
 
+                    {/* Task Analytics (poster) */}
+                    {posterAnalytics && (
+                        <div className="mb-10 sm:mb-12 lg:mb-14">
+                            <div className="mb-5 sm:mb-6">
+                                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">Task Analytics</h2>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Overview of your posted tasks</p>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Total views</p>
+                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.totalViewCount ?? 0}</p>
+                                </div>
+                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Avg. time to accept</p>
+                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                                        {posterAnalytics.averageTimeToAcceptanceMs != null
+                                            ? `${Math.round(posterAnalytics.averageTimeToAcceptanceMs / (60 * 60 * 1000) * 10) / 10}h`
+                                            : '—'}
+                                    </p>
+                                </div>
+                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Completion rate</p>
+                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.completionRatePercent ?? 0}%</p>
+                                </div>
+                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Total tasks</p>
+                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.totalTasks ?? 0}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* My Posted Tasks */}
                     <div>
-                        <div className="mb-5 sm:mb-6">
-                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">My Posted Tasks</h2>
-                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Manage your tasks and track their progress</p>
+                        <div className="mb-5 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">My Posted Tasks</h2>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Manage your tasks and track their progress</p>
+                            </div>
                         </div>
+
+                        {/* Filters and search */}
+                        <div className="mb-4 flex flex-wrap gap-2 sm:gap-3">
+                            <input
+                                type="text"
+                                placeholder="Search title or description..."
+                                value={posterSearch}
+                                onChange={(e) => setPosterSearch(e.target.value)}
+                                className="flex-1 min-w-[140px] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <select
+                                value={posterStatusFilter}
+                                onChange={(e) => setPosterStatusFilter(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">All statuses</option>
+                                <option value="OPEN,SEARCHING">Open / Searching</option>
+                                <option value="ACCEPTED">Accepted</option>
+                                <option value="IN_PROGRESS">In progress</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED_BY_POSTER,CANCELLED_BY_WORKER,CANCELLED_BY_ADMIN">Cancelled</option>
+                            </select>
+                            <select
+                                value={posterCategoryFilter}
+                                onChange={(e) => setPosterCategoryFilter(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">All categories</option>
+                                {categories.map((c) => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                            <select
+                                value={posterSort}
+                                onChange={(e) => setPosterSort(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="date">Newest first</option>
+                                <option value="budget_desc">Budget (high to low)</option>
+                                <option value="budget_asc">Budget (low to high)</option>
+                                <option value="status">By status</option>
+                            </select>
+                        </div>
+
+                        {/* Bulk actions bar */}
+                        {selectedPosterTaskIds.length > 0 && (
+                            <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl flex flex-wrap items-center gap-3">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                    {selectedPosterTaskIds.length} selected
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedPosterTaskIds([])}
+                                    className="text-sm text-gray-600 dark:text-gray-400 hover:underline"
+                                >
+                                    Clear
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleBulkCancel}
+                                    disabled={bulkActionLoading}
+                                    className="px-3 py-1.5 bg-red-600 dark:bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50"
+                                >
+                                    Cancel selected
+                                </button>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={90}
+                                        value={bulkExtendDays}
+                                        onChange={(e) => setBulkExtendDays(Number(e.target.value) || 7)}
+                                        className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                                    />
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">days</span>
+                                    <button
+                                        type="button"
+                                        onClick={handleBulkExtend}
+                                        disabled={bulkActionLoading}
+                                        className="px-3 py-1.5 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 disabled:opacity-50"
+                                    >
+                                        Extend validity
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleBulkDelete}
+                                    disabled={bulkActionLoading}
+                                    className="px-3 py-1.5 bg-gray-600 dark:bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50"
+                                >
+                                    Delete (open only)
+                                </button>
+                            </div>
+                        )}
 
                         {postedTasks.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
                                 {postedTasks.map((task) => (
-                                    <Link
+                                    <div
                                         key={task.id}
-                                        to={`/tasks/${task.id}`}
-                                        className="group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 border-gray-200 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600"
+                                        className="group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200"
                                     >
-                                        <div className="flex items-start justify-between mb-4">
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1 pr-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                                {task.title}
-                                            </h3>
-                                            <span className="inline-flex items-center px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-md whitespace-nowrap">
-                                                {task.category}
-                                            </span>
+                                        <div className="flex items-start gap-3 mb-4">
+                                            {!['completed', 'cancelled', 'cancelled_by_poster', 'cancelled_by_worker', 'cancelled_by_admin'].includes(task.status) && (
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedPosterTaskIds.includes(task.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setSelectedPosterTaskIds((prev) => [...prev, task.id])
+                                                        else setSelectedPosterTaskIds((prev) => prev.filter((id) => id !== task.id))
+                                                    }}
+                                                    className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                                                />
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                                <Link to={`/tasks/${task.id}`} className="block">
+                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex-1 pr-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                        {task.title}
+                                                    </h3>
+                                                </Link>
+                                                <span className="inline-flex items-center px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-md whitespace-nowrap mt-1">
+                                                    {task.category}
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="space-y-2 mb-4">
                                             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -1545,29 +1846,68 @@ function Dashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* Compact status row (mobile-friendly) */}
                                         <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex items-start justify-between gap-3">
                                             <StatusBadge status={task.status} />
                                             <div className="flex flex-col items-end gap-0.5 text-xs text-gray-500 dark:text-gray-400">
                                                 {task.scheduledAt && (
-                                                    <div className="flex items-center gap-1">
-                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                        <span className="whitespace-nowrap">
-                                                            {new Date(task.scheduledAt).toLocaleDateString('en-IN', {
-                                                                month: 'short',
-                                                                day: 'numeric'
-                                                            })}
-                                                        </span>
-                                                    </div>
+                                                    <span className="whitespace-nowrap">
+                                                        {new Date(task.scheduledAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                                                    </span>
                                                 )}
-                                                <span className="text-right leading-snug">
-                                                    {getPosterStatusLabel(task)}
-                                                </span>
+                                                <span className="text-right leading-snug">{getPosterStatusLabel(task)}</span>
                                             </div>
                                         </div>
-                                    </Link>
+                                        {/* Quick actions */}
+                                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2">
+                                            {['open', 'accepted', 'in_progress'].includes(task.status) && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.preventDefault(); setQuickActionTask({ ...task, budget: task.budgetNum ?? task.budget }) }}
+                                                        className="px-2 py-1.5 text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/50"
+                                                    >
+                                                        Increase budget
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.preventDefault(); setExtendValidityTask(task) }}
+                                                        className="px-2 py-1.5 text-xs font-medium bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                                                    >
+                                                        Extend validity
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.preventDefault(); setCloseConfirmTask(task) }}
+                                                        className="px-2 py-1.5 text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50"
+                                                    >
+                                                        Close task
+                                                    </button>
+                                                </>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.preventDefault(); setDuplicateConfirmTask(task) }}
+                                                className="px-2 py-1.5 text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50"
+                                            >
+                                                Duplicate
+                                            </button>
+                                            {['open'].includes(task.status) && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.preventDefault(); setRecurringModalTask(task) }}
+                                                    className="px-2 py-1.5 text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50"
+                                                >
+                                                    {task.isRecurringTemplate ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
+                                                </button>
+                                            )}
+                                            <Link
+                                                to={`/tasks/${task.id}`}
+                                                className="px-2 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
+                                            >
+                                                View details
+                                            </Link>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         ) : (
@@ -1586,6 +1926,46 @@ function Dashboard() {
                             </div>
                         )}
                     </div>
+
+                    {/* Poster modals */}
+                    <IncreaseBudgetModal
+                        task={quickActionTask}
+                        isOpen={!!quickActionTask}
+                        onClose={() => setQuickActionTask(null)}
+                        onSuccess={() => { setQuickActionTask(null); fetchPostedTasks(); fetchPosterStats() }}
+                    />
+                    <ExtendValidityModal
+                        task={extendValidityTask}
+                        isOpen={!!extendValidityTask}
+                        onClose={() => setExtendValidityTask(null)}
+                        onSuccess={() => { setExtendValidityTask(null); fetchPostedTasks() }}
+                    />
+                    <ConfirmationModal
+                        isOpen={!!closeConfirmTask}
+                        onConfirm={() => closeConfirmTask && handlePosterCloseTask(closeConfirmTask)}
+                        onCancel={() => setCloseConfirmTask(null)}
+                        title="Close task"
+                        message="Are you sure you want to close this task? It will be marked as cancelled."
+                        confirmText="Yes, close"
+                        cancelText="Cancel"
+                        confirmColor="red"
+                    />
+                    <ConfirmationModal
+                        isOpen={!!duplicateConfirmTask}
+                        onConfirm={() => duplicateConfirmTask && handlePosterDuplicateTask(duplicateConfirmTask)}
+                        onCancel={() => setDuplicateConfirmTask(null)}
+                        title="Duplicate task"
+                        message="Create a new task with the same details? A new listing will be created."
+                        confirmText="Yes, duplicate"
+                        cancelText="Cancel"
+                        confirmColor="blue"
+                    />
+                    <RecurringModal
+                        task={recurringModalTask}
+                        isOpen={!!recurringModalTask}
+                        onClose={() => setRecurringModalTask(null)}
+                        onSuccess={() => { setRecurringModalTask(null); fetchPostedTasks() }}
+                    />
                 </>
             )}
         </div>

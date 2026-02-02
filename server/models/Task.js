@@ -114,6 +114,33 @@ const taskSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    viewCount: {
+        type: Number,
+        default: 0,
+        description: 'Number of times task detail was viewed (for analytics)'
+    },
+    acceptedAt: {
+        type: Date,
+        required: false,
+        description: 'When a worker accepted the task (for time-to-acceptance analytics)'
+    },
+    // Recurring: template and schedule
+    isRecurringTemplate: {
+        type: Boolean,
+        default: false,
+        description: 'If true, this task is a template for recurring tasks'
+    },
+    recurringSchedule: {
+        frequency: { type: String, enum: ['daily', 'weekly', 'monthly'], default: 'weekly' },
+        nextRunAt: { type: Date, default: null },
+        paused: { type: Boolean, default: false }
+    },
+    sourceTemplateId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Task',
+        default: null,
+        description: 'If this task was created from a recurring template'
     }
 })
 

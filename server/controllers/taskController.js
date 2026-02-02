@@ -410,7 +410,8 @@ const acceptTask = async (req, res) => {
       {
         $set: {
           status: 'ACCEPTED',
-          acceptedBy: workerId
+          acceptedBy: workerId,
+          acceptedAt: new Date()
         }
       },
       {
@@ -505,6 +506,7 @@ const getAvailableTasks = async (req, res) => {
     const query = {
       status: { $in: ['OPEN', 'SEARCHING'] },
       isHidden: { $ne: true },
+      isRecurringTemplate: { $ne: true },
       $or: [
         { expiresAt: { $exists: false } },
         { expiresAt: null },
@@ -709,10 +711,11 @@ const getTaskById = async (req, res) => {
   }
 }
 
-// GET /api/tasks/user/:userId - Fetch tasks posted by a specific user
+// GET /api/tasks/user/:userId - Fetch tasks posted by a specific user (with filters and search)
 const getTasksByUser = async (req, res) => {
   try {
     const { userId } = req.params
+    const { status, category, search, sort = 'date', dateFrom, dateTo } = req.query
 
     // Validate userId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -722,9 +725,40 @@ const getTasksByUser = async (req, res) => {
       })
     }
 
-    // Fetch tasks posted by this user, sorted by createdAt (latest first)
-    const tasks = await Task.find({ postedBy: userId })
-      .sort({ createdAt: -1 })
+    const filter = { postedBy: userId }
+
+    if (status) {
+      const statuses = status.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+      if (statuses.length) filter.status = { $in: statuses }
+    }
+    if (category && String(category).trim()) {
+      filter.category = new RegExp(String(category).trim(), 'i')
+    }
+    if (search && String(search).trim()) {
+      const term = String(search).trim()
+      filter.$or = [
+        { title: new RegExp(term, 'i') },
+        { description: new RegExp(term, 'i') }
+      ]
+    }
+    if (dateFrom || dateTo) {
+      filter.createdAt = {}
+      if (dateFrom) filter.createdAt.$gte = new Date(dateFrom)
+      if (dateTo) {
+        const end = new Date(dateTo)
+        end.setHours(23, 59, 59, 999)
+        filter.createdAt.$lte = end
+      }
+    }
+
+    let sortOption = { createdAt: -1 }
+    if (sort === 'budget_asc') sortOption = { budget: 1, createdAt: -1 }
+    else if (sort === 'budget_desc') sortOption = { budget: -1, createdAt: -1 }
+    else if (sort === 'status') sortOption = { status: 1, createdAt: -1 }
+    else if (sort === 'date') sortOption = { createdAt: -1 }
+
+    const tasks = await Task.find(filter)
+      .sort(sortOption)
       .lean()
 
     return res.status(200).json({
@@ -1426,7 +1460,7 @@ const rateTask = async (req, res) => {
 const editTask = async (req, res) => {
   try {
     const { taskId } = req.params
-    const { posterId, title, description, category, budget, location, scheduledAt, expectedDuration, shouldReAlert } = req.body
+    const { posterId, title, description, category, budget, location, scheduledAt, expectedDuration, expiresAt: expiresAtBody, validForDays, shouldReAlert } = req.body
 
     // Validate taskId
     if (!mongoose.Types.ObjectId.isValid(taskId)) {
@@ -1463,11 +1497,87 @@ const editTask = async (req, res) => {
       })
     }
 
-    // HARDENING: Can only edit tasks that are OPEN or SEARCHING (not accepted/in progress/completed)
+    const isLimitedEdit = ['ACCEPTED', 'IN_PROGRESS'].includes(task.status)
+    // Limited edit (ACCEPTED/IN_PROGRESS): only budget, expiresAt, validForDays
+    if (isLimitedEdit) {
+      const updateData = {}
+      if (budget !== undefined) {
+        const budgetNumber = Number(budget)
+        if (isNaN(budgetNumber) || budgetNumber <= 0) {
+          return res.status(400).json({
+            error: 'Invalid budget',
+            message: 'budget must be a positive number'
+          })
+        }
+        updateData.budget = budgetNumber
+      }
+      let expiresAt = null
+      if (expiresAtBody) {
+        const d = new Date(expiresAtBody)
+        if (!isNaN(d.getTime()) && d > new Date()) expiresAt = d
+      }
+      if (!expiresAt && validForDays != null) {
+        const days = Number(validForDays)
+        if (!isNaN(days) && days > 0) {
+          const e = new Date()
+          e.setDate(e.getDate() + days)
+          expiresAt = e
+        }
+      }
+      if (expiresAt) updateData.expiresAt = expiresAt
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({
+          error: 'Nothing to update',
+          message: 'Provide budget and/or expiresAt/validForDays to update'
+        })
+      }
+
+      const updatedTask = await Task.findByIdAndUpdate(
+        taskId,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      )
+
+      let shouldAlert = false
+      if (shouldReAlert === true && updateData.budget != null) {
+        const now = new Date()
+        const lastAlerted = task.lastAlertedAt ? new Date(task.lastAlertedAt) : null
+        const threeHoursInMs = 3 * 60 * 60 * 1000
+        if (!lastAlerted || (now - lastAlerted) >= threeHoursInMs) {
+          shouldAlert = true
+          updatedTask.lastAlertedAt = now
+          await updatedTask.save()
+        }
+      }
+      if (shouldAlert) {
+        try {
+          broadcastNewTask({
+            taskId: updatedTask._id.toString(),
+            title: updatedTask.title,
+            category: updatedTask.category,
+            budget: updatedTask.budget,
+            location: updatedTask.location,
+            createdAt: updatedTask.createdAt
+          }, posterId)
+        } catch (socketError) { }
+      }
+      try {
+        notifyTaskUpdated(taskId, { status: updatedTask.status, budget: updatedTask.budget, expiresAt: updatedTask.expiresAt, postedBy: updatedTask.postedBy, acceptedBy: updatedTask.acceptedBy })
+        notifyTaskStatusChanged(posterId, taskId, updatedTask.status)
+      } catch (socketError) { }
+      return res.status(200).json({
+        message: 'Task updated successfully',
+        task: updatedTask,
+        reAlerted: shouldAlert
+      })
+    }
+
+    // Full edit: only for OPEN or SEARCHING
     if (!['OPEN', 'SEARCHING'].includes(task.status)) {
       return res.status(400).json({
         error: 'Cannot edit task',
-        message: 'Tasks can only be edited when status is OPEN or SEARCHING. Current status: ' + task.status
+        message: 'Tasks can only be fully edited when status is OPEN or SEARCHING. Current status: ' + task.status
       })
     }
 
@@ -1506,6 +1616,19 @@ const editTask = async (req, res) => {
     }
     if (expectedDuration !== undefined) {
       updateData.expectedDuration = expectedDuration ? Number(expectedDuration) : null
+    }
+    // Extend validity
+    if (expiresAtBody !== undefined) {
+      const d = new Date(expiresAtBody)
+      if (!isNaN(d.getTime()) && d > new Date()) updateData.expiresAt = d
+    }
+    if (validForDays != null) {
+      const days = Number(validForDays)
+      if (!isNaN(days) && days > 0) {
+        const e = new Date()
+        e.setDate(e.getDate() + days)
+        updateData.expiresAt = e
+      }
     }
 
     // Update task
@@ -1643,6 +1766,328 @@ const deleteTask = async (req, res) => {
   }
 }
 
+// POST /api/tasks/:taskId/duplicate - Poster duplicates a task (creates new OPEN task with same details)
+const duplicateTask = async (req, res) => {
+  try {
+    const { taskId } = req.params
+    const { posterId } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(taskId) || !posterId || !mongoose.Types.ObjectId.isValid(posterId)) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'taskId and posterId are required and must be valid ObjectIds'
+      })
+    }
+
+    const task = await Task.findById(taskId).populate('postedBy', '_id').lean()
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found', message: 'Task not found' })
+    }
+    if (task.postedBy._id.toString() !== posterId.toString()) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the task poster can duplicate this task'
+      })
+    }
+
+    const expiresAt = task.expiresAt && new Date(task.expiresAt) > new Date()
+      ? new Date(task.expiresAt)
+      : (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d })()
+
+    const newTask = await Task.create({
+      title: task.title,
+      description: task.description,
+      category: task.category,
+      budget: task.budget,
+      location: task.location,
+      postedBy: posterId,
+      status: 'OPEN',
+      scheduledAt: task.scheduledAt ? new Date(task.scheduledAt) : null,
+      expectedDuration: task.expectedDuration || null,
+      expiresAt
+    })
+
+    try {
+      broadcastNewTask({
+        taskId: newTask._id.toString(),
+        title: newTask.title,
+        category: newTask.category,
+        budget: newTask.budget,
+        location: newTask.location,
+        createdAt: newTask.createdAt
+      }, posterId)
+    } catch (socketError) { }
+
+    return res.status(201).json({
+      message: 'Task duplicated successfully',
+      task: newTask
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while duplicating the task'
+    })
+  }
+}
+
+// POST /api/tasks/bulk-cancel - Poster cancels multiple tasks
+const bulkCancelTasks = async (req, res) => {
+  try {
+    const { posterId, taskIds } = req.body
+    if (!posterId || !mongoose.Types.ObjectId.isValid(posterId) || !Array.isArray(taskIds) || taskIds.length === 0) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'posterId and taskIds (array) are required'
+      })
+    }
+
+    const validIds = taskIds.filter(id => mongoose.Types.ObjectId.isValid(id))
+    const tasks = await Task.find({ _id: { $in: validIds }, postedBy: posterId })
+    const cancellable = tasks.filter(t => ['OPEN', 'SEARCHING', 'ACCEPTED', 'IN_PROGRESS'].includes(t.status))
+
+    for (const task of cancellable) {
+      await Task.findByIdAndUpdate(task._id, { $set: { status: 'CANCELLED_BY_POSTER' } })
+      if (task.status === 'ACCEPTED' && task.acceptedBy) {
+        try {
+          notifyTaskCancelled(task.acceptedBy.toString(), task._id.toString(), 'poster')
+          notifyTaskStatusChanged(task.acceptedBy.toString(), task._id.toString(), 'CANCELLED_BY_POSTER')
+        } catch (e) { }
+      }
+    }
+
+    return res.status(200).json({
+      message: 'Bulk cancel completed',
+      cancelled: cancellable.length,
+      totalRequested: validIds.length
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while cancelling tasks'
+    })
+  }
+}
+
+// POST /api/tasks/bulk-extend-validity - Poster extends validity for multiple OPEN/SEARCHING tasks
+const bulkExtendValidity = async (req, res) => {
+  try {
+    const { posterId, taskIds, validForDays = 7 } = req.body
+    if (!posterId || !mongoose.Types.ObjectId.isValid(posterId) || !Array.isArray(taskIds) || taskIds.length === 0) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'posterId and taskIds (array) are required'
+      })
+    }
+    const days = Math.max(1, Math.min(90, Number(validForDays) || 7))
+    const validIds = taskIds.filter(id => mongoose.Types.ObjectId.isValid(id))
+    const result = await Task.updateMany(
+      { _id: { $in: validIds }, postedBy: posterId, status: { $in: ['OPEN', 'SEARCHING'] } },
+      { $set: { expiresAt: (() => { const d = new Date(); d.setDate(d.getDate() + days); return d })() } }
+    )
+
+    return res.status(200).json({
+      message: 'Bulk extend validity completed',
+      modified: result.modifiedCount,
+      totalRequested: validIds.length
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while extending validity'
+    })
+  }
+}
+
+// POST /api/tasks/bulk-delete - Poster deletes multiple OPEN/SEARCHING tasks
+const bulkDeleteTasks = async (req, res) => {
+  try {
+    const { posterId, taskIds } = req.body
+    if (!posterId || !mongoose.Types.ObjectId.isValid(posterId) || !Array.isArray(taskIds) || taskIds.length === 0) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'posterId and taskIds (array) are required'
+      })
+    }
+    const validIds = taskIds.filter(id => mongoose.Types.ObjectId.isValid(id))
+    const deleted = await Task.deleteMany({
+      _id: { $in: validIds },
+      postedBy: posterId,
+      status: { $in: ['OPEN', 'SEARCHING'] }
+    })
+
+    try {
+      validIds.forEach(tid => notifyTaskRemoved(null, tid))
+    } catch (e) { }
+
+    return res.status(200).json({
+      message: 'Bulk delete completed',
+      deleted: deleted.deletedCount,
+      totalRequested: validIds.length
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while deleting tasks'
+    })
+  }
+}
+
+// PATCH /api/tasks/:taskId/recurring - Poster sets/updates recurring schedule or pause
+const setRecurringSchedule = async (req, res) => {
+  try {
+    const { taskId } = req.params
+    const { posterId, frequency = 'weekly', paused = false } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(taskId) || !posterId || !mongoose.Types.ObjectId.isValid(posterId)) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'taskId and posterId are required and must be valid ObjectIds'
+      })
+    }
+    const freq = ['daily', 'weekly', 'monthly'].includes(frequency) ? frequency : 'weekly'
+
+    const task = await Task.findById(taskId).populate('postedBy', '_id')
+    if (!task) return res.status(404).json({ error: 'Task not found', message: 'Task not found' })
+    if (task.postedBy._id.toString() !== posterId.toString()) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the task poster can set recurring' })
+    }
+    if (!['OPEN', 'SEARCHING'].includes(task.status)) {
+      return res.status(400).json({
+        error: 'Cannot set recurring',
+        message: 'Only OPEN or SEARCHING tasks can be set as recurring templates'
+      })
+    }
+
+    const now = new Date()
+    let nextRunAt = task.recurringSchedule?.nextRunAt ? new Date(task.recurringSchedule.nextRunAt) : null
+    if (!nextRunAt || nextRunAt <= now) {
+      if (freq === 'daily') nextRunAt = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+      else if (freq === 'weekly') nextRunAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      else nextRunAt = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())
+    }
+
+    await Task.findByIdAndUpdate(taskId, {
+      $set: {
+        isRecurringTemplate: true,
+        'recurringSchedule.frequency': freq,
+        'recurringSchedule.nextRunAt': nextRunAt,
+        'recurringSchedule.paused': !!paused
+      }
+    })
+
+    const updated = await Task.findById(taskId).lean()
+    return res.status(200).json({
+      message: paused ? 'Recurring paused' : 'Recurring schedule updated',
+      task: updated
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while setting recurring'
+    })
+  }
+}
+
+// Run recurring job: create tasks from templates where nextRunAt <= now and !paused
+const runRecurringTasks = async () => {
+  try {
+    const now = new Date()
+    const templates = await Task.find({
+      isRecurringTemplate: true,
+      'recurringSchedule.paused': false,
+      'recurringSchedule.nextRunAt': { $lte: now }
+    }).lean()
+
+    for (const t of templates) {
+      try {
+        const expiresAt = t.expiresAt && new Date(t.expiresAt) > now
+          ? new Date(t.expiresAt)
+          : (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d })()
+        await Task.create({
+          title: t.title,
+          description: t.description,
+          category: t.category,
+          budget: t.budget,
+          location: t.location,
+          postedBy: t.postedBy,
+          status: 'OPEN',
+          scheduledAt: t.scheduledAt ? new Date(t.scheduledAt) : null,
+          expectedDuration: t.expectedDuration || null,
+          expiresAt,
+          sourceTemplateId: t._id
+        })
+
+        const freq = t.recurringSchedule?.frequency || 'weekly'
+        let next = new Date(t.recurringSchedule.nextRunAt || now)
+        if (freq === 'daily') next.setDate(next.getDate() + 1)
+        else if (freq === 'weekly') next.setDate(next.getDate() + 7)
+        else next = new Date(next.getFullYear(), next.getMonth() + 1, next.getDate())
+
+        await Task.findByIdAndUpdate(t._id, {
+          $set: { 'recurringSchedule.nextRunAt': next }
+        })
+      } catch (err) {
+        // log and continue with next template
+      }
+    }
+  } catch (error) {
+    // log
+  }
+}
+
+// GET /api/tasks/user/:userId/analytics - Poster task analytics summary
+const getPosterTaskAnalytics = async (req, res) => {
+  try {
+    const { userId } = req.params
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        error: 'Invalid userId',
+        message: 'userId must be a valid MongoDB ObjectId'
+      })
+    }
+
+    const tasks = await Task.find({ postedBy: userId }).lean()
+    const openOrSearching = tasks.filter(t => ['OPEN', 'SEARCHING'].includes(t.status))
+    const accepted = tasks.filter(t => t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS')
+    const completed = tasks.filter(t => t.status === 'COMPLETED')
+    const cancelled = tasks.filter(t => ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(t.status))
+
+    let totalViewCount = 0
+    let totalTimeToAcceptanceMs = 0
+    let acceptedCount = 0
+    tasks.forEach(t => {
+      if (t.viewCount) totalViewCount += t.viewCount
+      if (t.acceptedAt && t.createdAt) {
+        totalTimeToAcceptanceMs += new Date(t.acceptedAt) - new Date(t.createdAt)
+        acceptedCount += 1
+      }
+    })
+    const avgTimeToAcceptanceMs = acceptedCount > 0 ? totalTimeToAcceptanceMs / acceptedCount : null
+    const completedCount = completed.length
+    const totalAcceptedForCompletion = accepted.length + completedCount
+    const completionRate = totalAcceptedForCompletion > 0 ? (completedCount / totalAcceptedForCompletion) * 100 : 0
+
+    return res.status(200).json({
+      message: 'Analytics fetched successfully',
+      analytics: {
+        totalTasks: tasks.length,
+        openOrSearching: openOrSearching.length,
+        inProgress: accepted.length,
+        completed: completedCount,
+        cancelled: cancelled.length,
+        totalViewCount,
+        averageTimeToAcceptanceMs: avgTimeToAcceptanceMs,
+        completionRatePercent: Math.round(completionRate * 10) / 10
+      }
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while fetching analytics'
+    })
+  }
+}
+
 module.exports = {
   createTask,
   acceptTask,
@@ -1655,5 +2100,12 @@ module.exports = {
   confirmComplete,
   rateTask,
   editTask,
-  deleteTask
+  deleteTask,
+  duplicateTask,
+  bulkCancelTasks,
+  bulkExtendValidity,
+  bulkDeleteTasks,
+  getPosterTaskAnalytics,
+  setRecurringSchedule,
+  runRecurringTasks
 }

@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { authenticate } = require('../middleware/auth')
-const { createTask, acceptTask, getAvailableTasks, getTaskById, getTasksByUser, cancelTask, startTask, markComplete, confirmComplete, rateTask, editTask, deleteTask } = require('../controllers/taskController')
+const { createTask, acceptTask, getAvailableTasks, getTaskById, getTasksByUser, cancelTask, startTask, markComplete, confirmComplete, rateTask, editTask, deleteTask, duplicateTask, bulkCancelTasks, bulkExtendValidity, bulkDeleteTasks, getPosterTaskAnalytics, setRecurringSchedule } = require('../controllers/taskController')
 const { getMessages, sendMessage } = require('../controllers/chatController')
 const { getPublicStats } = require('../controllers/adminController')
 
@@ -15,6 +15,14 @@ router.get('/stats', getPublicStats)
 
 // GET /api/tasks/user/:userId - Fetch tasks posted by a user (MUST come before /tasks/:taskId)
 router.get('/tasks/user/:userId', getTasksByUser)
+
+// GET /api/tasks/user/:userId/analytics - Poster task analytics
+router.get('/tasks/user/:userId/analytics', getPosterTaskAnalytics)
+
+// POST /api/tasks/bulk-cancel, bulk-extend-validity, bulk-delete (MUST come before /tasks/:taskId)
+router.post('/tasks/bulk-cancel', bulkCancelTasks)
+router.post('/tasks/bulk-extend-validity', bulkExtendValidity)
+router.post('/tasks/bulk-delete', bulkDeleteTasks)
 
 // GET /api/tasks/:taskId - Fetch single task by ID (MUST come before /tasks to avoid route conflict)
 router.get('/tasks/:taskId', getTaskById)
@@ -44,11 +52,17 @@ router.post('/tasks/:taskId/rate', rateTask)
 // PUT /api/tasks/:taskId/edit - Poster edits their task
 router.put('/tasks/:taskId/edit', editTask)
 
+// PATCH /api/tasks/:taskId/recurring - Poster set recurring schedule / pause
+router.patch('/tasks/:taskId/recurring', setRecurringSchedule)
+
 // DELETE /api/tasks/:taskId - Poster deletes their task
 router.delete('/tasks/:taskId', deleteTask)
 
 // POST /api/tasks/:taskId/accept (MUST come before /tasks to avoid route conflict)
 router.post('/tasks/:taskId/accept', acceptTask)
+
+// POST /api/tasks/:taskId/duplicate - Poster duplicates task
+router.post('/tasks/:taskId/duplicate', duplicateTask)
 
 // POST /api/tasks - Create new task
 router.post('/tasks', createTask)
