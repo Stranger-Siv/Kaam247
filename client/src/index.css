@@ -12,6 +12,30 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Light mode subtle background so UI isn't blank */
+html:not(.dark) {
+  background-color: #f3f4f6;
+  /* gray-100 */
+}
+
+html:not(.dark) body {
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.06), transparent 55%),
+    #f9fafb;
+  /* gray-50 */
+}
+
+/* Dark mode keeps solid background driven by Tailwind classes */
+html.dark {
+  background-color: #020617;
+  /* slate-950 */
+}
+
+html.dark body {
+  background: #020617;
+}
+
 body {
   margin-left: 0;
   margin-right: 0;
