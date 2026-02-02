@@ -8,8 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Override gray scale with completely neutral colors (no blue tint)
-        // Light mode grays stay the same, dark grays become neutral charcoal
+        // Override gray scale with neutral (less blue) dark tones
         gray: {
           50: '#f9fafb',
           100: '#f3f4f6',
@@ -19,9 +18,9 @@ export default {
           500: '#6b7280',
           600: '#4b5563',
           700: '#374151',
-          800: '#1a1a1a', // Neutral dark charcoal (was blue-tinted)
-          900: '#0f0f0f', // Neutral dark charcoal (was blue-tinted)
-          950: '#0a0a0a', // True black/charcoal (was blue-tinted)
+          800: '#18181b', // softer neutral dark (zinc-like)
+          900: '#111111', // page background
+          950: '#050505', // deepest shade, still not pure black
         },
       },
     },

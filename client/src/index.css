@@ -26,15 +26,15 @@ html:not(.dark) body {
   /* gray-50 */
 }
 
-/* Dark mode - neutral charcoal instead of blue-tinted gray */
+/* Dark mode - softer neutral charcoal */
 html.dark {
-  background-color: #0a0a0a;
-  /* True black/charcoal */
+  background-color: #111111;
+  /* softer than pure black */
   color-scheme: dark;
 }
 
 html.dark body {
-  background: #0a0a0a;
+  background: #111111;
 }
 
 body {
