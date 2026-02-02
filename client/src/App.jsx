@@ -30,6 +30,7 @@ const Tasks = lazyWithRetry(() => import('./pages/Tasks'))
 const TaskDetail = lazyWithRetry(() => import('./pages/TaskDetail'))
 const PostTask = lazyWithRetry(() => import('./pages/PostTask'))
 const Profile = lazyWithRetry(() => import('./pages/Profile'))
+const Settings = lazyWithRetry(() => import('./pages/Settings'))
 const Activity = lazyWithRetry(() => import('./pages/Activity'))
 const Earnings = lazyWithRetry(() => import('./pages/Earnings'))
 const AdminOverview = lazyWithRetry(() => import('./pages/admin/AdminOverview'))
@@ -134,6 +135,7 @@ const AppContent = () => (
                             }
                           />
                           <Route path="/profile" element={<Profile />} />
+                          <Route path="/settings" element={<Settings />} />
                           <Route path="/activity" element={<Activity />} />
                           <Route
                             path="/earnings"

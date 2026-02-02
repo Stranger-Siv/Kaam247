@@ -474,6 +474,12 @@ function Profile() {
                                 Earnings
                             </Link>
                         )}
+                        <Link
+                            to="/settings"
+                            className="h-11 sm:h-12 inline-flex items-center justify-center px-4 sm:px-5 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 active:scale-[0.98] text-center touch-manipulation"
+                        >
+                            Settings
+                        </Link>
                         <button
                             onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                             disabled={isSaving}
