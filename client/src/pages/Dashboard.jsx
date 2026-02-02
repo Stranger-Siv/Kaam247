@@ -40,6 +40,8 @@ function Dashboard() {
         cancelled: 0
     })
     const [pendingConfirmations, setPendingConfirmations] = useState([])
+    const [taskTemplates, setTaskTemplates] = useState([])
+    const [templatesLoading, setTemplatesLoading] = useState(false)
 
     // DATA CONSISTENCY: Fetch worker stats (earnings, rating) - always fresh from backend
     const fetchWorkerStats = useCallback(async () => {
@@ -499,7 +501,12 @@ function Dashboard() {
                     status: task.status === 'SEARCHING' || task.status === 'OPEN' ? 'open' : task.status.toLowerCase(),
                     applicants: (task.status === 'SEARCHING' || task.status === 'OPEN') ? 0 : 1,
                     worker: task.acceptedBy ? 'Worker Assigned' : null,
-                    scheduledAt: task.scheduledAt
+                    scheduledAt: task.scheduledAt,
+                    createdAt: task.createdAt,
+                    startedAt: task.startedAt,
+                    completedAt: task.completedAt,
+                    acceptedBy: task.acceptedBy,
+                    workerCompleted: task.workerCompleted
                 }))
                 setPostedTasks(transformedTasks)
             }
@@ -514,6 +521,64 @@ function Dashboard() {
             fetchPostedTasks()
         }
     }, [userMode, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Fetch task templates for poster mode
+    const fetchTemplates = useCallback(async () => {
+        if (userMode !== 'poster' || !user?.id) return
+        try {
+            setTemplatesLoading(true)
+            const token = localStorage.getItem('kaam247_token')
+            const response = await fetch(`${API_BASE_URL}/api/users/me/templates`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            if (response.ok) {
+                const data = await response.json()
+                setTaskTemplates(data.templates || [])
+            }
+        } catch (err) {
+            // ignore
+        } finally {
+            setTemplatesLoading(false)
+        }
+    }, [userMode, user?.id])
+
+    useEffect(() => {
+        if (userMode === 'poster' && user?.id) {
+            fetchTemplates()
+        }
+    }, [userMode, user?.id, fetchTemplates])
+
+    // Check for upcoming task reminders
+    useEffect(() => {
+        if (userMode !== 'poster' || !user?.id || postedTasks.length === 0) return
+
+        const checkReminders = () => {
+            const now = new Date()
+            postedTasks.forEach((task) => {
+                if (task.scheduledAt) {
+                    const scheduledTime = new Date(task.scheduledAt)
+                    const timeUntil = scheduledTime.getTime() - now.getTime()
+                    const hoursUntil = timeUntil / (1000 * 60 * 60)
+
+                    // Show reminder 1 hour before scheduled time
+                    if (hoursUntil > 0 && hoursUntil <= 1 && hoursUntil > 0.95) {
+                        showReminder({
+                            title: 'Task reminder',
+                            message: `"${task.title}" is scheduled in about 1 hour`,
+                            taskId: task.id
+                        })
+                    }
+                }
+            })
+        }
+
+        checkReminders()
+        const interval = setInterval(checkReminders, 60000) // Check every minute
+
+        return () => clearInterval(interval)
+    }, [postedTasks, userMode, user?.id, showReminder])
 
     // DATA CONSISTENCY: Listen for task_accepted events (for posters) - always refetch fresh
     useEffect(() => {
@@ -1286,6 +1351,67 @@ function Dashboard() {
                         </div>
                     </div>
 
+                    {/* Task Templates Section */}
+                    {taskTemplates.length > 0 && (
+                        <div className="mb-10 sm:mb-12 lg:mb-14">
+                            <div className="mb-5 sm:mb-6">
+                                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">Saved Templates</h2>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Quick repost from your saved templates</p>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                                {taskTemplates.map((template, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                                    >
+                                        <div className="flex items-start justify-between mb-3">
+                                            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex-1 pr-2">
+                                                {template.name}
+                                            </h3>
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        const token = localStorage.getItem('kaam247_token')
+                                                        const response = await fetch(`${API_BASE_URL}/api/users/me/templates/${idx}`, {
+                                                            method: 'DELETE',
+                                                            headers: {
+                                                                'Authorization': `Bearer ${token}`
+                                                            }
+                                                        })
+                                                        if (response.ok) {
+                                                            fetchTemplates()
+                                                        }
+                                                    } catch (err) {
+                                                        // ignore
+                                                    }
+                                                }}
+                                                className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
+                                                title="Delete template"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div className="space-y-2 mb-4">
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{template.title}</p>
+                                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                                <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{template.category}</span>
+                                                <span className="font-semibold text-gray-700 dark:text-gray-300">₹{template.budget}</span>
+                                            </div>
+                                        </div>
+                                        <Link
+                                            to={`/post-task?template=${encodeURIComponent(JSON.stringify(template))}`}
+                                            className="block w-full text-center px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-sm font-semibold rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                        >
+                                            Repost Task
+                                        </Link>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* My Posted Tasks */}
                     <div>
                         <div className="mb-5 sm:mb-6">
@@ -1326,23 +1452,45 @@ function Dashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
+                                        {/* Status Timeline */}
+                                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                            <div className="flex items-center justify-between mb-3">
                                                 <StatusBadge status={task.status} />
-                                                {task.status === 'open' && (
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {task.applicants} {task.applicants === 1 ? 'applicant' : 'applicants'}
-                                                    </span>
-                                                )}
-                                                {task.status === 'accepted' && task.worker && (
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {task.worker}
-                                                    </span>
+                                                {task.scheduledAt && (
+                                                    <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <span>{new Date(task.scheduledAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
+                                                    </div>
                                                 )}
                                             </div>
-                                            <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                            </svg>
+                                            {/* Status Progression Timeline */}
+                                            <div className="flex items-center gap-2 text-xs">
+                                                {/* Posted */}
+                                                <div className="flex items-center gap-1.5 flex-1">
+                                                    <div className={`w-2 h-2 rounded-full ${task.createdAt ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                                                    <span className={`${task.createdAt ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>Posted</span>
+                                                </div>
+                                                {/* Accepted */}
+                                                <div className={`flex-1 h-0.5 ${task.acceptedBy ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
+                                                <div className="flex items-center gap-1.5 flex-1">
+                                                    <div className={`w-2 h-2 rounded-full ${task.acceptedBy ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                                                    <span className={`${task.acceptedBy ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>Accepted</span>
+                                                </div>
+                                                {/* In Progress */}
+                                                <div className={`flex-1 h-0.5 ${task.startedAt ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
+                                                <div className="flex items-center gap-1.5 flex-1">
+                                                    <div className={`w-2 h-2 rounded-full ${task.startedAt ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                                                    <span className={`${task.startedAt ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>Started</span>
+                                                </div>
+                                                {/* Completed */}
+                                                <div className={`flex-1 h-0.5 ${task.completedAt ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'}`}></div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className={`w-2 h-2 rounded-full ${task.completedAt ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                                                    <span className={`${task.completedAt ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>Done</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </Link>
                                 ))}

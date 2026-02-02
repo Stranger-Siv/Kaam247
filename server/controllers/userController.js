@@ -587,6 +587,132 @@ const savePushSubscription = async (req, res) => {
   }
 }
 
+// POST /api/users/me/templates - Save a task template
+const saveTaskTemplate = async (req, res) => {
+  try {
+    const userId = req.userId
+    const { name, title, description, category, budget, expectedDuration, location } = req.body
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' })
+    }
+
+    if (!name || !title || !description || !category || !budget) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'Name, title, description, category, and budget are required'
+      })
+    }
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    // Limit to 10 templates per user
+    if (user.taskTemplates && user.taskTemplates.length >= 10) {
+      return res.status(400).json({
+        error: 'Template limit reached',
+        message: 'You can save up to 10 templates. Delete one to add a new one.'
+      })
+    }
+
+    const template = {
+      name: name.trim().slice(0, 50),
+      title: title.trim(),
+      description: description.trim(),
+      category: category.trim(),
+      budget: Number(budget),
+      expectedDuration: expectedDuration ? Number(expectedDuration) : undefined,
+      location: location ? {
+        area: location.area || '',
+        city: location.city || '',
+        fullAddress: location.fullAddress || ''
+      } : undefined
+    }
+
+    if (isNaN(template.budget) || template.budget < 1) {
+      return res.status(400).json({ error: 'Invalid budget' })
+    }
+
+    user.taskTemplates = user.taskTemplates || []
+    user.taskTemplates.push(template)
+
+    await user.save()
+
+    res.status(200).json({
+      message: 'Template saved successfully',
+      template: template
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to save template'
+    })
+  }
+}
+
+// GET /api/users/me/templates - Get all task templates
+const getTaskTemplates = async (req, res) => {
+  try {
+    const userId = req.userId
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' })
+    }
+
+    const user = await User.findById(userId).select('taskTemplates').lean()
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    res.status(200).json({
+      templates: user.taskTemplates || []
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch templates'
+    })
+  }
+}
+
+// DELETE /api/users/me/templates/:templateId - Delete a task template
+const deleteTaskTemplate = async (req, res) => {
+  try {
+    const userId = req.userId
+    const { templateId } = req.params
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' })
+    }
+
+    if (!templateId) {
+      return res.status(400).json({ error: 'Template ID is required' })
+    }
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    user.taskTemplates = (user.taskTemplates || []).filter(
+      (t, idx) => idx.toString() !== templateId
+    )
+
+    await user.save()
+
+    res.status(200).json({
+      message: 'Template deleted successfully'
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to delete template'
+    })
+  }
+}
+
 module.exports = {
   createUser,
   updateProfile,
@@ -595,6 +721,9 @@ module.exports = {
   getProfile,
   getCancellationStatus,
   getActiveTask,
-  savePushSubscription
+  savePushSubscription,
+  saveTaskTemplate,
+  getTaskTemplates,
+  deleteTaskTemplate
 }
 

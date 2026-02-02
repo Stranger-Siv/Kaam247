@@ -196,6 +196,52 @@ const userSchema = new mongoose.Schema({
         trim: true,
         description: 'FCM tokens for push notifications (multiple devices: phone + Chrome, etc.)'
     },
+    taskTemplates: {
+        type: [{
+            name: {
+                type: String,
+                required: true,
+                trim: true,
+                maxlength: 50
+            },
+            title: {
+                type: String,
+                required: true,
+                trim: true
+            },
+            description: {
+                type: String,
+                required: true,
+                trim: true
+            },
+            category: {
+                type: String,
+                required: true,
+                trim: true
+            },
+            budget: {
+                type: Number,
+                required: true,
+                min: 1
+            },
+            expectedDuration: {
+                type: Number,
+                required: false,
+                min: 1
+            },
+            location: {
+                area: String,
+                city: String,
+                fullAddress: String
+            },
+            createdAt: {
+                type: Date,
+                default: Date.now
+            }
+        }],
+        default: [],
+        description: 'Saved task templates for quick reposting'
+    },
     createdAt: {
         type: Date,
         default: Date.now

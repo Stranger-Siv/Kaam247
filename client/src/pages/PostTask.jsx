@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
 import { useCategories } from '../hooks/useCategories'
@@ -9,11 +9,16 @@ import { reverseGeocode as reverseGeocodeViaApi } from '../utils/geocoding'
 
 function PostTask() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [fieldErrors, setFieldErrors] = useState({})
+  const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false)
+  const [templateName, setTemplateName] = useState('')
+  const [savingTemplate, setSavingTemplate] = useState(false)
+  const [lastCreatedTask, setLastCreatedTask] = useState(null)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -32,6 +37,38 @@ function PostTask() {
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [locationError, setLocationError] = useState(null)
   const [mapCenter, setMapCenter] = useState([12.9716, 77.5946]) // Bangalore default [lat, lng]
+
+  // Load template from URL query params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const templateParam = params.get('template')
+    if (templateParam) {
+      try {
+        const template = JSON.parse(decodeURIComponent(templateParam))
+        setFormData({
+          title: template.title || '',
+          description: template.description || '',
+          category: template.category || '',
+          location: template.location?.area && template.location?.city
+            ? `${template.location.area}, ${template.location.city}`
+            : '',
+          fullAddress: template.location?.fullAddress || '',
+          budget: template.budget?.toString() || '',
+          hours: template.expectedDuration?.toString() || '',
+          validForDays: '7'
+        })
+        if (template.location?.area && template.location?.city) {
+          setLocationData({
+            coordinates: null, // Will be set when user selects location on map
+            area: template.location.area,
+            city: template.location.city
+          })
+        }
+      } catch (err) {
+        // Invalid template data, ignore
+      }
+    }
+  }, [location.search])
 
   // Initialize location data with default coordinates if not set
   useEffect(() => {
@@ -335,8 +372,19 @@ function PostTask() {
       const data = await response.json()
       const taskId = data.task._id
 
-      // Redirect to task detail page
-      navigate(`/tasks/${taskId}`)
+      // Store task data for potential template saving
+      setLastCreatedTask({
+        id: taskId,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        category: formData.category,
+        budget: budgetAmount,
+        expectedDuration: formData.hours ? parseInt(formData.hours) : null,
+        location: finalLocation
+      })
+
+      // Show save template option instead of immediate redirect
+      setShowSaveTemplateModal(true)
     } catch (err) {
       // Provide more specific error messages
       let errorMessage = 'Failed to post task. Please try again.'
@@ -349,6 +397,48 @@ function PostTask() {
 
       setError(errorMessage)
       setIsSubmitting(false)
+    }
+  }
+
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim() || !lastCreatedTask) return
+
+    try {
+      setSavingTemplate(true)
+      const token = localStorage.getItem('kaam247_token')
+      const response = await fetch(`${API_BASE_URL}/api/users/me/templates`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: templateName.trim(),
+          ...lastCreatedTask
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to save template')
+      }
+
+      // Close modal and redirect
+      setShowSaveTemplateModal(false)
+      navigate(`/tasks/${lastCreatedTask.id || ''}`)
+    } catch (err) {
+      setError(err.message || 'Failed to save template')
+    } finally {
+      setSavingTemplate(false)
+    }
+  }
+
+  const handleSkipTemplate = () => {
+    setShowSaveTemplateModal(false)
+    if (lastCreatedTask?.id) {
+      navigate(`/tasks/${lastCreatedTask.id}`)
+    } else {
+      navigate('/dashboard')
     }
   }
 
@@ -665,6 +755,50 @@ function PostTask() {
           </div>
         )}
       </form>
+
+      {/* Save Template Modal */}
+      {showSaveTemplateModal && lastCreatedTask && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 sm:p-8 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              Save as Template?
+            </h3>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
+              Save this task as a template to quickly repost it later.
+            </p>
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Template Name
+              </label>
+              <input
+                type="text"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="e.g., Weekly Cleaning"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base"
+                maxLength={50}
+                autoFocus
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleSkipTemplate}
+                disabled={savingTemplate}
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+              >
+                Skip
+              </button>
+              <button
+                onClick={handleSaveTemplate}
+                disabled={savingTemplate || !templateName.trim()}
+                className="flex-1 px-4 py-2.5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingTemplate ? 'Saving...' : 'Save Template'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
