@@ -261,7 +261,7 @@ const getIO = () => {
     return io
 }
 
-const broadcastNewTask = (taskData, postedByUserId) => {
+const broadcastNewTask = async (taskData, postedByUserId) => {
     try {
         if (!io) {
             return
@@ -285,7 +285,20 @@ const broadcastNewTask = (taskData, postedByUserId) => {
         // Get all workers with their locations
         const workers = socketManager.getAllWorkersWithLocations()
 
-        // Filter workers: exclude task creator and check distance
+        if (!workers.length) {
+            return
+        }
+
+        // Preload worker preferences in one query so we can filter by category
+        const workerIds = workers.map(w => w.userId)
+        const users = await User.find({ _id: { $in: workerIds } })
+            .select('workerPreferences')
+            .lean()
+        const prefsByUserId = new Map(
+            users.map(u => [u._id.toString(), u.workerPreferences || {}])
+        )
+
+        // Filter workers: exclude task creator, check distance and category preferences
         const eligibleWorkers = workers.filter(worker => {
             // Exclude task creator
             if (worker.userId === postedByUserId.toString()) {
@@ -327,6 +340,20 @@ const broadcastNewTask = (taskData, postedByUserId) => {
             const workerRadius = worker.radius || 5
             if (distance > workerRadius) {
                 return false
+            }
+
+            // Respect worker category preferences, if any are set
+            const prefs = prefsByUserId.get(worker.userId)
+            const preferredCategories = prefs && Array.isArray(prefs.preferredCategories)
+                ? prefs.preferredCategories
+                : []
+
+            // If worker has specified preferredCategories, only send tasks matching those
+            if (preferredCategories.length > 0) {
+                const taskCategory = (taskData.category || '').trim()
+                if (!preferredCategories.includes(taskCategory)) {
+                    return false
+                }
             }
 
             // Check if this task was already alerted to this worker
