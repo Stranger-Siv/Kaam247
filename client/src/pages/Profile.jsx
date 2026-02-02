@@ -397,7 +397,7 @@ function Profile() {
                 <div className="space-y-4">
                     <Link
                         to="/settings"
-                        className="w-full sm:w-auto min-w-[140px] px-5 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-all duration-200 active:scale-[0.98] text-center touch-manipulation min-h-[44px]"
+                        className="inline-flex items-center justify-center w-full sm:w-auto px-8 sm:px-10 lg:px-12 py-3.5 sm:py-4 lg:py-4.5 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-base sm:text-lg lg:text-xl font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] min-h-[48px] sm:min-h-[52px] touch-manipulation"
                     >
                         Settings
                     </Link>
