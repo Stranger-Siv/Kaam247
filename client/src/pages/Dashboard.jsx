@@ -571,9 +571,11 @@ function Dashboard() {
             if (response.ok) {
                 const data = await response.json()
                 setTaskTemplates(data.templates || [])
+            } else {
+                console.error('Failed to fetch templates:', response.status)
             }
         } catch (err) {
-            // ignore
+            console.error('Error fetching templates:', err)
         } finally {
             setTemplatesLoading(false)
         }
@@ -583,6 +585,17 @@ function Dashboard() {
         if (userMode === 'poster' && user?.id) {
             fetchTemplates()
         }
+    }, [userMode, user?.id, fetchTemplates])
+
+    // Refresh templates when page becomes visible (user might have saved a template)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && userMode === 'poster' && user?.id) {
+                fetchTemplates()
+            }
+        }
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
     }, [userMode, user?.id, fetchTemplates])
 
     // Check for upcoming task reminders
@@ -1399,12 +1412,12 @@ function Dashboard() {
                     </div>
 
                     {/* Task Templates Section */}
-                    {taskTemplates.length > 0 && (
-                        <div className="mb-10 sm:mb-12 lg:mb-14">
-                            <div className="mb-5 sm:mb-6">
-                                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">Saved Templates</h2>
-                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Quick repost from your saved templates</p>
-                            </div>
+                    <div className="mb-10 sm:mb-12 lg:mb-14">
+                        <div className="mb-5 sm:mb-6">
+                            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">Saved Templates</h2>
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Quick repost from your saved templates</p>
+                        </div>
+                        {taskTemplates.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                                 {taskTemplates.map((template, idx) => (
                                     <div
@@ -1456,8 +1469,22 @@ function Dashboard() {
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-8 sm:p-12 text-center border border-gray-200 dark:border-gray-700">
+                                <svg className="w-12 h-12 sm:w-14 sm:h-14 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <p className="text-base sm:text-lg text-gray-700 dark:text-gray-300 mb-2 font-semibold">No templates saved yet</p>
+                                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">Save a task as a template after posting to quickly repost it later</p>
+                                <Link
+                                    to="/post-task"
+                                    className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                                >
+                                    Post a Task
+                                </Link>
+                            </div>
+                        )}
+                    </div>
 
                     {/* My Posted Tasks */}
                     <div>

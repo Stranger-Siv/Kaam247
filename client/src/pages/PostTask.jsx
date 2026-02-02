@@ -427,7 +427,9 @@ function PostTask() {
       setShowSaveTemplateModal(false)
       navigate(`/tasks/${lastCreatedTask.id || ''}`)
     } catch (err) {
-      setError(err.message || 'Failed to save template')
+      const errorMsg = err.message || 'Failed to save template'
+      setError(errorMsg)
+      // Keep modal open so user can try again
     } finally {
       setSavingTemplate(false)
     }
@@ -766,6 +768,11 @@ function PostTask() {
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
               Save this task as a template to quickly repost it later.
             </p>
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+              </div>
+            )}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Template Name
