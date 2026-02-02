@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../config/env'
 import ModeToggle from '../components/ModeToggle'
+import ProfileStrength from '../components/ProfileStrength'
 
 function Profile() {
     const { userMode } = useUserMode()
@@ -16,6 +17,7 @@ function Profile() {
         navigate('/')
     }
     const [profile, setProfile] = useState(null)
+    const [userData, setUserData] = useState(null) // Full user data for ProfileStrength
     const [stats, setStats] = useState({
         tasksCompleted: 0,
         earnings: 0,
@@ -43,6 +45,7 @@ function Profile() {
                 if (response.ok) {
                     const data = await response.json()
                     const userData = data.user
+                    setUserData(userData) // Store full user data for ProfileStrength
                     setProfile({
                         name: userData.name || '',
                         email: userData.email || '',
@@ -99,6 +102,7 @@ function Profile() {
                     if (response.ok) {
                         const data = await response.json()
                         const userData = data.user
+                        setUserData(userData) // Update full user data
                         setProfile(prev => ({
                             ...prev,
                             location: userData.location?.area
@@ -170,6 +174,7 @@ function Profile() {
             })
                 .then(res => res.json())
                 .then(data => {
+                    setUserData(data.user) // Update userData for ProfileStrength
                     if (userMode === 'worker') {
                         setStats(prev => ({
                             ...prev,
@@ -188,6 +193,7 @@ function Profile() {
             })
                 .then(res => res.json())
                 .then(data => {
+                    setUserData(data.user) // Update userData for ProfileStrength
                     if (userMode === 'worker') {
                         setStats(prev => ({
                             ...prev,
@@ -257,6 +263,11 @@ function Profile() {
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-1 sm:mb-2 break-words">Profile</h1>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 break-words">Manage your account and view your activity</p>
             </div>
+
+            {/* Profile Strength Indicator */}
+            {userData && (
+                <ProfileStrength userData={userData} userMode={userMode} stats={stats} />
+            )}
 
             {/* Overview card - avatar, name, location, member since, quick actions */}
             <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">
