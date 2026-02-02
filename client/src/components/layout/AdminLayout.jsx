@@ -198,19 +198,18 @@ function AdminLayout() {
                   </button>
                 </div>
               </div>
-            </div>
-        </>
+            </>
           )}
-      </header>
+        </header>
 
-      {/* Page Content - no bottom nav so no extra pb on mobile */}
-      <main className="flex-1 overflow-y-auto pb-6 overflow-x-hidden">
-        <div className="max-w-7xl mx-auto px-[6px] sm:px-5 lg:px-7 py-4 sm:py-6 lg:py-8 w-full overflow-x-hidden">
-          <Outlet />
-        </div>
-      </main>
+        {/* Page Content - no bottom nav so no extra pb on mobile */}
+        <main className="flex-1 overflow-y-auto pb-6 overflow-x-hidden">
+          <div className="max-w-7xl mx-auto px-[6px] sm:px-5 lg:px-7 py-4 sm:py-6 lg:py-8 w-full overflow-x-hidden">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
-    </div >
   )
 }
 
