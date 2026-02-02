@@ -286,12 +286,6 @@ function Profile() {
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-2.5 sm:gap-3 w-full sm:w-auto">
-                        <Link
-                            to="/activity"
-                            className="h-11 sm:h-12 inline-flex items-center justify-center px-4 sm:px-5 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 active:scale-[0.98] text-center touch-manipulation"
-                        >
-                            Activity
-                        </Link>
                         {userMode === 'worker' && (
                             <Link
                                 to="/earnings"
