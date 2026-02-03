@@ -19,7 +19,7 @@ export async function safeFetch(endpoint, options = {}) {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers: defaultHeaders,
-      credentials: 'include' // Send cookies with cross-origin requests
+      credentials: 'omit' // Use Bearer token only; avoid sending/storing cookies for API (reduces third-party cookie count)
     })
 
     // Handle network errors
