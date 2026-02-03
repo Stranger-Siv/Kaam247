@@ -62,33 +62,36 @@ function OnboardingSlides() {
       aria-modal="true"
       aria-label="Welcome to Kaam247"
     >
-      {/* Progress rail: track runs behind dots, fill grows step-by-step */}
-      <div className="relative flex justify-center pt-5 pb-3 px-4">
-        <div className="relative w-[160px] sm:w-[200px] h-8 flex items-center">
-          {/* Rail track (full width) */}
+      {/* Progress rail: track bar + blue fill + dots */}
+      <div className="relative flex flex-col items-center pt-6 pb-4 px-4">
+        <div className="relative w-[85vw] min-w-[200px] max-w-[300px] h-12 flex items-center">
+          {/* Rail track - single full-width bar, high contrast */}
           <div
-            className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-2 rounded-full bg-gray-200 dark:bg-slate-700"
+            className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-3 rounded-full border border-gray-300 dark:border-slate-600 bg-gray-200 dark:bg-slate-700"
+            style={{ width: '100%' }}
             aria-hidden
           />
-          {/* Rail fill: progresses to current step */}
+          {/* Rail fill - left-aligned, grows with step */}
           <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-2 rounded-l-full bg-blue-500 dark:bg-blue-400 transition-all duration-500 ease-out"
+            className="absolute left-0 top-1/2 -translate-y-1/2 h-3 rounded-full bg-blue-500 dark:bg-blue-400 transition-[width] duration-500 ease-out"
             style={{ width: `${((step + 0.5) / SLIDE_COUNT) * 100}%` }}
             aria-hidden
           />
-          {/* Dots centered on rail segments */}
-          {Array.from({ length: SLIDE_COUNT }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setStep(i)}
-              className={`absolute top-1/2 z-10 h-1.5 rounded-full transition-all duration-300 -translate-x-1/2 -translate-y-1/2 ${i === step ? dotActive : dotInactive}`}
-              style={{ left: `${((i + 0.5) / SLIDE_COUNT) * 100}%` }}
-              aria-label={`Step ${i + 1} of ${SLIDE_COUNT}`}
-            />
-          ))}
+          {/* Dots - evenly spaced on top */}
+          <div className="absolute inset-0 flex items-center justify-between px-1">
+            {Array.from({ length: SLIDE_COUNT }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setStep(i)}
+                className={`relative z-10 flex-shrink-0 h-3 rounded-full transition-all duration-300 ring-2 ring-white dark:ring-gray-900 ${i === step ? dotActive : dotInactive
+                  }`}
+                aria-label={`Step ${i + 1} of ${SLIDE_COUNT}`}
+              />
+            ))}
+          </div>
         </div>
-        <p className="text-center text-xs text-gray-500 dark:text-slate-400 mt-2 tabular-nums">
+        <p className="text-center text-xs text-gray-500 dark:text-slate-400 mt-3 tabular-nums">
           {step + 1} of {SLIDE_COUNT}
         </p>
       </div>
