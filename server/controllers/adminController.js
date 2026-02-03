@@ -4,6 +4,7 @@ const Report = require('../models/Report')
 const Config = require('../models/Config')
 const Chat = require('../models/Chat')
 const AdminLog = require('../models/AdminLog')
+const UserFeedback = require('../models/UserFeedback')
 const mongoose = require('mongoose')
 const { notifyUserUpdated, notifyTaskUpdated, notifyTaskCancelled, notifyAdminStatsRefresh } = require('../socket/socketHandler')
 
@@ -1667,6 +1668,50 @@ const getAnalytics = async (req, res) => {
   }
 }
 
+// GET /api/admin/feedback - List onboarding feedback and profile feedback (college pilot)
+const getFeedback = async (req, res) => {
+  try {
+    const [profileFeedback, usersWithOnboarding] = await Promise.all([
+      UserFeedback.find()
+        .populate('user', 'name email phone')
+        .sort({ createdAt: -1 })
+        .lean(),
+      User.find(
+        { 'onboardingFeedback.submittedAt': { $exists: true, $ne: null } },
+        'name email phone onboardingFeedback'
+      )
+        .sort({ 'onboardingFeedback.submittedAt': -1 })
+        .lean()
+    ])
+    const onboardingFeedback = usersWithOnboarding
+      .filter(u => u.onboardingFeedback?.submittedAt)
+      .map(u => ({
+        userId: u._id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        useCase: u.onboardingFeedback?.useCase || '',
+        suggestions: u.onboardingFeedback?.suggestions || '',
+        submittedAt: u.onboardingFeedback?.submittedAt
+      }))
+    return res.status(200).json({
+      profileFeedback: profileFeedback.map(f => ({
+        _id: f._id,
+        user: f.user ? { _id: f.user._id, name: f.user.name, email: f.user.email, phone: f.user.phone } : null,
+        rating: f.rating,
+        text: f.text,
+        createdAt: f.createdAt
+      })),
+      onboardingFeedback
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch feedback'
+    })
+  }
+}
+
 module.exports = {
   // Public stats
   getPublicStats,
@@ -1702,6 +1747,8 @@ module.exports = {
   updateSettings,
   // Reviews
   getReviews,
+  // Feedback (onboarding + profile)
+  getFeedback,
   // Logs
   getLogs,
   // Analytics

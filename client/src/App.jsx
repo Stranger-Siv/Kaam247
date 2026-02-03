@@ -57,6 +57,7 @@ const AdminReviews = lazyWithRetry(() => import('./pages/admin/AdminReviews'))
 const AdminLogs = lazyWithRetry(() => import('./pages/admin/AdminLogs'))
 const AdminAnalytics = lazyWithRetry(() => import('./pages/admin/AdminAnalytics'))
 const AdminTickets = lazyWithRetry(() => import('./pages/admin/AdminTickets'))
+const AdminFeedback = lazyWithRetry(() => import('./pages/admin/AdminFeedback'))
 const SetupProfile = lazyWithRetry(() => import('./pages/SetupProfile'))
 
 const HomeOrRedirect = () => {
@@ -207,6 +208,7 @@ const AppContent = () => (
                               <Route path="/admin/chats" element={<AdminChats />} />
                               <Route path="/admin/settings" element={<AdminSettings />} />
                               <Route path="/admin/reviews" element={<AdminReviews />} />
+                              <Route path="/admin/feedback" element={<AdminFeedback />} />
                               <Route path="/admin/logs" element={<AdminLogs />} />
                               <Route path="/admin/analytics" element={<AdminAnalytics />} />
                               <Route path="/admin/reports" element={<AdminReports />} />

@@ -23,6 +23,7 @@ function AdminLayout() {
     { path: '/admin/reports', label: 'Reports', icon: '🚨' },
     { path: '/admin/tickets', label: 'Tickets', icon: '🎫' },
     { path: '/admin/reviews', label: 'Reviews', icon: '⭐' },
+    { path: '/admin/feedback', label: 'Feedback', icon: '💬' },
     { path: '/admin/logs', label: 'Logs', icon: '📜' },
     { path: '/admin/analytics', label: 'Analytics', icon: '📈' },
     { path: '/admin/settings', label: 'Settings', icon: '⚙️' }

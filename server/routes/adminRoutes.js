@@ -27,6 +27,7 @@ const {
   getSettings,
   updateSettings,
   getReviews,
+  getFeedback,
   getLogs,
   getAnalytics
 } = require('../controllers/adminController')
@@ -128,6 +129,11 @@ router.put('/settings', updateSettings)
 // REVIEWS
 // ============================================
 router.get('/reviews', getReviews)
+
+// ============================================
+// FEEDBACK (onboarding + profile suggestions)
+// ============================================
+router.get('/feedback', getFeedback)
 
 // ============================================
 // LOGS
