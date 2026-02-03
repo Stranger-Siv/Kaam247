@@ -31,6 +31,12 @@ const TaskDetail = lazyWithRetry(() => import('./pages/TaskDetail'))
 const PostTask = lazyWithRetry(() => import('./pages/PostTask'))
 const Profile = lazyWithRetry(() => import('./pages/Profile'))
 const Settings = lazyWithRetry(() => import('./pages/Settings'))
+const SettingsProfile = lazyWithRetry(() => import('./pages/settings/SettingsProfile'))
+const SettingsPreferences = lazyWithRetry(() => import('./pages/settings/SettingsPreferences'))
+const SettingsAvailability = lazyWithRetry(() => import('./pages/settings/SettingsAvailability'))
+const SettingsDataExport = lazyWithRetry(() => import('./pages/settings/SettingsDataExport'))
+const SettingsNotifications = lazyWithRetry(() => import('./pages/settings/SettingsNotifications'))
+const SettingsAccount = lazyWithRetry(() => import('./pages/settings/SettingsAccount'))
 const Activity = lazyWithRetry(() => import('./pages/Activity'))
 const Earnings = lazyWithRetry(() => import('./pages/Earnings'))
 const AdminOverview = lazyWithRetry(() => import('./pages/admin/AdminOverview'))
@@ -136,6 +142,12 @@ const AppContent = () => (
                           />
                           <Route path="/profile" element={<Profile />} />
                           <Route path="/settings" element={<Settings />} />
+                          <Route path="/settings/profile" element={<SettingsProfile />} />
+                          <Route path="/settings/preferences" element={<ModeProtectedRoute allowedMode="worker"><SettingsPreferences /></ModeProtectedRoute>} />
+                          <Route path="/settings/availability" element={<ModeProtectedRoute allowedMode="worker"><SettingsAvailability /></ModeProtectedRoute>} />
+                          <Route path="/settings/data-export" element={<SettingsDataExport />} />
+                          <Route path="/settings/notifications" element={<SettingsNotifications />} />
+                          <Route path="/settings/account" element={<SettingsAccount />} />
                           <Route path="/activity" element={<Activity />} />
                           <Route
                             path="/earnings"
