@@ -502,7 +502,7 @@ const getAvailableTasks = async (req, res) => {
     const minBudget = req.query.minBudget != null && req.query.minBudget !== '' ? Number(req.query.minBudget) : null
     const maxBudget = req.query.maxBudget != null && req.query.maxBudget !== '' ? Number(req.query.maxBudget) : null
     const search = req.query.search && String(req.query.search).trim() ? String(req.query.search).trim() : null
-    const sort = req.query.sort && String(req.query.sort) : 'distance'
+    const sort = req.query.sort ? String(req.query.sort) : 'distance'
 
     const now = new Date()
     const query = {
