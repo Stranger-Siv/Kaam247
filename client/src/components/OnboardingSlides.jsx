@@ -62,17 +62,35 @@ function OnboardingSlides() {
       aria-modal="true"
       aria-label="Welcome to Kaam247"
     >
-      {/* Progress dots */}
-      <div className="flex justify-center gap-1.5 pt-5 pb-2">
-        {Array.from({ length: SLIDE_COUNT }, (_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setStep(i)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? dotActive : dotInactive}`}
-            aria-label={`Step ${i + 1} of ${SLIDE_COUNT}`}
+      {/* Progress rail: track runs behind dots, fill grows step-by-step */}
+      <div className="relative flex justify-center pt-5 pb-3 px-4">
+        <div className="relative w-[160px] sm:w-[200px] h-8 flex items-center">
+          {/* Rail track (full width) */}
+          <div
+            className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-2 rounded-full bg-gray-200 dark:bg-slate-700"
+            aria-hidden
           />
-        ))}
+          {/* Rail fill: progresses to current step */}
+          <div
+            className="absolute left-0 top-1/2 -translate-y-1/2 h-2 rounded-l-full bg-blue-500 dark:bg-blue-400 transition-all duration-500 ease-out"
+            style={{ width: `${((step + 0.5) / SLIDE_COUNT) * 100}%` }}
+            aria-hidden
+          />
+          {/* Dots centered on rail segments */}
+          {Array.from({ length: SLIDE_COUNT }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setStep(i)}
+              className={`absolute top-1/2 z-10 h-1.5 rounded-full transition-all duration-300 -translate-x-1/2 -translate-y-1/2 ${i === step ? dotActive : dotInactive}`}
+              style={{ left: `${((i + 0.5) / SLIDE_COUNT) * 100}%` }}
+              aria-label={`Step ${i + 1} of ${SLIDE_COUNT}`}
+            />
+          ))}
+        </div>
+        <p className="text-center text-xs text-gray-500 dark:text-slate-400 mt-2 tabular-nums">
+          {step + 1} of {SLIDE_COUNT}
+        </p>
       </div>
 
       {/* Slide content - key forces re-mount and replay animation on step change */}
