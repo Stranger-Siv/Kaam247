@@ -7,16 +7,16 @@ function Footer({ className = '' }) {
       role="contentinfo"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex flex-row items-center justify-between gap-4 min-h-[2.5rem]">
+        <div className="flex flex-row items-baseline justify-between gap-4 min-h-[2.5rem]">
           {/* Left: copyright */}
-          <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0 leading-none">
+          <span className="text-sm leading-normal text-gray-500 dark:text-gray-400 shrink-0">
             © {new Date().getFullYear()} Kaam247
           </span>
-          {/* Right: links + tagline — same text size and line height for alignment */}
-          <div className="flex flex-row items-center justify-end gap-4 shrink-0 text-sm text-gray-500 dark:text-gray-400 leading-none">
+          {/* Right: links + tagline — baseline-aligned, even spacing */}
+          <div className="flex flex-row items-baseline justify-end gap-3 shrink-0 text-sm leading-normal text-gray-500 dark:text-gray-400">
             <Link
               to="/terms"
-              className="hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded px-0.5 -mx-0.5 py-0.5"
+              className="inline hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded"
             >
               Terms
             </Link>
@@ -25,14 +25,14 @@ function Footer({ className = '' }) {
             </span>
             <Link
               to="/privacy"
-              className="hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded px-0.5 -mx-0.5 py-0.5"
+              className="inline hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded"
             >
               Privacy
             </Link>
             <span className="text-gray-400 dark:text-gray-500 select-none" aria-hidden="true">
               ·
             </span>
-            <span className="text-gray-500 dark:text-gray-400">
+            <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap">
               Made for local, real-world tasks
             </span>
           </div>
