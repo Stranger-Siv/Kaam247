@@ -775,7 +775,7 @@ function PostTask() {
                   min="50"
                 />
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
-                  Minimum ₹50. Enter the amount you are willing to pay. You can still negotiate with workers after they accept.
+                  Minimum ₹50. Enter the amount you are willing to pay.
                 </p>
               </div>
             </div>
