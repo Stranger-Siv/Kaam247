@@ -37,6 +37,7 @@ function Tasks() {
   const [sortOption, setSortOption] = useState('distance')
   const [showOnlySaved, setShowOnlySaved] = useState(false)
   const [savedTaskIds, setSavedTaskIds] = useState(new Set())
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false)
   const preferencesAppliedRef = useRef(false)
   const { getSocket } = useSocket()
   const { isOnline, workerLocation } = useAvailability()
@@ -444,8 +445,8 @@ function Tasks() {
         />
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm dark:shadow-gray-900/50 sm:shadow-md p-4 sm:p-5 lg:p-6 mb-5 sm:mb-6 lg:mb-8 border border-gray-200 dark:border-gray-700 w-full">
+      {/* Filters - hidden on small screens (use FAB + sheet instead) */}
+      <div className="hidden sm:block bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm dark:shadow-gray-900/50 sm:shadow-md p-4 sm:p-5 lg:p-6 mb-5 sm:mb-6 lg:mb-8 border border-gray-200 dark:border-gray-700 w-full">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
           {/* Category Filter */}
           <div className="flex flex-col gap-2">
@@ -516,6 +517,106 @@ function Tasks() {
           </label>
         </div>
       </div>
+
+      {/* Small screen: floating filter button */}
+      <button
+        type="button"
+        onClick={() => setFilterPanelOpen(true)}
+        className="sm:hidden fixed bottom-20 right-4 z-[998] flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 dark:bg-blue-500 text-white shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 transition-all touch-manipulation"
+        aria-label="Open filters"
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+      </button>
+
+      {/* Small screen: filter sheet (slides up from bottom) */}
+      {filterPanelOpen && (
+        <>
+          <div
+            className="sm:hidden fixed inset-0 z-[999] bg-black/50 transition-opacity"
+            aria-hidden="true"
+            onClick={() => setFilterPanelOpen(false)}
+          />
+          <div
+            className="sm:hidden fixed left-0 right-0 bottom-0 z-[1000] bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[85vh] overflow-y-auto animate-slide-up"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filters"
+          >
+            <div className="sticky top-0 bg-white dark:bg-gray-800 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 rounded-t-2xl">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filters</h2>
+              <button
+                type="button"
+                onClick={() => setFilterPanelOpen(false)}
+                className="text-blue-600 dark:text-blue-400 font-medium text-sm"
+              >
+                Done
+              </button>
+            </div>
+            <div className="p-4 space-y-4 pb-8">
+              <div>
+                <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Category</span>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="h-11 w-full px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Distance</span>
+                <select
+                  value={selectedDistance}
+                  onChange={(e) => setSelectedDistance(e.target.value)}
+                  className="h-11 w-full px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  {distances.map((dist) => (
+                    <option key={dist} value={dist}>{dist}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Budget</span>
+                <select
+                  value={selectedBudget}
+                  onChange={(e) => setSelectedBudget(e.target.value)}
+                  className="h-11 w-full px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  {budgets.map((budget) => (
+                    <option key={budget} value={budget}>{budget}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Sort by</span>
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="h-11 w-full px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <option value="distance">Nearest first</option>
+                  <option value="budget_desc">Budget (high to low)</option>
+                  <option value="budget_asc">Budget (low to high)</option>
+                  <option value="newest">Newest first</option>
+                </select>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer pt-2">
+                <input
+                  type="checkbox"
+                  checked={showOnlySaved}
+                  onChange={(e) => setShowOnlySaved(e.target.checked)}
+                  className="rounded border-gray-300 dark:border-gray-600 text-amber-500 focus:ring-amber-500"
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show saved only</span>
+              </label>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Tasks List */}
       {loading ? (
