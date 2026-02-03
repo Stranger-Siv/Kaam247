@@ -46,8 +46,8 @@ function OnboardingSlides() {
     exiting ? 'opacity-0' : 'opacity-100'
   ].join(' ')
 
-  const dotActive = 'w-6 bg-blue-500 dark:bg-blue-400 shadow-md shadow-blue-500/30'
-  const dotInactive = 'w-1.5 bg-gray-300 dark:bg-slate-600 hover:bg-gray-400 dark:hover:bg-slate-500'
+  const dotActive = 'w-7 h-7 bg-blue-500 dark:bg-blue-400 shadow-md shadow-blue-500/30 text-white'
+  const dotInactive = 'w-7 h-7 bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500 text-gray-600 dark:text-slate-400'
 
   return (
     <div
@@ -77,17 +77,20 @@ function OnboardingSlides() {
             style={{ width: `${((step + 0.5) / SLIDE_COUNT) * 100}%` }}
             aria-hidden
           />
-          {/* Dots - evenly spaced on top */}
-          <div className="absolute inset-0 flex items-center justify-between px-1">
+          {/* Dots - step numbers inside rings */}
+          <div className="absolute inset-0 flex items-center justify-between px-0.5">
             {Array.from({ length: SLIDE_COUNT }, (_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setStep(i)}
-                className={`relative z-10 flex-shrink-0 h-3 rounded-full transition-all duration-300 ring-2 ring-white dark:ring-gray-900 ${i === step ? dotActive : dotInactive
-                  }`}
+                className={`relative z-10 flex-shrink-0 flex items-center justify-center rounded-full transition-all duration-300 ring-2 ring-white dark:ring-gray-900 ${i === step ? dotActive : dotInactive}`}
                 aria-label={`Step ${i + 1} of ${SLIDE_COUNT}`}
-              />
+              >
+                <span className="text-[10px] sm:text-xs font-bold leading-none select-none">
+                  {i + 1}
+                </span>
+              </button>
             ))}
           </div>
         </div>
