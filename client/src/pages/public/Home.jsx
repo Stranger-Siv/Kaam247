@@ -314,8 +314,8 @@ function Home() {
       {/* SECTION 6: REAL NUMBERS */}
       <section className="bg-white dark:bg-gray-950 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 dark:border-gray-800">
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-800">
-            <div className="flex flex-col items-center justify-center py-6 md:py-4 xl:py-6 first:pt-0 last:pb-0 md:first:pt-4 md:last:pb-4 xl:first:pl-0 xl:last:pr-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-gray-100 dark:divide-gray-800">
+            <div className="flex flex-col items-center justify-center py-6 lg:py-4 xl:py-6 first:pt-0 last:pb-0 lg:first:pt-4 lg:last:pb-4 xl:first:pl-0 xl:last:pr-0">
               <span
                 className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${!statsLoading ? 'animate-stat-pop' : ''}`}
                 style={!statsLoading ? { animationDelay: '0ms' } : undefined}
@@ -324,7 +324,7 @@ function Home() {
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400 mt-2">Total users</span>
             </div>
-            <div className="flex flex-col items-center justify-center py-6 md:py-4 xl:py-6">
+            <div className="flex flex-col items-center justify-center py-6 lg:py-4 xl:py-6">
               <span
                 className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${!statsLoading ? 'animate-stat-pop' : ''}`}
                 style={!statsLoading ? { animationDelay: '80ms' } : undefined}
@@ -333,7 +333,7 @@ function Home() {
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400 mt-2">Tasks completed</span>
             </div>
-            <div className="flex flex-col items-center justify-center py-6 md:py-4 xl:py-6">
+            <div className="flex flex-col items-center justify-center py-6 lg:py-4 xl:py-6">
               <span
                 className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${!statsLoading ? 'animate-stat-pop' : ''}`}
                 style={!statsLoading ? { animationDelay: '160ms' } : undefined}
@@ -342,7 +342,7 @@ function Home() {
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400 mt-2">Task categories</span>
             </div>
-            <div className="flex flex-col items-center justify-center py-6 md:py-4 xl:py-6">
+            <div className="flex flex-col items-center justify-center py-6 lg:py-4 xl:py-6">
               <span
                 className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${!statsLoading ? 'animate-stat-pop' : ''}`}
                 style={!statsLoading ? { animationDelay: '240ms' } : undefined}
