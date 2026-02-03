@@ -32,6 +32,10 @@ export default {
           from: { opacity: '0', transform: 'translateX(20px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
         },
+        'stat-pop': {
+          from: { opacity: '0', transform: 'scale(0.85) translateY(8px)' },
+          to: { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
       },
       animation: {
         'slide-up': 'slide-up 0.25s ease-out',
@@ -40,6 +44,7 @@ export default {
         'onboarding-float': 'onboarding-float 4.5s ease-in-out infinite',
         'onboarding-scale-in': 'onboarding-scale-in 0.6s ease-out forwards',
         'onboarding-slide-in-right': 'onboarding-slide-in-right 0.55s ease-out forwards',
+        'stat-pop': 'stat-pop 0.5s ease-out forwards',
       },
       colors: {
         // Override gray scale with neutral (less blue) dark tones

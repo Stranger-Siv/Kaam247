@@ -314,33 +314,42 @@ function Home() {
       {/* SECTION 6: REAL NUMBERS */}
       <section className="bg-white dark:bg-gray-950 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 dark:border-gray-800">
         <div className="max-w-4xl mx-auto">
-          <p className="text-center text-xs sm:text-sm font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-6">
-            Kaam247 in numbers
-          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-800">
             <div className="flex flex-col items-center justify-center py-6 sm:py-4 lg:py-6 first:pt-0 last:pb-0 sm:first:pt-4 sm:last:pb-4 lg:first:pl-0 lg:last:pr-0">
-              <span className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
+              <span
+                className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${!statsLoading ? 'animate-stat-pop' : ''}`}
+                style={!statsLoading ? { animationDelay: '0ms' } : undefined}
+              >
                 {statsLoading ? '—' : stats.totalUsers.toLocaleString()}
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Total users</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 mt-2">Total users</span>
             </div>
             <div className="flex flex-col items-center justify-center py-6 sm:py-4 lg:py-6">
-              <span className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
+              <span
+                className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${!statsLoading ? 'animate-stat-pop' : ''}`}
+                style={!statsLoading ? { animationDelay: '80ms' } : undefined}
+              >
                 {statsLoading ? '—' : stats.totalCompletedTasks.toLocaleString()}
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Tasks completed</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 mt-2">Tasks completed</span>
             </div>
             <div className="flex flex-col items-center justify-center py-6 sm:py-4 lg:py-6">
-              <span className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
+              <span
+                className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${!statsLoading ? 'animate-stat-pop' : ''}`}
+                style={!statsLoading ? { animationDelay: '160ms' } : undefined}
+              >
                 {statsLoading ? '—' : stats.categoryCount}
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Task categories</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 mt-2">Task categories</span>
             </div>
             <div className="flex flex-col items-center justify-center py-6 sm:py-4 lg:py-6">
-              <span className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
+              <span
+                className={`text-4xl sm:text-5xl lg:text-6xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${!statsLoading ? 'animate-stat-pop' : ''}`}
+                style={!statsLoading ? { animationDelay: '240ms' } : undefined}
+              >
                 {statsLoading ? '—' : (stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '—')}
               </span>
-              <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Avg. rating</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 mt-2">Avg. rating</span>
             </div>
           </div>
         </div>
