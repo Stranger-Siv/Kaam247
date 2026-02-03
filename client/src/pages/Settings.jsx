@@ -23,6 +23,11 @@ function Settings() {
   const [preferencesError, setPreferencesError] = useState(null)
   const [preferencesSuccess, setPreferencesSuccess] = useState(false)
 
+  // Availability schedule (workers)
+  const [availabilitySchedule, setAvailabilitySchedule] = useState({ enabled: false, slots: [] })
+  const [availabilitySaving, setAvailabilitySaving] = useState(false)
+  const [availabilityError, setAvailabilityError] = useState(null)
+
   // Mobile number change request
   const [ticketRequestedPhone, setTicketRequestedPhone] = useState('')
   const [ticketReason, setTicketReason] = useState('')
@@ -79,6 +84,47 @@ function Settings() {
     }
     fetchProfile()
   }, [user?.id])
+
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      if (!user?.id || userMode !== 'worker') return
+      try {
+        const token = localStorage.getItem('kaam247_token')
+        const res = await fetch(`${API_BASE_URL}/api/users/me/availability-schedule`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setAvailabilitySchedule(data.schedule || { enabled: false, slots: [] })
+        }
+      } catch (e) { }
+    }
+    fetchSchedule()
+  }, [user?.id, userMode])
+
+  const handleSaveAvailabilitySchedule = async () => {
+    if (!user?.id) return
+    setAvailabilitySaving(true)
+    setAvailabilityError(null)
+    try {
+      const token = localStorage.getItem('kaam247_token')
+      const res = await fetch(`${API_BASE_URL}/api/users/me/availability-schedule`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(availabilitySchedule)
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.message || 'Failed to save schedule')
+      }
+    } catch (err) {
+      setAvailabilityError(err.message)
+    } finally {
+      setAvailabilitySaving(false)
+    }
+  }
+
+  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
   const handleProfileInputChange = (field, value) => {
     setProfile(prev => ({ ...prev, [field]: value }))
@@ -365,6 +411,92 @@ function Settings() {
                 className="h-11 px-5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {preferencesSaving ? 'Saving...' : 'Save preferences'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Availability schedule (workers) */}
+        {userMode === 'worker' && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+              Availability schedule
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Set when you’re typically available. You can still go ON DUTY / OFF DUTY manually; this is for reference or future auto-off.
+            </p>
+            <div className="space-y-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={availabilitySchedule.enabled}
+                  onChange={(e) => setAvailabilitySchedule(prev => ({ ...prev, enabled: e.target.checked }))}
+                  className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Use schedule</span>
+              </label>
+              <div>
+                <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Slots (day, start, end)</p>
+                {(availabilitySchedule.slots || []).map((slot, idx) => (
+                  <div key={idx} className="flex flex-wrap items-center gap-2 mb-2">
+                    <select
+                      value={slot.dayOfWeek}
+                      onChange={(e) => {
+                        const next = [...(availabilitySchedule.slots || [])]
+                        next[idx] = { ...next[idx], dayOfWeek: Number(e.target.value) }
+                        setAvailabilitySchedule(prev => ({ ...prev, slots: next }))
+                      }}
+                      className="h-9 px-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                    >
+                      {DAY_NAMES.map((d, i) => (
+                        <option key={i} value={i}>{d}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="time"
+                      value={slot.startTime || '09:00'}
+                      onChange={(e) => {
+                        const next = [...(availabilitySchedule.slots || [])]
+                        next[idx] = { ...next[idx], startTime: e.target.value }
+                        setAvailabilitySchedule(prev => ({ ...prev, slots: next }))
+                      }}
+                      className="h-9 px-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                    />
+                    <input
+                      type="time"
+                      value={slot.endTime || '17:00'}
+                      onChange={(e) => {
+                        const next = [...(availabilitySchedule.slots || [])]
+                        next[idx] = { ...next[idx], endTime: e.target.value }
+                        setAvailabilitySchedule(prev => ({ ...prev, slots: next }))
+                      }}
+                      className="h-9 px-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setAvailabilitySchedule(prev => ({ ...prev, slots: (prev.slots || []).filter((_, i) => i !== idx) }))}
+                      className="text-red-600 dark:text-red-400 text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setAvailabilitySchedule(prev => ({ ...prev, slots: [...(prev.slots || []), { dayOfWeek: 1, startTime: '09:00', endTime: '17:00' }] }))}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  + Add slot
+                </button>
+              </div>
+              {availabilityError && <p className="text-sm text-red-600 dark:text-red-400">{availabilityError}</p>}
+              <button
+                type="button"
+                onClick={handleSaveAvailabilitySchedule}
+                disabled={availabilitySaving}
+                className="h-11 px-5 bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
+              >
+                {availabilitySaving ? 'Saving...' : 'Save schedule'}
               </button>
             </div>
           </div>

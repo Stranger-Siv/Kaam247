@@ -18,6 +18,8 @@ function Activity() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   // DATA CONSISTENCY: Fetch activity - always fresh from backend, no duplicates
   const fetchActivity = async () => {
@@ -31,7 +33,11 @@ function Activity() {
       setError(null)
 
       const token = localStorage.getItem('kaam247_token')
-      const response = await fetch(`${API_BASE_URL}/api/users/me/activity`, {
+      const params = new URLSearchParams()
+      if (dateFrom) params.set('dateFrom', dateFrom)
+      if (dateTo) params.set('dateTo', dateTo)
+      const qs = params.toString()
+      const response = await fetch(`${API_BASE_URL}/api/users/me/activity${qs ? `?${qs}` : ''}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -84,7 +90,7 @@ function Activity() {
       window.removeEventListener('task_cancelled', handleTaskCancelled)
       window.removeEventListener('task_rated', handleTaskRated)
     }
-  }, [user?.id])
+  }, [user?.id, dateFrom, dateTo])
 
 
   const formatDate = (dateString) => {
@@ -163,6 +169,50 @@ function Activity() {
       <div className="mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-1 sm:mb-2 break-words">Activity History</h1>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 break-words">View all your tasks and activities</p>
+      </div>
+
+      {/* Date filter and Export */}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <span>From</span>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <span>To</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={async () => {
+            const token = localStorage.getItem('kaam247_token')
+            const params = new URLSearchParams({ export: 'csv' })
+            if (dateFrom) params.set('dateFrom', dateFrom)
+            if (dateTo) params.set('dateTo', dateTo)
+            const res = await fetch(`${API_BASE_URL}/api/users/me/activity?${params}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            })
+            const blob = await res.blob()
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = 'activity.csv'
+            a.click()
+            URL.revokeObjectURL(url)
+          }}
+          className="inline-flex items-center px-3 py-1.5 text-sm font-medium bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600"
+        >
+          Export CSV
+        </button>
       </div>
 
       {/* Tabs - Mobile Scrollable (contained) */}

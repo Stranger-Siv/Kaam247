@@ -33,6 +33,10 @@ function Tasks() {
   const [workerPreferredCategories, setWorkerPreferredCategories] = useState([])
   const [showAllTasksOverride, setShowAllTasksOverride] = useState(false)
   const [clearingPreferences, setClearingPreferences] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortOption, setSortOption] = useState('distance')
+  const [showOnlySaved, setShowOnlySaved] = useState(false)
+  const [savedTaskIds, setSavedTaskIds] = useState(new Set())
   const preferencesAppliedRef = useRef(false)
   const { getSocket } = useSocket()
   const { isOnline, workerLocation } = useAvailability()
@@ -71,24 +75,27 @@ function Tasks() {
     }
   }
 
-  // Load worker preferences once (default radius + preferred categories for sorting)
+  // Load worker preferences and saved task IDs once
   useEffect(() => {
-    if (userMode !== 'worker' || !user?.id || preferencesAppliedRef.current) return
+    if (userMode !== 'worker' || !user?.id) return
     const token = localStorage.getItem('kaam247_token')
     fetch(`${API_BASE_URL}/api/users/me`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then(data => {
         const prefs = data.user?.workerPreferences
-        if (!prefs) return
-        preferencesAppliedRef.current = true
-        if (Array.isArray(prefs.preferredCategories) && prefs.preferredCategories.length > 0) {
-          setWorkerPreferredCategories(prefs.preferredCategories)
+        if (prefs && !preferencesAppliedRef.current) {
+          preferencesAppliedRef.current = true
+          if (Array.isArray(prefs.preferredCategories) && prefs.preferredCategories.length > 0) {
+            setWorkerPreferredCategories(prefs.preferredCategories)
+          }
+          const defaultKm = prefs.defaultRadiusKm
+          if (typeof defaultKm === 'number' && defaultKm >= 1 && defaultKm <= 10) {
+            const option = DISTANCE_OPTIONS.find(o => o.km === defaultKm) || DISTANCE_OPTIONS.find(o => o.km === 5)
+            if (option) setSelectedDistance(option.label)
+          }
         }
-        const defaultKm = prefs.defaultRadiusKm
-        if (typeof defaultKm === 'number' && defaultKm >= 1 && defaultKm <= 10) {
-          const option = DISTANCE_OPTIONS.find(o => o.km === defaultKm) || DISTANCE_OPTIONS.find(o => o.km === 5)
-          if (option) setSelectedDistance(option.label)
-        }
+        const saved = data.user?.savedTasks || []
+        setSavedTaskIds(new Set(saved.map(id => (id && id._id ? id._id.toString() : String(id)))))
       })
       .catch(() => { })
   }, [userMode, user?.id])
@@ -182,7 +189,7 @@ function Tasks() {
     }
 
     fetchTasks()
-  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, refetchTrigger, workerPreferredCategories, showAllTasksOverride])
+  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, searchQuery, sortOption, refetchTrigger, workerPreferredCategories, showAllTasksOverride])
 
   // Listen for new tasks via Socket.IO (only when online)
   useEffect(() => {
@@ -316,7 +323,26 @@ function Tasks() {
     return () => window.removeEventListener('refetch_required', handleRefetch)
   }, [])
 
-  const filteredTasks = tasks
+  const filteredTasks = showOnlySaved
+    ? tasks.filter(t => savedTaskIds.has(t.id))
+    : tasks
+
+  const toggleBookmark = async (taskId, e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const token = localStorage.getItem('kaam247_token')
+    if (!token) return
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/me/saved-tasks/${taskId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSavedTaskIds(new Set(data.savedTasks || []))
+      }
+    } catch (err) { }
+  }
 
   // Worker OFF DUTY: hide task feed completely
   if (userMode === 'worker' && !isOnline) {
@@ -407,9 +433,20 @@ function Tasks() {
         )}
       </div>
 
+      {/* Search */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by title or description..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full h-11 px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+        />
+      </div>
+
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm dark:shadow-gray-900/50 sm:shadow-md p-4 sm:p-5 lg:p-6 mb-5 sm:mb-6 lg:mb-8 border border-gray-200 dark:border-gray-700 w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
           {/* Category Filter */}
           <div className="flex flex-col gap-2">
             <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Category</span>
@@ -451,6 +488,32 @@ function Tasks() {
               ))}
             </select>
           </div>
+
+          {/* Sort */}
+          <div className="flex flex-col gap-2">
+            <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Sort by</span>
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value)}
+              className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base touch-manipulation transition-colors"
+            >
+              <option value="distance">Nearest first</option>
+              <option value="budget_desc">Budget (high to low)</option>
+              <option value="budget_asc">Budget (low to high)</option>
+              <option value="newest">Newest first</option>
+            </select>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showOnlySaved}
+              onChange={(e) => setShowOnlySaved(e.target.checked)}
+              className="rounded border-gray-300 dark:border-gray-600 text-amber-500 focus:ring-amber-500"
+            />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show saved only</span>
+          </label>
         </div>
       </div>
 
@@ -468,12 +531,13 @@ function Tasks() {
               key={task.id}
               task={task}
               onTaskAccepted={(taskId) => {
-                // Remove task from list when accepted
                 setTasks(prev => prev.filter(t => t.id !== taskId))
               }}
               onTaskRemoved={(taskId) => {
                 setTasks(prev => prev.filter(t => t.id !== taskId))
               }}
+              isSaved={savedTaskIds.has(task.id)}
+              onToggleBookmark={toggleBookmark}
             />
           ))}
         </div>

@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { useAvailability } from '../context/AvailabilityContext'
 import { useUserMode } from '../context/UserModeContext'
 
-function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved }) {
+function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onToggleBookmark }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { userMode } = useUserMode()
@@ -150,17 +150,38 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved }) {
       <Link
         to={`/tasks/${task.id}`}
         className={`group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 active:bg-gray-50 dark:active:bg-gray-700 w-full overflow-hidden block ${task.isNew
-            ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20'
-            : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
+          ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20'
+          : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
           }`}
       >
         <div className="flex items-start justify-between mb-4 sm:mb-5 gap-2 sm:gap-3 w-full min-w-0">
           <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-gray-100 flex-1 pr-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 break-words min-w-0 leading-tight">
             {task.title}
           </h3>
-          <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-lg whitespace-nowrap flex-shrink-0">
-            {task.category}
-          </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {onToggleBookmark && (
+              <button
+                type="button"
+                onClick={(e) => onToggleBookmark(task.id, e)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
+                aria-label={isSaved ? 'Remove from saved' : 'Save task'}
+                title={isSaved ? 'Remove from saved' : 'Save task'}
+              >
+                {isSaved ? (
+                  <svg className="w-5 h-5 text-amber-500 dark:text-amber-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                )}
+              </button>
+            )}
+            <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-lg whitespace-nowrap">
+              {task.category}
+            </span>
+          </div>
         </div>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 sm:mb-5 line-clamp-2 leading-relaxed break-words w-full">
           {task.description}

@@ -244,10 +244,11 @@ const updateProfile = async (req, res) => {
   }
 }
 
-// GET /api/users/me/activity - Get user's activity history
+// GET /api/users/me/activity - Get user's activity history (optional: dateFrom, dateTo, export=csv)
 const getActivity = async (req, res) => {
   try {
     const userId = req.userId // From auth middleware
+    const { dateFrom, dateTo, export: exportFormat } = req.query
 
     // Validate userId
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -257,13 +258,22 @@ const getActivity = async (req, res) => {
       })
     }
 
+    const dateFilter = {}
+    if (dateFrom) dateFilter.$gte = new Date(dateFrom)
+    if (dateTo) {
+      const end = new Date(dateTo)
+      end.setHours(23, 59, 59, 999)
+      dateFilter.$lte = end
+    }
+    const createdAtQuery = Object.keys(dateFilter).length ? { createdAt: dateFilter } : {}
+
     // Fetch all tasks where user is either poster or worker
-    const postedTasks = await Task.find({ postedBy: userId })
+    const postedTasks = await Task.find({ postedBy: userId, ...createdAtQuery })
       .populate('acceptedBy', 'name')
       .sort({ createdAt: -1 })
       .lean()
 
-    const acceptedTasks = await Task.find({ acceptedBy: userId })
+    const acceptedTasks = await Task.find({ acceptedBy: userId, ...createdAtQuery })
       .populate('postedBy', 'name')
       .sort({ createdAt: -1 })
       .lean()
@@ -344,6 +354,22 @@ const getActivity = async (req, res) => {
       })).sort((a, b) => new Date(b.date) - new Date(a.date))
     }
 
+    if (exportFormat === 'csv') {
+      const rows = [
+        ['Role', 'Title', 'Category', 'Budget', 'Status', 'Date', 'Posted By', 'Accepted By', 'Rating'].join(',')
+      ]
+      const all = [
+        ...categorized.posted.map(t => ['Poster', t.title, t.category, t.budget, t.status, t.date, '-', t.acceptedBy || '-', t.rating || '-']),
+        ...categorized.accepted.map(t => ['Worker', t.title, t.category, t.budget, t.status, t.date, t.postedBy || '-', '-', t.rating || '-']),
+        ...categorized.completed.map(t => [t.role, t.title, t.category, t.budget, t.status, t.date, t.postedBy || '-', t.acceptedBy || '-', t.rating || '-']),
+        ...categorized.cancelled.map(t => [t.role, t.title, t.category, t.budget, t.status, t.date, t.postedBy || '-', t.acceptedBy || '-', '-'])
+      ]
+      all.forEach(arr => rows.push(arr.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')))
+      res.setHeader('Content-Type', 'text/csv')
+      res.setHeader('Content-Disposition', 'attachment; filename=activity.csv')
+      return res.status(200).send(rows.join('\n'))
+    }
+
     return res.status(200).json({
       message: 'Activity fetched successfully',
       activity: categorized
@@ -409,6 +435,45 @@ const getEarnings = async (req, res) => {
     })
     const earningsThisMonth = thisMonthTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
 
+    // Breakdown by category
+    const byCategory = {}
+    completedTasks.forEach(task => {
+      const cat = task.category || 'Other'
+      byCategory[cat] = (byCategory[cat] || 0) + (task.budget || 0)
+    })
+
+    // Last 7 days daily breakdown
+    const last7Days = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      d.setHours(0, 0, 0, 0)
+      const end = new Date(d)
+      end.setHours(23, 59, 59, 999)
+      const dayTasks = completedTasks.filter(task => {
+        const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
+        return completedDate >= d && completedDate <= end
+      })
+      const dayTotal = dayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+      last7Days.push({ date: d.toISOString().slice(0, 10), total: dayTotal, count: dayTasks.length })
+    }
+
+    // Last 30 days (for chart)
+    const last30Days = []
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      d.setHours(0, 0, 0, 0)
+      const end = new Date(d)
+      end.setHours(23, 59, 59, 999)
+      const dayTasks = completedTasks.filter(task => {
+        const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
+        return completedDate >= d && completedDate <= end
+      })
+      const dayTotal = dayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+      last30Days.push({ date: d.toISOString().slice(0, 10), total: dayTotal, count: dayTasks.length })
+    }
+
     // Format task list
     const taskList = completedTasks.map(task => ({
       id: task._id,
@@ -428,7 +493,10 @@ const getEarnings = async (req, res) => {
         thisWeek: earningsThisWeek,
         thisMonth: earningsThisMonth,
         totalTasks: completedTasks.length,
-        tasks: taskList
+        tasks: taskList,
+        byCategory,
+        last7Days,
+        last30Days
       }
     })
   } catch (error) {
@@ -439,12 +507,52 @@ const getEarnings = async (req, res) => {
   }
 }
 
-// GET /api/users/me - Get current user profile
+// Compute worker badges from stats
+async function getWorkerBadges(userId) {
+  const user = await User.findById(userId).select('averageRating totalRatings').lean()
+  if (!user) return []
+
+  const completedAsWorker = await Task.find({
+    acceptedBy: userId,
+    status: 'COMPLETED'
+  }).lean()
+
+  const totalEarnings = completedAsWorker.reduce((s, t) => s + (t.budget || 0), 0)
+  const cancelledByWorker = await Task.countDocuments({
+    acceptedBy: userId,
+    status: { $in: ['CANCELLED_BY_WORKER'] }
+  })
+  const acceptedCount = await Task.countDocuments({ acceptedBy: userId })
+  const cancelRate = acceptedCount > 0 ? (cancelledByWorker / acceptedCount) * 100 : 0
+
+  const avgAcceptTime = await Task.aggregate([
+    { $match: { acceptedBy: mongoose.Types.ObjectId(userId), acceptedAt: { $exists: true } } },
+    {
+      $project: {
+        ms: { $subtract: ['$acceptedAt', '$createdAt'] }
+      }
+    },
+    { $group: { _id: null, avgMs: { $avg: '$ms' } } }
+  ])
+  const avgAcceptMs = avgAcceptTime[0]?.avgMs || null
+
+  const badges = []
+  if (user.averageRating >= 4.5 && (user.totalRatings || 0) >= 10) badges.push('TOP_RATED')
+  if (cancelRate <= 10 && acceptedCount >= 5) badges.push('RELIABLE')
+  if (avgAcceptMs != null && avgAcceptMs < 30 * 60 * 1000) badges.push('FAST_RESPONDER') // under 30 min
+  if (totalEarnings >= 10000) badges.push('EARNED_10K')
+  if (totalEarnings >= 5000) badges.push('EARNED_5K')
+  if (totalEarnings >= 1000) badges.push('EARNED_1K')
+
+  return badges
+}
+
+// GET /api/users/me - Get current user profile (includes worker badges and savedTasks)
 const getProfile = async (req, res) => {
   try {
     const userId = req.userId // From auth middleware
 
-    const user = await User.findById(userId).select('-password')
+    const user = await User.findById(userId).select('-password').lean()
     if (!user) {
       return res.status(404).json({
         error: 'User not found',
@@ -452,14 +560,98 @@ const getProfile = async (req, res) => {
       })
     }
 
+    const response = { ...user, savedTasks: user.savedTasks || [] }
+    if (user.roleMode === 'worker') {
+      response.workerBadges = await getWorkerBadges(userId)
+    }
+
     return res.status(200).json({
       message: 'Profile fetched successfully',
-      user: user
+      user: response
     })
   } catch (error) {
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while fetching profile'
+    })
+  }
+}
+
+// POST /api/users/me/saved-tasks/:taskId - Toggle bookmark (add if not saved, remove if saved)
+const toggleSavedTask = async (req, res) => {
+  try {
+    const userId = req.userId
+    const { taskId } = req.params
+    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+      return res.status(400).json({ error: 'Invalid taskId', message: 'Invalid task ID' })
+    }
+
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ error: 'User not found', message: 'User not found' })
+
+    const id = new mongoose.Types.ObjectId(taskId)
+    const saved = user.savedTasks || []
+    const idx = saved.findIndex(s => s.toString() === taskId)
+    if (idx >= 0) {
+      user.savedTasks = saved.filter(s => s.toString() !== taskId)
+    } else {
+      user.savedTasks = [...saved, id]
+    }
+    await user.save()
+
+    return res.status(200).json({
+      message: idx >= 0 ? 'Removed from saved' : 'Saved task',
+      savedTasks: user.savedTasks.map(s => s.toString())
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred'
+    })
+  }
+}
+
+// GET /api/users/me/availability-schedule - Get availability schedule
+const getAvailabilitySchedule = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('availabilitySchedule').lean()
+    if (!user) return res.status(404).json({ error: 'User not found', message: 'User not found' })
+    return res.status(200).json({
+      schedule: user.availabilitySchedule || { enabled: false, slots: [] }
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred'
+    })
+  }
+}
+
+// PATCH /api/users/me/availability-schedule - Update availability schedule
+const updateAvailabilitySchedule = async (req, res) => {
+  try {
+    const { enabled, slots } = req.body
+    const user = await User.findById(req.userId)
+    if (!user) return res.status(404).json({ error: 'User not found', message: 'User not found' })
+
+    user.availabilitySchedule = {
+      enabled: !!enabled,
+      slots: Array.isArray(slots)
+        ? slots
+          .filter(s => typeof s.dayOfWeek === 'number' && s.dayOfWeek >= 0 && s.dayOfWeek <= 6 && s.startTime && s.endTime)
+          .map(s => ({ dayOfWeek: s.dayOfWeek, startTime: String(s.startTime), endTime: String(s.endTime) }))
+        : (user.availabilitySchedule?.slots || [])
+    }
+    await user.save()
+
+    return res.status(200).json({
+      message: 'Availability schedule updated',
+      schedule: user.availabilitySchedule
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred'
     })
   }
 }
@@ -724,6 +916,9 @@ module.exports = {
   savePushSubscription,
   saveTaskTemplate,
   getTaskTemplates,
-  deleteTaskTemplate
+  deleteTaskTemplate,
+  toggleSavedTask,
+  getAvailabilitySchedule,
+  updateAvailabilitySchedule
 }
 

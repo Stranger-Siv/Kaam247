@@ -52,7 +52,8 @@ function Profile() {
                             : 'Location not set',
                         profilePhoto: userData.profilePhoto || null,
                         locationUpdatedAt: userData.locationUpdatedAt || null,
-                        createdAt: userData.createdAt || null
+                        createdAt: userData.createdAt || null,
+                        workerBadges: userData.workerBadges || []
                     })
 
                     // Set stats based on mode
@@ -280,6 +281,21 @@ function Profile() {
                                 </svg>
                                 <span className="break-words">{profile.location}</span>
                             </p>
+                            {userMode === 'worker' && profile.workerBadges && profile.workerBadges.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {profile.workerBadges.map((badge) => {
+                                        const labels = { TOP_RATED: '★ Top Rated', RELIABLE: '✓ Reliable', FAST_RESPONDER: '⚡ Fast Responder', EARNED_1K: '₹1K+', EARNED_5K: '₹5K+', EARNED_10K: '₹10K+' }
+                                        return (
+                                            <span
+                                                key={badge}
+                                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800"
+                                            >
+                                                {labels[badge] || badge}
+                                            </span>
+                                        )
+                                    })}
+                                </div>
+                            )}
                             {memberSince && (
                                 <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-500">Member since {memberSince}</p>
                             )}

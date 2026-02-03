@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -35,7 +36,10 @@ function Earnings() {
     thisWeek: 0,
     thisMonth: 0,
     totalTasks: 0,
-    tasks: []
+    tasks: [],
+    byCategory: {},
+    last7Days: [],
+    last30Days: []
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -177,6 +181,41 @@ function Earnings() {
           Total <span className="font-semibold text-gray-900 dark:text-gray-100">₹{earnings.total ?? 0}</span>
         </span>
       </div>
+
+      {/* Earnings by category */}
+      {earnings.byCategory && Object.keys(earnings.byCategory).length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">By category</h2>
+          <div className="flex flex-wrap gap-3">
+            {Object.entries(earnings.byCategory).map(([cat, amount]) => (
+              <div
+                key={cat}
+                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+              >
+                <span className="text-sm text-gray-600 dark:text-gray-400">{cat}</span>
+                <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">₹{amount}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Last 7 days chart */}
+      {earnings.last7Days && earnings.last7Days.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Last 7 days</h2>
+          <div className="h-48 w-full max-w-md">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={earnings.last7Days.map(d => ({ ...d, label: d.date.slice(5) }))}>
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(v) => [`₹${v}`, 'Earnings']} labelFormatter={(l) => `Date: ${l}`} />
+                <Bar dataKey="total" fill="rgb(34 197 94)" name="Earnings" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Calendar */}

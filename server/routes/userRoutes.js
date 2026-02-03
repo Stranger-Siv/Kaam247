@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { createUser, updateProfile, getActivity, getEarnings, getProfile, getCancellationStatus, getActiveTask, savePushSubscription, saveTaskTemplate, getTaskTemplates, deleteTaskTemplate } = require('../controllers/userController')
+const { createUser, updateProfile, getActivity, getEarnings, getProfile, getCancellationStatus, getActiveTask, savePushSubscription, saveTaskTemplate, getTaskTemplates, deleteTaskTemplate, toggleSavedTask, getAvailabilitySchedule, updateAvailabilitySchedule } = require('../controllers/userController')
 const { createTicket, getMyTickets } = require('../controllers/supportTicketController')
 const { authenticate } = require('../middleware/auth')
 
@@ -13,8 +13,17 @@ router.get('/users/me', authenticate, getProfile)
 // PUT /api/users/me - Update current user profile (authenticated)
 router.put('/users/me', authenticate, updateProfile)
 
-// GET /api/users/me/activity - Get user activity history (authenticated)
+// GET /api/users/me/activity - Get user activity history (authenticated; ?dateFrom= &dateTo= &export=csv)
 router.get('/users/me/activity', authenticate, getActivity)
+
+// POST /api/users/me/saved-tasks/:taskId - Toggle bookmark (authenticated)
+router.post('/users/me/saved-tasks/:taskId', authenticate, toggleSavedTask)
+
+// GET /api/users/me/availability-schedule - Get availability schedule (authenticated)
+router.get('/users/me/availability-schedule', authenticate, getAvailabilitySchedule)
+
+// PATCH /api/users/me/availability-schedule - Update availability schedule (authenticated)
+router.patch('/users/me/availability-schedule', authenticate, updateAvailabilitySchedule)
 
 // GET /api/users/me/earnings - Get worker earnings (authenticated)
 router.get('/users/me/earnings', authenticate, getEarnings)

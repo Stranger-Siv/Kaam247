@@ -184,6 +184,20 @@ const userSchema = new mongoose.Schema({
             description: 'Default search radius in km when browsing tasks'
         }
     },
+    savedTasks: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Task',
+        default: [],
+        description: 'Task IDs bookmarked by worker (favorites)'
+    },
+    availabilitySchedule: {
+        enabled: { type: Boolean, default: false },
+        slots: [{
+            dayOfWeek: { type: Number, min: 0, max: 6 },
+            startTime: { type: String },
+            endTime: { type: String }
+        }]
+    },
     fcmToken: {
         type: String,
         default: null,

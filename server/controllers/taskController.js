@@ -501,6 +501,8 @@ const getAvailableTasks = async (req, res) => {
     const category = req.query.category && String(req.query.category).trim() ? String(req.query.category).trim() : null
     const minBudget = req.query.minBudget != null && req.query.minBudget !== '' ? Number(req.query.minBudget) : null
     const maxBudget = req.query.maxBudget != null && req.query.maxBudget !== '' ? Number(req.query.maxBudget) : null
+    const search = req.query.search && String(req.query.search).trim() ? String(req.query.search).trim() : null
+    const sort = req.query.sort && String(req.query.sort) : 'distance'
 
     const now = new Date()
     const query = {
@@ -518,6 +520,11 @@ const getAvailableTasks = async (req, res) => {
       query.budget = {}
       if (minBudget != null && !isNaN(minBudget)) query.budget.$gte = minBudget
       if (maxBudget != null && !isNaN(maxBudget)) query.budget.$lte = maxBudget
+    }
+    if (search) {
+      query.$and = (query.$and || []).concat([
+        { $or: [{ title: new RegExp(search, 'i') }, { description: new RegExp(search, 'i') }] }
+      ])
     }
 
     let tasks = await Task.find(query).lean()
@@ -567,19 +574,29 @@ const getAvailableTasks = async (req, res) => {
         return task.distanceKm <= radiusKm
       })
 
-      // Sort by distance (nearest first)
-      tasks.sort((a, b) => {
-        if (a.distanceKm === null) return 1
-        if (b.distanceKm === null) return -1
-        return a.distanceKm - b.distanceKm
-      })
+      // Sort: distance (default), budget_desc, budget_asc, newest
+      if (sort === 'budget_desc') {
+        tasks.sort((a, b) => (b.budget || 0) - (a.budget || 0))
+      } else if (sort === 'budget_asc') {
+        tasks.sort((a, b) => (a.budget || 0) - (b.budget || 0))
+      } else if (sort === 'newest') {
+        tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      } else {
+        tasks.sort((a, b) => {
+          if (a.distanceKm === null) return 1
+          if (b.distanceKm === null) return -1
+          return a.distanceKm - b.distanceKm
+        })
+      }
     } else {
       // No location provided - sort by createdAt (latest first) and set distanceKm to null
       tasks = tasks.map(task => ({
         ...task,
         distanceKm: null
       }))
-      tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      if (sort === 'budget_desc') tasks.sort((a, b) => (b.budget || 0) - (a.budget || 0))
+      else if (sort === 'budget_asc') tasks.sort((a, b) => (a.budget || 0) - (b.budget || 0))
+      else tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     }
 
     return res.status(200).json({
