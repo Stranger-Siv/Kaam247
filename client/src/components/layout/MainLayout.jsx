@@ -113,10 +113,10 @@ function MainLayout() {
                             </button>
                         </nav>
 
-                        {/* Mobile Header Right Side - Only Availability Toggle */}
+                        {/* Mobile Header Right Side - Availability Toggle + Theme */}
                         <div className="md:hidden flex items-center gap-2">
-                            {/* Availability Toggle - Mobile Header (Worker Mode Only) */}
                             {userMode === 'worker' && <AvailabilityToggle />}
+                            <ThemeToggle />
                         </div>
                     </div>
                 </div>

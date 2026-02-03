@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useUserMode } from '../../context/UserModeContext'
-import ThemeToggle from '../ThemeToggle'
 
 function BottomNav() {
   const location = useLocation()
@@ -12,6 +11,9 @@ function BottomNav() {
     }
     if (path === '/tasks') {
       return location.pathname.startsWith('/tasks') && !location.pathname.match(/\/tasks\/\d+/)
+    }
+    if (path === '/earnings') {
+      return location.pathname === '/earnings'
     }
     return location.pathname.startsWith(path)
   }
@@ -52,6 +54,15 @@ function BottomNav() {
         </svg>
       )
     },
+    ...(userMode === 'worker' ? [{
+      path: '/earnings',
+      label: 'Earnings',
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      )
+    }] : []),
     {
       path: '/profile',
       label: 'Profile',
@@ -63,13 +74,6 @@ function BottomNav() {
     }
   ]
 
-  // Add theme toggle as a special item (not a link)
-  const themeToggleItem = {
-    path: null,
-    label: 'Theme',
-    isThemeToggle: true
-  }
-
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-[999] shadow-lg safe-area-inset-bottom">
       <div className="flex">
@@ -79,11 +83,10 @@ function BottomNav() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex-1 flex flex-col items-center justify-center py-2.5 px-2 text-[10px] font-medium transition-colors min-h-[64px] touch-manipulation ${
-                active
+              className={`flex-1 flex flex-col items-center justify-center py-2.5 px-2 text-[10px] font-medium transition-colors min-h-[64px] touch-manipulation ${active
                   ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700'
-              }`}
+                }`}
             >
               <span className={`mb-1 transition-transform ${active ? 'scale-110' : ''}`}>
                 {item.icon}
@@ -92,10 +95,6 @@ function BottomNav() {
             </Link>
           )
         })}
-        {/* Theme Toggle Button */}
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <ThemeToggle mobile={true} />
-        </div>
       </div>
     </nav>
   )

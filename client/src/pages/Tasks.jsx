@@ -31,8 +31,7 @@ function Tasks() {
   const [hasActiveTask, setHasActiveTask] = useState(false)
   const [refetchTrigger, setRefetchTrigger] = useState(0)
   const [workerPreferredCategories, setWorkerPreferredCategories] = useState([])
-  const [showAllTasksOverride, setShowAllTasksOverride] = useState(false)
-  const [clearingPreferences, setClearingPreferences] = useState(false)
+  const [showAllTasksOverride] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortOption, setSortOption] = useState('distance')
   const [showOnlySaved, setShowOnlySaved] = useState(false)
@@ -376,62 +375,6 @@ function Tasks() {
       <div className="mb-6 sm:mb-8 lg:mb-10 w-full">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight break-words">Available Tasks</h1>
         <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-400 leading-relaxed break-words">Find work near you</p>
-        {userMode === 'worker' && workerPreferredCategories.length > 0 && (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {showAllTasksOverride ? (
-              <>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Showing all tasks.</p>
-                <button
-                  type="button"
-                  onClick={() => { setShowAllTasksOverride(false); setRefetchTrigger(prev => prev + 1) }}
-                  className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Use my preferences again
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-blue-600 dark:text-blue-400">
-                  Showing only: {workerPreferredCategories.join(', ')}.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => { setShowAllTasksOverride(true); setRefetchTrigger(prev => prev + 1) }}
-                  className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Show all tasks
-                </button>
-                <span className="text-gray-400 dark:text-gray-500">|</span>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (clearingPreferences) return
-                    setClearingPreferences(true)
-                    try {
-                      const token = localStorage.getItem('kaam247_token')
-                      const res = await fetch(`${API_BASE_URL}/api/users/me`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-                        body: JSON.stringify({ workerPreferences: { preferredCategories: [], defaultRadiusKm: 5 } })
-                      })
-                      if (res.ok) {
-                        setWorkerPreferredCategories([])
-                        setShowAllTasksOverride(true)
-                        setRefetchTrigger(prev => prev + 1)
-                      }
-                    } finally {
-                      setClearingPreferences(false)
-                    }
-                  }}
-                  disabled={clearingPreferences}
-                  className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:underline disabled:opacity-50"
-                >
-                  {clearingPreferences ? 'Clearing...' : 'Clear saved preferences'}
-                </button>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Search */}
