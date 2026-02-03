@@ -67,7 +67,7 @@ function BottomNav() {
       )
     }] : [{
       path: '/transactions',
-      label: 'Transactions',
+      label: 'Trans.', // Short label for small screens; full "Transactions" in desktop nav
       icon: (
         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -94,15 +94,17 @@ function BottomNav() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex-1 flex flex-col items-center justify-center py-2.5 px-2 text-[10px] font-medium transition-colors min-h-[64px] touch-manipulation ${active
+              className={`flex-1 flex flex-col items-center justify-center py-2.5 px-1 min-w-0 text-[10px] font-medium transition-colors min-h-[64px] touch-manipulation ${active
                 ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40'
                 : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700'
                 }`}
             >
-              <span className={`mb-1 transition-transform ${active ? 'scale-110' : ''}`}>
+              <span className={`mb-1 shrink-0 transition-transform ${active ? 'scale-110' : ''}`}>
                 {item.icon}
               </span>
-              <span className="text-[10px] leading-tight">{item.label}</span>
+              <span className="text-[10px] leading-tight truncate w-full text-center max-w-full px-px" title={item.path === '/transactions' ? 'Transactions' : undefined}>
+                {item.label}
+              </span>
             </Link>
           )
         })}
