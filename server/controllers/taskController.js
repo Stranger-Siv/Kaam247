@@ -151,7 +151,7 @@ const createTask = async (req, res) => {
       const days = Number(validForDays)
       if (!isNaN(days) && days > 0) {
         const e = new Date()
-        e.setDate(e.getDate() + Math.min(Math.floor(days), 30))
+        e.setDate(e.getDate() + Math.min(Math.floor(days), 14))
         e.setHours(23, 59, 59, 999)
         expiresAt = e
       }
@@ -1537,7 +1537,7 @@ const editTask = async (req, res) => {
         const days = Number(validForDays)
         if (!isNaN(days) && days > 0) {
           const e = new Date()
-          e.setDate(e.getDate() + days)
+          e.setDate(e.getDate() + Math.min(Math.floor(days), 14))
           expiresAt = e
         }
       }
@@ -1643,7 +1643,7 @@ const editTask = async (req, res) => {
       const days = Number(validForDays)
       if (!isNaN(days) && days > 0) {
         const e = new Date()
-        e.setDate(e.getDate() + days)
+        e.setDate(e.getDate() + Math.min(Math.floor(days), 14))
         updateData.expiresAt = e
       }
     }
@@ -1895,7 +1895,7 @@ const bulkExtendValidity = async (req, res) => {
         message: 'posterId and taskIds (array) are required'
       })
     }
-    const days = Math.max(1, Math.min(90, Number(validForDays) || 7))
+    const days = Math.max(1, Math.min(14, Number(validForDays) || 7))
     const validIds = taskIds.filter(id => mongoose.Types.ObjectId.isValid(id))
     const result = await Task.updateMany(
       { _id: { $in: validIds }, postedBy: posterId, status: { $in: ['OPEN', 'SEARCHING'] } },

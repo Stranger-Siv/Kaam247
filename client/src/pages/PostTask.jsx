@@ -85,8 +85,7 @@ function PostTask() {
     { value: '1', label: '1 day' },
     { value: '3', label: '3 days' },
     { value: '7', label: '7 days (default)' },
-    { value: '14', label: '14 days' },
-    { value: '30', label: '30 days' }
+    { value: '14', label: '14 days (max)' }
   ]
 
   const hoursOptions = [

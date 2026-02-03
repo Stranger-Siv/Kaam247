@@ -12,6 +12,8 @@ import ReportModal from '../components/ReportModal'
 import EditTaskModal from '../components/EditTaskModal'
 import ConfirmationModal from '../components/ConfirmationModal'
 import IncreaseBudgetModal from '../components/IncreaseBudgetModal'
+import ExtendValidityModal from '../components/ExtendValidityModal'
+import RecurringModal from '../components/RecurringModal'
 import TaskChat from '../components/TaskChat'
 
 function TaskDetail() {
@@ -49,6 +51,10 @@ function TaskDetail() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showIncreaseBudgetModal, setShowIncreaseBudgetModal] = useState(false)
+  const [showExtendValidityModal, setShowExtendValidityModal] = useState(false)
+  const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)
+  const [showRecurringModal, setShowRecurringModal] = useState(false)
+  const [isDuplicating, setIsDuplicating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
   const [showChatModal, setShowChatModal] = useState(false)
@@ -136,6 +142,7 @@ function TaskDetail() {
           : 'Distance unavailable',
         distanceKm: backendTask.distanceKm,
         budget: `₹${backendTask.budget}`,
+        budgetNum: typeof backendTask.budget === 'number' ? backendTask.budget : Number(backendTask.budget) || 0,
         category: backendTask.category,
         time: (backendTask.scheduledAt || backendTask.createdAt)
           ? new Date(backendTask.scheduledAt || backendTask.createdAt).toLocaleString('en-IN', {
@@ -170,7 +177,8 @@ function TaskDetail() {
         completedAt: backendTask.completedAt || null,
         rating: backendTask.rating || null,
         review: backendTask.review || null,
-        ratedAt: backendTask.ratedAt || null
+        ratedAt: backendTask.ratedAt || null,
+        recurringSchedule: backendTask.recurringSchedule || null
       }
 
       taskStatusRef.current = backendTask.status
@@ -896,6 +904,36 @@ function TaskDetail() {
     }
   }
 
+  const handleDuplicateTask = () => {
+    setShowDuplicateConfirm(true)
+  }
+
+  const confirmDuplicateTask = async () => {
+    setShowDuplicateConfirm(false)
+    if (!user?.id || !taskId) return
+    setIsDuplicating(true)
+    try {
+      const token = localStorage.getItem('kaam247_token')
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ posterId: user.id })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.task?._id) navigate(`/tasks/${data.task._id}`)
+        else navigate('/dashboard', { state: { message: 'Task duplicated' } })
+      } else {
+        const data = await res.json().catch(() => ({}))
+        alert(data.message || 'Failed to duplicate task')
+      }
+    } catch (e) {
+      alert('Failed to duplicate task')
+    } finally {
+      setIsDuplicating(false)
+    }
+  }
+
   const handleCancelTask = () => {
     // FRONTEND GUARD: Prevent double actions
     if (isCancelling || !user?.id || !taskId) {
@@ -1215,8 +1253,38 @@ function TaskDetail() {
               </svg>
               Chat with Worker
             </button>
-            <div className="w-full px-6 py-4 bg-yellow-50 text-yellow-700 text-base font-medium rounded-lg text-center">
+            <div className="w-full px-6 py-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-base font-medium rounded-lg text-center">
               Task in progress
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button
+                onClick={() => setShowIncreaseBudgetModal(true)}
+                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Increase Budget
+              </button>
+              <button
+                onClick={() => setShowExtendValidityModal(true)}
+                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
+              >
+                Extend Validity
+              </button>
+              <button
+                onClick={handleDuplicateTask}
+                disabled={isDuplicating}
+                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+              </button>
+              <button
+                onClick={() => setShowRecurringModal(true)}
+                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+              >
+                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
+              </button>
             </div>
             {task.workerCompleted ? (
               <>
@@ -1251,6 +1319,18 @@ function TaskDetail() {
                 Waiting for worker to mark task as completed
               </div>
             )}
+            {cancelError && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-400">{cancelError}</p>
+              </div>
+            )}
+            <button
+              onClick={handleCancelTask}
+              disabled={isCancelling}
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 dark:bg-red-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 dark:hover:bg-red-600 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel Task'}
+            </button>
           </div>
         )
       } else if (currentStatus === 'ACCEPTED' || task.status === 'accepted') {
@@ -1266,8 +1346,38 @@ function TaskDetail() {
               </svg>
               Chat with Worker
             </button>
-            <div className="w-full px-6 py-4 bg-blue-50 text-blue-700 text-base font-medium rounded-lg text-center">
+            <div className="w-full px-6 py-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-base font-medium rounded-lg text-center">
               Worker assigned: {task.worker || 'Worker'}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button
+                onClick={() => setShowIncreaseBudgetModal(true)}
+                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Increase Budget
+              </button>
+              <button
+                onClick={() => setShowExtendValidityModal(true)}
+                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
+              >
+                Extend Validity
+              </button>
+              <button
+                onClick={handleDuplicateTask}
+                disabled={isDuplicating}
+                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+              </button>
+              <button
+                onClick={() => setShowRecurringModal(true)}
+                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+              >
+                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
+              </button>
             </div>
             {cancelError && (
               <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
@@ -1297,15 +1407,21 @@ function TaskDetail() {
                 <p className="text-sm text-red-700 dark:text-red-400">{deleteError}</p>
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <button
                 onClick={() => setShowIncreaseBudgetModal(true)}
-                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-base font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 Increase Budget
+              </button>
+              <button
+                onClick={() => setShowExtendValidityModal(true)}
+                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
+              >
+                Extend Validity
               </button>
               <button
                 onClick={() => setShowEditModal(true)}
@@ -1337,6 +1453,19 @@ function TaskDetail() {
                     Delete
                   </>
                 )}
+              </button>
+              <button
+                onClick={handleDuplicateTask}
+                disabled={isDuplicating}
+                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+              </button>
+              <button
+                onClick={() => setShowRecurringModal(true)}
+                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+              >
+                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
               </button>
             </div>
             <button
@@ -1713,8 +1842,48 @@ function TaskDetail() {
       } else if (currentStatus === 'ACCEPTED' || task.status === 'accepted') {
         return (
           <div className="space-y-3">
-            <div className="w-full px-6 py-4 bg-blue-50 text-blue-700 text-base font-medium rounded-lg text-center">
+            <button
+              type="button"
+              onClick={() => setShowChatModal(true)}
+              className="w-full px-5 sm:px-6 py-3.5 sm:py-4 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 min-h-[48px]"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Chat with Worker
+            </button>
+            <div className="w-full px-6 py-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-base font-medium rounded-lg text-center">
               Worker assigned: {task.worker || 'Worker'}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button
+                onClick={() => setShowIncreaseBudgetModal(true)}
+                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Increase Budget
+              </button>
+              <button
+                onClick={() => setShowExtendValidityModal(true)}
+                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
+              >
+                Extend Validity
+              </button>
+              <button
+                onClick={handleDuplicateTask}
+                disabled={isDuplicating}
+                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+              </button>
+              <button
+                onClick={() => setShowRecurringModal(true)}
+                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+              >
+                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
+              </button>
             </div>
             {cancelError && (
               <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
@@ -1733,17 +1902,57 @@ function TaskDetail() {
       } else if (currentStatus === 'IN_PROGRESS' || task.status === 'in_progress') {
         return (
           <div className="space-y-3">
-            <div className="w-full px-6 py-4 bg-yellow-50 text-yellow-700 text-base font-medium rounded-lg text-center">
+            <button
+              type="button"
+              onClick={() => setShowChatModal(true)}
+              className="w-full px-5 sm:px-6 py-3.5 sm:py-4 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 min-h-[48px]"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Chat with Worker
+            </button>
+            <div className="w-full px-6 py-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-base font-medium rounded-lg text-center">
               Task in progress
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button
+                onClick={() => setShowIncreaseBudgetModal(true)}
+                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Increase Budget
+              </button>
+              <button
+                onClick={() => setShowExtendValidityModal(true)}
+                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
+              >
+                Extend Validity
+              </button>
+              <button
+                onClick={handleDuplicateTask}
+                disabled={isDuplicating}
+                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+              </button>
+              <button
+                onClick={() => setShowRecurringModal(true)}
+                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+              >
+                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
+              </button>
             </div>
             {task.workerCompleted ? (
               <>
-                <div className="w-full px-6 py-4 bg-green-50 text-green-700 text-base font-medium rounded-lg text-center border-2 border-green-200">
+                <div className="w-full px-6 py-4 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-base font-medium rounded-lg text-center border-2 border-green-200 dark:border-green-800">
                   Worker has marked this task as completed
                 </div>
                 {confirmError && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-700">{confirmError}</p>
+                  <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-700 dark:text-red-400">{confirmError}</p>
                   </div>
                 )}
                 <button
@@ -1769,6 +1978,18 @@ function TaskDetail() {
                 Waiting for worker to mark task as completed
               </div>
             )}
+            {cancelError && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-400">{cancelError}</p>
+              </div>
+            )}
+            <button
+              onClick={handleCancelTask}
+              disabled={isCancelling}
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 dark:bg-red-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 dark:hover:bg-red-600 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
+            >
+              {isCancelling ? 'Cancelling...' : 'Cancel Task'}
+            </button>
           </div>
         )
       } else if (currentStatus === 'COMPLETED' || task.status === 'completed') {
@@ -2193,12 +2414,44 @@ function TaskDetail() {
       {/* Increase Budget Modal */}
       {showIncreaseBudgetModal && task && (
         <IncreaseBudgetModal
-          task={task}
+          task={{ ...task, budget: task.budgetNum ?? task.budget }}
           isOpen={showIncreaseBudgetModal}
           onClose={() => setShowIncreaseBudgetModal(false)}
           onSuccess={handleEditSuccess}
         />
       )}
+
+      {/* Extend Validity Modal */}
+      {showExtendValidityModal && task && (
+        <ExtendValidityModal
+          task={task}
+          isOpen={showExtendValidityModal}
+          onClose={() => setShowExtendValidityModal(false)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Recurring Modal */}
+      {showRecurringModal && task && (
+        <RecurringModal
+          task={task}
+          isOpen={showRecurringModal}
+          onClose={() => setShowRecurringModal(false)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Duplicate confirmation */}
+      <ConfirmationModal
+        isOpen={showDuplicateConfirm}
+        onConfirm={confirmDuplicateTask}
+        onCancel={() => setShowDuplicateConfirm(false)}
+        title="Duplicate task"
+        message="Create a new task with the same details? A new listing will be created."
+        confirmText="Yes, duplicate"
+        cancelText="Cancel"
+        confirmColor="blue"
+      />
 
       {/* Cancel Task Confirmation Modal */}
       <ConfirmationModal

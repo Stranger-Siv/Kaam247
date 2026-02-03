@@ -21,8 +21,8 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
                 type="button"
                 onClick={(e) => onToggleBookmark(task.id, e)}
                 className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-amber-500 dark:hover:text-amber-400 transition-colors"
-                aria-label={isSaved ? 'Remove from saved' : 'Save task'}
-                title={isSaved ? 'Remove from saved' : 'Save task'}
+                aria-label={isSaved ? 'Remove from bookmarks' : 'Bookmark task'}
+                title={isSaved ? 'Remove from bookmarks' : 'Bookmark task'}
               >
                 {isSaved ? (
                   <svg className="w-5 h-5 text-amber-500 dark:text-amber-400" fill="currentColor" viewBox="0 0 24 24">

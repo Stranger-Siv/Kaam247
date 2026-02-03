@@ -38,6 +38,10 @@ function Tasks() {
   const [savedTaskIds, setSavedTaskIds] = useState(new Set())
   const [filterPanelOpen, setFilterPanelOpen] = useState(false)
   const preferencesAppliedRef = useRef(false)
+  const sortOptionRef = useRef(sortOption)
+  sortOptionRef.current = sortOption
+  const savedTaskIdsRef = useRef(savedTaskIds)
+  savedTaskIdsRef.current = savedTaskIds
   const { getSocket } = useSocket()
   const { isOnline, workerLocation } = useAvailability()
   const { user } = useAuth()
@@ -129,6 +133,7 @@ function Tasks() {
         if (selectedCategory && selectedCategory !== 'All') url += `&category=${encodeURIComponent(selectedCategory)}`
         if (minBudget != null) url += `&minBudget=${minBudget}`
         if (maxBudget != null) url += `&maxBudget=${maxBudget}`
+        if (sortOption) url += `&sort=${encodeURIComponent(sortOption)}`
 
         const response = await fetch(url)
 
@@ -161,7 +166,9 @@ function Tasks() {
               : 'Distance unavailable',
             distanceKm: task.distanceKm,
             budget: `₹${task.budget}`,
+            budgetNum: typeof task.budget === 'number' ? task.budget : Number(task.budget) || 0,
             category: task.category,
+            createdAt: task.createdAt ? new Date(task.createdAt).getTime() : 0,
             time: (task.scheduledAt || task.createdAt)
               ? new Date(task.scheduledAt || task.createdAt).toLocaleString('en-IN', {
                 weekday: 'short',
@@ -173,10 +180,14 @@ function Tasks() {
           }))
           // When worker has preferred categories set, show only those unless "Show all" was clicked
           .filter(task => workerPreferredCategories.length === 0 || showAllTasksOverride || workerPreferredCategories.includes(task.category))
-          // Sort by distance (nearest first)
+          // Apply sort (match server + client filters so order is correct)
           .sort((a, b) => {
-            if (a.distanceKm === null || a.distanceKm === undefined) return 1
-            if (b.distanceKm === null || b.distanceKm === undefined) return -1
+            if (sortOption === 'budget_desc') return (b.budgetNum ?? 0) - (a.budgetNum ?? 0)
+            if (sortOption === 'budget_asc') return (a.budgetNum ?? 0) - (b.budgetNum ?? 0)
+            if (sortOption === 'newest') return (b.createdAt ?? 0) - (a.createdAt ?? 0)
+            // distance (default): nearest first
+            if (a.distanceKm == null) return 1
+            if (b.distanceKm == null) return -1
             return a.distanceKm - b.distanceKm
           })
 
@@ -215,6 +226,7 @@ function Tasks() {
         }
       }
       // Convert backend task format to frontend format
+      const budgetNum = typeof taskData.budget === 'number' ? taskData.budget : Number(taskData.budget) || 0
       const newTask = {
         id: taskData.taskId,
         title: taskData.title,
@@ -227,19 +239,24 @@ function Tasks() {
           : 'Distance unavailable',
         distanceKm: taskData.distanceKm,
         budget: `₹${taskData.budget}`,
+        budgetNum,
         category: taskData.category,
+        createdAt: taskData.createdAt ? new Date(taskData.createdAt).getTime() : Date.now(),
         time: 'Just now',
         status: 'open',
         isNew: true
       }
 
-      // Add to top of list (maintain sort by distance if available)
+      // Add to list and re-apply current sort
       setTasks(prev => {
-        const updated = [newTask, ...prev]
-        // Sort by distance if available
-        return updated.sort((a, b) => {
-          if (a.distanceKm === null || a.distanceKm === undefined) return 1
-          if (b.distanceKm === null || b.distanceKm === undefined) return -1
+        const withNew = [newTask, ...prev]
+        const sortBy = sortOptionRef.current
+        return withNew.sort((a, b) => {
+          if (sortBy === 'budget_desc') return ((b.budgetNum ?? 0) - (a.budgetNum ?? 0))
+          if (sortBy === 'budget_asc') return ((a.budgetNum ?? 0) - (b.budgetNum ?? 0))
+          if (sortBy === 'newest') return ((b.createdAt ?? 0) - (a.createdAt ?? 0))
+          if (a.distanceKm == null) return 1
+          if (b.distanceKm == null) return -1
           return a.distanceKm - b.distanceKm
         })
       })
@@ -260,9 +277,25 @@ function Tasks() {
       }, 3000)
     }
 
-    const handleRemoveTask = (data) => {
+    const handleRemoveTask = async (data) => {
       // DATA CONSISTENCY: Remove task from list when accepted by another worker
       setTasks(prev => prev.filter(task => task.id !== data.taskId))
+      // If this task was bookmarked, remove it from saved list (no longer available)
+      if (savedTaskIdsRef.current.has(data.taskId)) {
+        const token = localStorage.getItem('kaam247_token')
+        if (token) {
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/users/me/saved-tasks/${data.taskId}`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` }
+            })
+            if (res.ok) {
+              const json = await res.json()
+              setSavedTaskIds(new Set(json.savedTasks || []))
+            }
+          } catch (_) { }
+        }
+      }
     }
 
     const handleTaskStatusChanged = () => {
@@ -448,7 +481,7 @@ function Tasks() {
             </select>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex flex-col gap-1">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
@@ -456,8 +489,9 @@ function Tasks() {
               onChange={(e) => setShowOnlySaved(e.target.checked)}
               className="rounded border-gray-300 dark:border-gray-600 text-amber-500 focus:ring-amber-500"
             />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show saved only</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show bookmarked only</span>
           </label>
+          <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">View tasks you saved for later. If someone else takes a task, it is removed from your bookmarks.</p>
         </div>
       </div>
 
@@ -554,8 +588,9 @@ function Tasks() {
                   onChange={(e) => setShowOnlySaved(e.target.checked)}
                   className="rounded border-gray-300 dark:border-gray-600 text-amber-500 focus:ring-amber-500"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show saved only</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show bookmarked only</span>
               </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 pl-6">Your saved tasks. Taken tasks are removed from bookmarks.</p>
             </div>
           </div>
         </>
