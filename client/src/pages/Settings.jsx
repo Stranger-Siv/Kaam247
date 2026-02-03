@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useUserMode } from '../context/UserModeContext'
 import { useCategories } from '../hooks/useCategories'
@@ -27,6 +27,11 @@ function Settings() {
   const [availabilitySchedule, setAvailabilitySchedule] = useState({ enabled: false, slots: [] })
   const [availabilitySaving, setAvailabilitySaving] = useState(false)
   const [availabilityError, setAvailabilityError] = useState(null)
+
+  // Data export (CSV)
+  const [csvDateFrom, setCsvDateFrom] = useState('')
+  const [csvDateTo, setCsvDateTo] = useState('')
+  const [csvDownloading, setCsvDownloading] = useState(false)
 
   // Mobile number change request
   const [ticketRequestedPhone, setTicketRequestedPhone] = useState('')
@@ -268,6 +273,31 @@ function Settings() {
     )
   }
 
+  const handleDownloadActivityCsv = async () => {
+    if (!user?.id) return
+    setCsvDownloading(true)
+    try {
+      const token = localStorage.getItem('kaam247_token')
+      const params = new URLSearchParams({ export: 'csv' })
+      if (csvDateFrom) params.set('dateFrom', csvDateFrom)
+      if (csvDateTo) params.set('dateTo', csvDateTo)
+      const res = await fetch(`${API_BASE_URL}/api/users/me/activity?${params}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'activity.csv'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      // ignore
+    } finally {
+      setCsvDownloading(false)
+    }
+  }
+
   return (
     <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
       {/* Header */}
@@ -287,6 +317,39 @@ function Settings() {
         >
           Back to profile
         </button>
+      </div>
+
+      {/* Quick links to main pages */}
+      <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">Go to</h2>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            to="/profile"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Profile
+          </Link>
+          <Link
+            to="/activity"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Activity
+          </Link>
+          {userMode === 'worker' && (
+            <Link
+              to="/earnings"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Earnings
+            </Link>
+          )}
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Dashboard
+          </Link>
+        </div>
       </div>
 
       <div className="space-y-5 sm:space-y-6">
@@ -501,6 +564,44 @@ function Settings() {
             </div>
           </div>
         )}
+
+        {/* Data & export */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 sm:mb-4">
+            Data & export
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Download your activity (posted, accepted, completed, cancelled tasks) as a CSV file. Optionally set a date range.
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-gray-600 dark:text-gray-400">From</span>
+              <input
+                type="date"
+                value={csvDateFrom}
+                onChange={(e) => setCsvDateFrom(e.target.value)}
+                className="h-10 px-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-gray-600 dark:text-gray-400">To</span>
+              <input
+                type="date"
+                value={csvDateTo}
+                onChange={(e) => setCsvDateTo(e.target.value)}
+                className="h-10 px-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={handleDownloadActivityCsv}
+              disabled={csvDownloading}
+              className="h-10 px-4 bg-green-600 dark:bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50"
+            >
+              {csvDownloading ? 'Downloading...' : 'Download activity CSV'}
+            </button>
+          </div>
+        </div>
 
         {/* Notifications */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
