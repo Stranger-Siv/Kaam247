@@ -498,7 +498,7 @@ function Profile() {
                     )}
                     <Link
                         to="/settings"
-                        className="inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                        className={`inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation ${!isStandalone ? 'mt-5' : ''}`}
                     >
                         Settings
                     </Link>
