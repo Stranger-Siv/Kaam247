@@ -1,0 +1,6 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap (add your production URL when you have a sitemap)
+# Sitemap: https://kaam247.in/sitemap.xml
