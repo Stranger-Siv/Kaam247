@@ -311,50 +311,36 @@ function Home() {
         </div>
       </section>
 
-      {/* SECTION 6: REAL NUMBERS + CTA */}
-      <section className="bg-gray-50 dark:bg-gray-900 py-10 sm:py-14 lg:py-18 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-8 sm:mb-10">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">
-              Kaam247 in numbers
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
-              Real stats from our community
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 text-center">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+      {/* SECTION 6: REAL NUMBERS */}
+      <section className="bg-white dark:bg-gray-950 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 dark:border-gray-800">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-center text-xs sm:text-sm font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-6">
+            Kaam247 in numbers
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-800">
+            <div className="flex flex-col items-center justify-center py-6 sm:py-4 lg:py-6 first:pt-0 last:pb-0 sm:first:pt-4 sm:last:pb-4 lg:first:pl-0 lg:last:pr-0">
+              <span className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
                 {statsLoading ? '—' : stats.totalUsers.toLocaleString()}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Total users
-              </p>
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Total users</span>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 text-center">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+            <div className="flex flex-col items-center justify-center py-6 sm:py-4 lg:py-6">
+              <span className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
                 {statsLoading ? '—' : stats.totalCompletedTasks.toLocaleString()}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Tasks completed
-              </p>
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Tasks completed</span>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 text-center">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+            <div className="flex flex-col items-center justify-center py-6 sm:py-4 lg:py-6">
+              <span className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
                 {statsLoading ? '—' : stats.categoryCount}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Task categories
-              </p>
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Task categories</span>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 text-center">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+            <div className="flex flex-col items-center justify-center py-6 sm:py-4 lg:py-6">
+              <span className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight">
                 {statsLoading ? '—' : (stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '—')}
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Avg. rating
-              </p>
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 mt-1.5">Avg. rating</span>
             </div>
           </div>
         </div>
