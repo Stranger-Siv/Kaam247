@@ -3,12 +3,12 @@ import { createContext, useContext, useState, useEffect } from 'react'
 const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
-  // Default theme: light. Only 'light' or 'dark' from localStorage.
+  // Default theme: dark. Only 'light' or 'dark' from localStorage.
   const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') return 'light'
+    if (typeof window === 'undefined') return 'dark'
     const savedTheme = localStorage.getItem('kaam247_theme')
     if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme
-    return 'light'
+    return 'dark'
   })
 
   useEffect(() => {
