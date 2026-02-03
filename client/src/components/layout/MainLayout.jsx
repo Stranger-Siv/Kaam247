@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useUserMode } from '../../context/UserModeContext'
+import { useOnboarding } from '../../context/OnboardingContext'
 import ModeToggle from '../ModeToggle'
 import AvailabilityToggle from '../AvailabilityToggle'
 import ThemeToggle from '../ThemeToggle'
@@ -9,12 +9,14 @@ import Footer from './Footer'
 import NotificationToast from '../NotificationToast'
 import ReminderToast from '../ReminderToast'
 import BottomNav from './BottomNav'
+import OnboardingSlides from '../OnboardingSlides'
 
 function MainLayout() {
     const navigate = useNavigate()
     const location = useLocation()
     const { logout } = useAuth()
     const { userMode } = useUserMode()
+    const { hasCompletedOnboarding, onboardingLoaded } = useOnboarding()
 
     const handleLogout = () => {
         logout()
@@ -23,6 +25,8 @@ function MainLayout() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-gray-950 flex flex-col">
+            {/* First-time onboarding overlay */}
+            {onboardingLoaded && !hasCompletedOnboarding && <OnboardingSlides />}
             {/* Header */}
             <header className="bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-900/50 sticky top-0 z-[1000] border-b border-gray-200 dark:border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

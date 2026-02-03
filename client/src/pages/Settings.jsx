@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useUserMode } from '../context/UserModeContext'
+import { useOnboarding } from '../context/OnboardingContext'
 
 function Settings() {
   const navigate = useNavigate()
   const { userMode } = useUserMode()
+  const { resetOnboarding } = useOnboarding()
   const [refreshing, setRefreshing] = useState(false)
 
   const handleRefreshApp = async () => {
@@ -82,6 +84,21 @@ function Settings() {
             </li>
           ))}
         </ul>
+      </div>
+
+      {/* Show onboarding again */}
+      <div className="mt-6 p-4 sm:p-5 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Show onboarding again</p>
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3">
+          Replay the welcome slides that explain Worker and Poster modes.
+        </p>
+        <button
+          type="button"
+          onClick={resetOnboarding}
+          className="px-4 py-2.5 text-sm font-medium rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+        >
+          Show onboarding again
+        </button>
       </div>
 
       {/* Refresh app - PWA update */}
