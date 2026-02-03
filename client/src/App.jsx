@@ -26,6 +26,8 @@ import { lazyWithRetry } from './utils/lazyWithRetry'
 const Home = lazyWithRetry(() => import('./pages/public/Home'))
 const Login = lazyWithRetry(() => import('./pages/public/Login'))
 const Register = lazyWithRetry(() => import('./pages/public/Register'))
+const Terms = lazyWithRetry(() => import('./pages/public/Terms'))
+const Privacy = lazyWithRetry(() => import('./pages/public/Privacy'))
 const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'))
 const Tasks = lazyWithRetry(() => import('./pages/Tasks'))
 const TaskDetail = lazyWithRetry(() => import('./pages/TaskDetail'))
@@ -103,6 +105,22 @@ const AppContent = () => (
                             element={
                               <PublicLayout>
                                 <Register />
+                              </PublicLayout>
+                            }
+                          />
+                          <Route
+                            path="/terms"
+                            element={
+                              <PublicLayout>
+                                <Terms />
+                              </PublicLayout>
+                            }
+                          />
+                          <Route
+                            path="/privacy"
+                            element={
+                              <PublicLayout>
+                                <Privacy />
                               </PublicLayout>
                             }
                           />
