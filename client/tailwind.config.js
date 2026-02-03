@@ -36,10 +36,10 @@ export default {
       animation: {
         'slide-up': 'slide-up 0.25s ease-out',
         'task-countdown': 'task-countdown 15s linear forwards',
-        'onboarding-fade-in': 'onboarding-fade-in 0.45s ease-out forwards',
-        'onboarding-float': 'onboarding-float 3s ease-in-out infinite',
-        'onboarding-scale-in': 'onboarding-scale-in 0.4s ease-out forwards',
-        'onboarding-slide-in-right': 'onboarding-slide-in-right 0.4s ease-out forwards',
+        'onboarding-fade-in': 'onboarding-fade-in 0.7s ease-out forwards',
+        'onboarding-float': 'onboarding-float 4.5s ease-in-out infinite',
+        'onboarding-scale-in': 'onboarding-scale-in 0.6s ease-out forwards',
+        'onboarding-slide-in-right': 'onboarding-slide-in-right 0.55s ease-out forwards',
       },
       colors: {
         // Override gray scale with neutral (less blue) dark tones

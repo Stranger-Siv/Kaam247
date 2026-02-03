@@ -38,10 +38,11 @@ function OnboardingSlides() {
   }
   const handleExplore = () => finishOnboarding('/dashboard')
 
+  // Fully opaque so background page never shows through (light and dark)
   const containerClass = [
     'fixed inset-0 z-[2000] flex flex-col transition-opacity duration-300',
-    'bg-gradient-to-b from-slate-50 via-white to-blue-50/30',
-    'dark:from-slate-900 dark:via-gray-900 dark:to-gray-950',
+    'bg-gradient-to-b from-slate-50 via-white to-blue-50',
+    'dark:bg-gradient-to-b dark:from-slate-900 dark:via-gray-900 dark:to-gray-950',
     exiting ? 'opacity-0' : 'opacity-100'
   ].join(' ')
 
