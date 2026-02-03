@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNotification } from '../context/NotificationContext'
 
-const AUTO_DISMISS_MS = 15000
 const FADE_OUT_MS = 300
 
 function NotificationToast() {
-  const { notifications, dismissAllNotifications } = useNotification()
+  const { notifications, dismissAllNotifications, dismissTask } = useNotification()
   const navigate = useNavigate()
   const [isExiting, setIsExiting] = useState(false)
   const timerRef = useRef(null)
@@ -36,33 +35,15 @@ function NotificationToast() {
     }
   }
 
+  const handleDismissTask = (e, taskId) => {
+    e.stopPropagation()
+    if (taskId) dismissTask(taskId)
+  }
+
   const handleClose = (e) => {
     e?.stopPropagation?.()
     dismissPanel(true)
   }
-
-  // One 15s timer for the whole panel; when it fires, fade out then dismiss all and go to /tasks
-  useEffect(() => {
-    if (!notifications?.length) {
-      setIsExiting(false)
-      navigatedRef.current = false
-      return
-    }
-    navigatedRef.current = false
-    setIsExiting(false)
-
-    const t = setTimeout(() => {
-      dismissPanel(true)
-    }, AUTO_DISMISS_MS)
-
-    return () => {
-      clearTimeout(t)
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-        timerRef.current = null
-      }
-    }
-  }, [notifications?.length])
 
   if (!notifications?.length) {
     return null
@@ -104,8 +85,11 @@ function NotificationToast() {
           <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 min-h-0">
             <div className="space-y-4 pb-4">
               {notifications.map((n) => (
-                <div key={n.id} className="rounded-xl bg-white/5 border border-white/10 p-4 flex flex-col gap-3">
-                  <h2 className="text-lg font-bold text-slate-50 leading-tight line-clamp-2">{n.title}</h2>
+                <div key={n.id} className="rounded-xl bg-white/5 border border-white/10 p-4 flex flex-col gap-3 relative">
+                  <button onClick={(e) => handleDismissTask(e, n.id)} className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-200 rounded-full hover:bg-white/10 touch-manipulation" aria-label="Dismiss this task">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                  <h2 className="text-lg font-bold text-slate-50 leading-tight line-clamp-2 pr-8">{n.title}</h2>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white/10 text-slate-50 text-sm font-medium">{n.category}</span>
                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-400/15 text-emerald-200 text-sm font-bold">₹{n.budget}</span>
@@ -126,10 +110,7 @@ function NotificationToast() {
             </div>
           </div>
           <div className="px-4 pt-3 pb-4 border-t border-white/10 flex-shrink-0">
-            <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden mb-2">
-              <div className="h-full bg-blue-500 rounded-full" style={{ width: '100%', animation: 'toastProgress 15s linear forwards' }} />
-            </div>
-            <p className="text-xs text-slate-400 text-center">Auto-opening Tasks page in 15 seconds…</p>
+            <p className="text-xs text-slate-400 text-center">Each task disappears after 15 seconds. Dismiss individually or close all.</p>
           </div>
         </div>
       </div>
@@ -149,8 +130,11 @@ function NotificationToast() {
           <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
             <div className="p-4 space-y-4">
               {notifications.map((n) => (
-                <div key={n.id} className="rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 p-4 flex flex-col gap-2.5">
-                  <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight line-clamp-2">{n.title}</h2>
+                <div key={n.id} className="rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 p-4 flex flex-col gap-2.5 relative">
+                  <button onClick={(e) => handleDismissTask(e, n.id)} className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600" aria-label="Dismiss this task">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 leading-tight line-clamp-2 pr-7">{n.title}</h2>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 text-sm font-medium">{n.category}</span>
                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-bold">₹{n.budget}</span>
@@ -171,10 +155,7 @@ function NotificationToast() {
             </div>
           </div>
           <div className="px-4 pt-2 pb-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-            <div className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden mb-1.5">
-              <div className="h-full bg-blue-600 dark:bg-blue-500 rounded-full" style={{ width: '100%', animation: 'toastProgress 15s linear forwards' }} />
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Auto-opening Tasks page in 15 seconds…</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Each task disappears after 15 seconds. Dismiss individually or close all.</p>
           </div>
         </div>
       </div>

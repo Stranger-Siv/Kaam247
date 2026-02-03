@@ -1,9 +1,29 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useUserMode } from '../context/UserModeContext'
 
 function Settings() {
   const navigate = useNavigate()
   const { userMode } = useUserMode()
+  const [refreshing, setRefreshing] = useState(false)
+
+  const handleRefreshApp = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    try {
+      if ('caches' in window) {
+        const names = await caches.keys()
+        await Promise.all(names.map((name) => caches.delete(name)))
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(regs.map((r) => r.unregister()))
+      }
+    } catch (_) {
+      // Continue to reload anyway
+    }
+    window.location.reload()
+  }
 
   const menuItems = [
     { to: '/settings/profile', label: 'Profile', description: 'Name and account details' },
@@ -62,6 +82,22 @@ function Settings() {
             </li>
           ))}
         </ul>
+      </div>
+
+      {/* Refresh app - PWA update */}
+      <div className="mt-6 p-4 sm:p-5 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Refresh app</p>
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3">
+          If the app feels outdated or something isn&apos;t working, tap below to load the latest version.
+        </p>
+        <button
+          type="button"
+          onClick={handleRefreshApp}
+          disabled={refreshing}
+          className="px-4 py-2.5 text-sm font-medium rounded-xl bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 transition-colors"
+        >
+          {refreshing ? 'Refreshing…' : 'Refresh app to get latest version'}
+        </button>
       </div>
     </div>
   )

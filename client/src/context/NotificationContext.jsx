@@ -1,23 +1,36 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import { initNotificationSound, startNotificationAlertLoop, stopNotificationAlertLoop } from '../utils/notificationSound'
+
+const NEW_TASK_ALERT_DURATION_MS = 15 * 1000 // 15 seconds per task - each task has its own independent timer
 
 const NotificationContext = createContext()
 
 export function NotificationProvider({ children }) {
-  // Queue: show one notification at a time, each new task gets its own toast in order
   const [notificationQueue, setNotificationQueue] = useState([])
+  const timersByTaskIdRef = useRef({}) // { [taskId]: timeoutId } - one timer per task, run simultaneously
 
-  // Initialize audio context early so it can be unlocked on first user interaction
   useEffect(() => {
     initNotificationSound()
   }, [])
   const [alertedTaskIds, setAlertedTaskIds] = useState(new Set())
   const [reminder, setReminder] = useState(null)
-  const [reminderCooldown, setReminderCooldown] = useState(new Set()) // taskIds we've reminded in this session
+  const [reminderCooldown, setReminderCooldown] = useState(new Set())
 
-  // Expose full list so UI can show all new tasks in one scrollable panel
   const notifications = notificationQueue
   const notification = notificationQueue[0] ?? null
+
+  // Called when a single task's 15s timer expires - remove only that task; other timers keep running
+  const expireTask = useCallback((taskId) => {
+    if (timersByTaskIdRef.current[taskId] != null) {
+      clearTimeout(timersByTaskIdRef.current[taskId])
+      delete timersByTaskIdRef.current[taskId]
+    }
+    setNotificationQueue(prev => {
+      const next = prev.filter(t => t.id !== taskId)
+      if (next.length === 0) stopNotificationAlertLoop()
+      return next
+    })
+  }, [])
 
   const showNotification = useCallback((taskData) => {
     const rawId = taskData.taskId ?? taskData._id ?? taskData.id
@@ -26,7 +39,6 @@ export function NotificationProvider({ children }) {
 
     if (alertedTaskIds.has(taskId)) return
 
-    // Format task data for notification
     const formattedTask = {
       id: taskId,
       title: taskData.title,
@@ -42,10 +54,8 @@ export function NotificationProvider({ children }) {
       createdAt: taskData.createdAt || new Date().toISOString()
     }
 
-    // Mark as alerted
     setAlertedTaskIds(prev => new Set([...prev, taskId]))
 
-    // System notification (shows over other apps / when PWA in background) if permission granted
     if (typeof window !== 'undefined' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       try {
         const body = [formattedTask.title, formattedTask.distance].filter(Boolean).join(' • ')
@@ -65,22 +75,40 @@ export function NotificationProvider({ children }) {
       } catch (_) { }
     }
 
-    // Keep ringing until user accepts, rejects, or dismisses
-    startNotificationAlertLoop()
-
-    // Add to queue; in-app panel shows full-screen overlay
+    const wasEmpty = notificationQueue.length === 0
     setNotificationQueue(prev => [...prev, formattedTask])
-  }, [alertedTaskIds])
 
-  const hideNotification = useCallback(() => {
+    if (wasEmpty) startNotificationAlertLoop()
+
+    const timeoutId = setTimeout(() => {
+      expireTask(taskId)
+    }, NEW_TASK_ALERT_DURATION_MS)
+    timersByTaskIdRef.current[taskId] = timeoutId
+  }, [alertedTaskIds, notificationQueue.length, expireTask])
+
+  const dismissTask = useCallback((taskId) => {
+    if (timersByTaskIdRef.current[taskId] != null) {
+      clearTimeout(timersByTaskIdRef.current[taskId])
+      delete timersByTaskIdRef.current[taskId]
+    }
     setNotificationQueue(prev => {
-      const next = prev.slice(1)
+      const next = prev.filter(t => t.id !== taskId)
       if (next.length === 0) stopNotificationAlertLoop()
       return next
     })
   }, [])
 
+  const hideNotification = useCallback(() => {
+    const first = notificationQueue[0]
+    if (first) dismissTask(first.id)
+  }, [notificationQueue, dismissTask])
+
   const dismissAllNotifications = useCallback(() => {
+    const timers = timersByTaskIdRef.current
+    Object.keys(timers).forEach(taskId => {
+      if (timers[taskId] != null) clearTimeout(timers[taskId])
+    })
+    timersByTaskIdRef.current = {}
     stopNotificationAlertLoop()
     setNotificationQueue([])
   }, [])
@@ -97,6 +125,11 @@ export function NotificationProvider({ children }) {
   }, [])
 
   const clearAlertedTasks = useCallback(() => {
+    const timers = timersByTaskIdRef.current
+    Object.keys(timers).forEach(taskId => {
+      if (timers[taskId] != null) clearTimeout(timers[taskId])
+    })
+    timersByTaskIdRef.current = {}
     stopNotificationAlertLoop()
     setAlertedTaskIds(new Set())
     setNotificationQueue([])
@@ -109,6 +142,7 @@ export function NotificationProvider({ children }) {
         notifications,
         showNotification,
         hideNotification,
+        dismissTask,
         dismissAllNotifications,
         reminder,
         showReminder,
@@ -128,4 +162,3 @@ export function useNotification() {
   }
   return context
 }
-
