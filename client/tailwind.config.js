@@ -12,9 +12,14 @@ export default {
           from: { transform: 'translateY(100%)' },
           to: { transform: 'translateY(0)' },
         },
+        'task-countdown': {
+          from: { width: '100%' },
+          to: { width: '0%' },
+        },
       },
       animation: {
         'slide-up': 'slide-up 0.25s ease-out',
+        'task-countdown': 'task-countdown 15s linear forwards',
       },
       colors: {
         // Override gray scale with neutral (less blue) dark tones

@@ -85,7 +85,7 @@ function NotificationToast() {
           <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 min-h-0">
             <div className="space-y-4 pb-4">
               {notifications.map((n) => (
-                <div key={n.id} className="rounded-xl bg-white/5 border border-white/10 p-4 flex flex-col gap-3 relative">
+                <div key={n.id} className="rounded-xl bg-white/5 border border-white/10 p-4 flex flex-col gap-3 relative overflow-hidden">
                   <button onClick={(e) => handleDismissTask(e, n.id)} className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-200 rounded-full hover:bg-white/10 touch-manipulation" aria-label="Dismiss this task">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -105,6 +105,9 @@ function NotificationToast() {
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                     View & Accept
                   </button>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 rounded-b-xl overflow-hidden" aria-hidden>
+                    <div className="h-full bg-blue-500 rounded-b-xl animate-task-countdown origin-left" style={{ width: '100%' }} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -130,7 +133,7 @@ function NotificationToast() {
           <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
             <div className="p-4 space-y-4">
               {notifications.map((n) => (
-                <div key={n.id} className="rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 p-4 flex flex-col gap-2.5 relative">
+                <div key={n.id} className="rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 p-4 flex flex-col gap-2.5 relative overflow-hidden">
                   <button onClick={(e) => handleDismissTask(e, n.id)} className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600" aria-label="Dismiss this task">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -150,6 +153,9 @@ function NotificationToast() {
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                     View & Accept
                   </button>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-600 rounded-b-xl overflow-hidden" aria-hidden>
+                    <div className="h-full bg-blue-600 dark:bg-blue-500 rounded-b-xl animate-task-countdown origin-left" style={{ width: '100%' }} />
+                  </div>
                 </div>
               ))}
             </div>
