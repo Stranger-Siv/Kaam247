@@ -522,7 +522,7 @@ function Tasks() {
       <button
         type="button"
         onClick={() => setFilterPanelOpen(true)}
-        className="sm:hidden fixed bottom-20 right-4 z-[998] flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 dark:bg-blue-500 text-white shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 transition-all touch-manipulation"
+        className="sm:hidden fixed right-4 z-[998] bottom-[90px] flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 dark:bg-blue-500 text-white shadow-lg hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 transition-all touch-manipulation"
         aria-label="Open filters"
       >
         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
