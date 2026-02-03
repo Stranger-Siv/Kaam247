@@ -560,9 +560,16 @@ const getProfile = async (req, res) => {
       })
     }
 
-    const response = { ...user, savedTasks: user.savedTasks || [] }
+    // Build a plain object safe for JSON (convert ObjectIds to string)
+    const response = JSON.parse(JSON.stringify(user))
+    response.savedTasks = (user.savedTasks || []).map(id => (id && id.toString ? id.toString() : String(id)))
+
     if (user.roleMode === 'worker') {
-      response.workerBadges = await getWorkerBadges(userId)
+      try {
+        response.workerBadges = await getWorkerBadges(userId)
+      } catch (e) {
+        response.workerBadges = []
+      }
     }
 
     return res.status(200).json({

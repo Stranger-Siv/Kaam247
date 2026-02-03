@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -196,23 +195,6 @@ function Earnings() {
                 <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100">₹{amount}</span>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Last 7 days chart */}
-      {earnings.last7Days && earnings.last7Days.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Last 7 days</h2>
-          <div className="h-48 w-full max-w-md">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={earnings.last7Days.map(d => ({ ...d, label: d.date.slice(5) }))}>
-                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(v) => [`₹${v}`, 'Earnings']} labelFormatter={(l) => `Date: ${l}`} />
-                <Bar dataKey="total" fill="rgb(34 197 94)" name="Earnings" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
           </div>
         </div>
       )}
