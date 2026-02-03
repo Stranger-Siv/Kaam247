@@ -399,13 +399,17 @@ const acceptTask = async (req, res) => {
       })
     }
 
-    // Atomic update: Find task with status "OPEN" or "SEARCHING" and update to "ACCEPTED"
-    // This ensures only one worker can accept the task
+    // ATOMIC ACCEPT (race-condition safe):
+    // If 2+ workers accept the same task at once, only ONE can win. We use findOneAndUpdate
+    // so the "read and update" is a single atomic operation in MongoDB. The first request
+    // that matches (status OPEN/SEARCHING, no acceptedBy) updates the doc; the others get
+    // no match and return 409 "Task already accepted".
     const updatedTask = await Task.findOneAndUpdate(
       {
         _id: taskId,
-        status: { $in: ['OPEN', 'SEARCHING'] }, // Only accept if status is OPEN or SEARCHING
-        isHidden: { $ne: true } // Ensure task is not hidden
+        status: { $in: ['OPEN', 'SEARCHING'] },
+        $or: [{ acceptedBy: null }, { acceptedBy: { $exists: false } }], // No worker assigned yet
+        isHidden: { $ne: true }
       },
       {
         $set: {

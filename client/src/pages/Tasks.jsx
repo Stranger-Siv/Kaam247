@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useSocket } from '../context/SocketContext'
 import { useAvailability } from '../context/AvailabilityContext'
 import { useAuth } from '../context/AuthContext'
@@ -22,7 +22,9 @@ const DISTANCE_OPTIONS = [
 
 function Tasks() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [bannerMessage, setBannerMessage] = useState(null) // e.g. "Task already accepted by another worker"
   const [selectedDistance, setSelectedDistance] = useState('All')
   const [selectedBudget, setSelectedBudget] = useState('All')
   const [tasks, setTasks] = useState([])
@@ -49,6 +51,17 @@ function Tasks() {
   const newTaskHighlightRef = useRef(new Set())
   const { categories: categoriesList } = useCategories()
   const categories = ['All', ...categoriesList]
+
+  // Show message when redirected from Task Detail (e.g. task already accepted by another worker)
+  useEffect(() => {
+    const msg = location.state?.message
+    if (msg && typeof msg === 'string') {
+      setBannerMessage(msg)
+      navigate(location.pathname, { replace: true, state: {} }) // Clear state so message doesn't reappear
+      const t = setTimeout(() => setBannerMessage(null), 5000)
+      return () => clearTimeout(t)
+    }
+  }, [location.state?.message, location.pathname, navigate])
 
   // Pull-to-refresh handler
   const handleRefresh = () => {
@@ -403,6 +416,28 @@ function Tasks() {
       className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden"
       style={{ touchAction: 'pan-y' }}
     >
+
+      {/* Banner when redirected after task already accepted by another worker */}
+      {bannerMessage && (
+        <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl flex items-start gap-3">
+          <span className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </span>
+          <p className="text-sm text-amber-800 dark:text-amber-200 flex-1">{bannerMessage}</p>
+          <button
+            type="button"
+            onClick={() => setBannerMessage(null)}
+            className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 shrink-0 p-1"
+            aria-label="Dismiss"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="mb-6 sm:mb-8 lg:mb-10 w-full">
