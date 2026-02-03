@@ -507,6 +507,119 @@ const getEarnings = async (req, res) => {
   }
 }
 
+// GET /api/users/me/transactions - Get poster's transactions (spend on completed tasks)
+const getTransactions = async (req, res) => {
+  try {
+    const userId = req.userId
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        error: 'Invalid userId',
+        message: 'User ID is required'
+      })
+    }
+
+    const completedTasks = await Task.find({
+      postedBy: userId,
+      status: 'COMPLETED'
+    })
+      .populate('acceptedBy', 'name')
+      .sort({ completedAt: -1 })
+      .lean()
+
+    const totalSpent = completedTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+    const now = new Date()
+
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const todayTasks = completedTasks.filter(task => {
+      const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
+      return completedDate >= startOfToday
+    })
+    const spentToday = todayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+
+    const startOfWeek = new Date(now)
+    startOfWeek.setDate(now.getDate() - 7)
+    const weekTasks = completedTasks.filter(task => {
+      const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
+      return completedDate >= startOfWeek
+    })
+    const spentThisWeek = weekTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const thisMonthTasks = completedTasks.filter(task => {
+      const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
+      return completedDate >= startOfMonth
+    })
+    const spentThisMonth = thisMonthTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+
+    const byCategory = {}
+    completedTasks.forEach(task => {
+      const cat = task.category || 'Other'
+      byCategory[cat] = (byCategory[cat] || 0) + (task.budget || 0)
+    })
+
+    const last7Days = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      d.setHours(0, 0, 0, 0)
+      const end = new Date(d)
+      end.setHours(23, 59, 59, 999)
+      const dayTasks = completedTasks.filter(task => {
+        const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
+        return completedDate >= d && completedDate <= end
+      })
+      const dayTotal = dayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+      last7Days.push({ date: d.toISOString().slice(0, 10), total: dayTotal, count: dayTasks.length })
+    }
+
+    const last30Days = []
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      d.setHours(0, 0, 0, 0)
+      const end = new Date(d)
+      end.setHours(23, 59, 59, 999)
+      const dayTasks = completedTasks.filter(task => {
+        const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
+        return completedDate >= d && completedDate <= end
+      })
+      const dayTotal = dayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+      last30Days.push({ date: d.toISOString().slice(0, 10), total: dayTotal, count: dayTasks.length })
+    }
+
+    const taskList = completedTasks.map(task => ({
+      id: task._id,
+      title: task.title,
+      category: task.category,
+      budget: task.budget,
+      completedAt: task.completedAt || task.createdAt,
+      worker: task.acceptedBy?.name || 'Worker',
+      rating: task.rating || null
+    }))
+
+    return res.status(200).json({
+      message: 'Transactions fetched successfully',
+      transactions: {
+        total: totalSpent,
+        today: spentToday,
+        thisWeek: spentThisWeek,
+        thisMonth: spentThisMonth,
+        totalTasks: completedTasks.length,
+        tasks: taskList,
+        byCategory,
+        last7Days,
+        last30Days
+      }
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred while fetching transactions'
+    })
+  }
+}
+
 // Compute worker badges from stats
 async function getWorkerBadges(userId) {
   const user = await User.findById(userId).select('averageRating totalRatings').lean()
@@ -917,6 +1030,7 @@ module.exports = {
   updateProfile,
   getActivity,
   getEarnings,
+  getTransactions,
   getProfile,
   getCancellationStatus,
   getActiveTask,

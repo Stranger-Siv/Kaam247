@@ -92,6 +92,17 @@ function MainLayout() {
                                     Earnings
                                 </Link>
                             )}
+                            {userMode === 'poster' && (
+                                <Link
+                                    to="/transactions"
+                                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/transactions'
+                                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                                        : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                                        }`}
+                                >
+                                    Transactions
+                                </Link>
+                            )}
                             <Link
                                 to="/profile"
                                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/profile'

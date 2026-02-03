@@ -39,6 +39,7 @@ const SettingsNotifications = lazyWithRetry(() => import('./pages/settings/Setti
 const SettingsAccount = lazyWithRetry(() => import('./pages/settings/SettingsAccount'))
 const Activity = lazyWithRetry(() => import('./pages/Activity'))
 const Earnings = lazyWithRetry(() => import('./pages/Earnings'))
+const Transactions = lazyWithRetry(() => import('./pages/Transactions'))
 const AdminOverview = lazyWithRetry(() => import('./pages/admin/AdminOverview'))
 const AdminUsers = lazyWithRetry(() => import('./pages/admin/AdminUsers'))
 const AdminUserDetail = lazyWithRetry(() => import('./pages/admin/AdminUserDetail'))
@@ -154,6 +155,14 @@ const AppContent = () => (
                             element={
                               <ModeProtectedRoute allowedMode="worker">
                                 <Earnings />
+                              </ModeProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/transactions"
+                            element={
+                              <ModeProtectedRoute allowedMode="poster">
+                                <Transactions />
                               </ModeProtectedRoute>
                             }
                           />

@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { createUser, updateProfile, getActivity, getEarnings, getProfile, getCancellationStatus, getActiveTask, savePushSubscription, saveTaskTemplate, getTaskTemplates, deleteTaskTemplate, toggleSavedTask, getAvailabilitySchedule, updateAvailabilitySchedule } = require('../controllers/userController')
+const { createUser, updateProfile, getActivity, getEarnings, getTransactions, getProfile, getCancellationStatus, getActiveTask, savePushSubscription, saveTaskTemplate, getTaskTemplates, deleteTaskTemplate, toggleSavedTask, getAvailabilitySchedule, updateAvailabilitySchedule } = require('../controllers/userController')
 const { createTicket, getMyTickets } = require('../controllers/supportTicketController')
 const { authenticate } = require('../middleware/auth')
 
@@ -27,6 +27,9 @@ router.patch('/users/me/availability-schedule', authenticate, updateAvailability
 
 // GET /api/users/me/earnings - Get worker earnings (authenticated)
 router.get('/users/me/earnings', authenticate, getEarnings)
+
+// GET /api/users/me/transactions - Get poster transactions / spend (authenticated)
+router.get('/users/me/transactions', authenticate, getTransactions)
 
 // GET /api/users/me/cancellation-status - Get worker cancellation status (authenticated)
 router.get('/users/me/cancellation-status', authenticate, getCancellationStatus)
