@@ -1256,22 +1256,7 @@ function TaskDetail() {
             <div className="w-full px-6 py-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-base font-medium rounded-lg text-center">
               Task in progress
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <button
-                onClick={() => setShowIncreaseBudgetModal(true)}
-                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Increase Budget
-              </button>
-              <button
-                onClick={() => setShowExtendValidityModal(true)}
-                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-              >
-                Extend Validity
-              </button>
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleDuplicateTask}
                 disabled={isDuplicating}
@@ -1349,22 +1334,7 @@ function TaskDetail() {
             <div className="w-full px-6 py-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-base font-medium rounded-lg text-center">
               Worker assigned: {task.worker || 'Worker'}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <button
-                onClick={() => setShowIncreaseBudgetModal(true)}
-                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Increase Budget
-              </button>
-              <button
-                onClick={() => setShowExtendValidityModal(true)}
-                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-              >
-                Extend Validity
-              </button>
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleDuplicateTask}
                 disabled={isDuplicating}
@@ -1855,22 +1825,7 @@ function TaskDetail() {
             <div className="w-full px-6 py-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-base font-medium rounded-lg text-center">
               Worker assigned: {task.worker || 'Worker'}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <button
-                onClick={() => setShowIncreaseBudgetModal(true)}
-                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Increase Budget
-              </button>
-              <button
-                onClick={() => setShowExtendValidityModal(true)}
-                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-              >
-                Extend Validity
-              </button>
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleDuplicateTask}
                 disabled={isDuplicating}
@@ -1915,22 +1870,7 @@ function TaskDetail() {
             <div className="w-full px-6 py-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-base font-medium rounded-lg text-center">
               Task in progress
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <button
-                onClick={() => setShowIncreaseBudgetModal(true)}
-                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Increase Budget
-              </button>
-              <button
-                onClick={() => setShowExtendValidityModal(true)}
-                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-              >
-                Extend Validity
-              </button>
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleDuplicateTask}
                 disabled={isDuplicating}
