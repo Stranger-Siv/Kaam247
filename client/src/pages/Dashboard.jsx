@@ -14,6 +14,18 @@ import { performStateRecovery } from '../utils/stateRecovery'
 import { reverseGeocode } from '../utils/geocoding'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 
+/** Format avg time-to-accept (ms) for poster analytics: "5m", "1.2h", "—" */
+function formatAvgTimeToAccept(ms) {
+    if (ms == null || typeof ms !== 'number') return '—'
+    if (ms < 60 * 1000) return '<1m'
+    if (ms < 60 * 60 * 1000) return `${Math.round(ms / (60 * 1000))}m`
+    const hours = ms / (60 * 60 * 1000)
+    if (hours < 24) return `${Math.round(hours * 10) / 10}h`
+    const h = Math.floor(hours)
+    const m = Math.round((hours - h) * 60)
+    return m ? `${h}h ${m}m` : `${h}h`
+}
+
 function Dashboard() {
     const { userMode } = useUserMode()
     const { getSocket } = useSocket()
@@ -1615,28 +1627,42 @@ function Dashboard() {
                         <div className="mb-10 sm:mb-12 lg:mb-14">
                             <div className="mb-5 sm:mb-6">
                                 <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1.5 sm:mb-2 leading-tight">Task Analytics</h2>
-                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Overview of your posted tasks</p>
+                                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">Overview of your posted tasks by status</p>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                                 <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Total views</p>
-                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.totalViewCount ?? 0}</p>
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Total tasks</p>
+                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.totalTasks ?? 0}</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5">All time</p>
+                                </div>
+                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Open</p>
+                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.openOrSearching ?? 0}</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5">Waiting for worker</p>
+                                </div>
+                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">In progress</p>
+                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.inProgress ?? 0}</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5">Accepted or ongoing</p>
+                                </div>
+                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Completed</p>
+                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.completed ?? 0}</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5">Done</p>
+                                </div>
+                            </div>
+                            <div className="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Completion rate</p>
+                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.completionRatePercent ?? 0}%</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5">Of tasks that got a worker</p>
                                 </div>
                                 <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
                                     <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Avg. time to accept</p>
                                     <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                                        {posterAnalytics.averageTimeToAcceptanceMs != null
-                                            ? `${Math.round(posterAnalytics.averageTimeToAcceptanceMs / (60 * 60 * 1000) * 10) / 10}h`
-                                            : '—'}
+                                        {formatAvgTimeToAccept(posterAnalytics.averageTimeToAcceptanceMs)}
                                     </p>
-                                </div>
-                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Completion rate</p>
-                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.completionRatePercent ?? 0}%</p>
-                                </div>
-                                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Total tasks</p>
-                                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{posterAnalytics.totalTasks ?? 0}</p>
+                                    <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 mt-0.5">From post to worker accept</p>
                                 </div>
                             </div>
                         </div>
