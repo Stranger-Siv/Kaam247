@@ -311,8 +311,8 @@ function Home() {
         </div>
       </section>
 
-      {/* SECTION 6: REAL NUMBERS */}
-      <section className="bg-white dark:bg-gray-950 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 dark:border-gray-800">
+      {/* SECTION 6: REAL NUMBERS — hidden on small screens */}
+      <section className="hidden md:block bg-white dark:bg-gray-950 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 dark:border-gray-800">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100 dark:divide-gray-800">
             <div className="flex flex-col items-center justify-center py-6 md:py-4 first:pt-0 last:pb-0 md:first:pt-4 md:last:pb-4 md:first:pl-0 md:last:pr-0">
