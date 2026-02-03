@@ -1,8 +1,40 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { API_BASE_URL } from '../../config/env'
 
 function Home() {
   const { isAuthenticated } = useAuth()
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalCompletedTasks: 0,
+    categoryCount: 0,
+    averageRating: 0
+  })
+  const [statsLoading, setStatsLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`${API_BASE_URL}/api/stats`, { credentials: 'omit' })
+      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
+      .then((data) => {
+        if (!cancelled) {
+          setStats({
+            totalUsers: data.totalUsers ?? 0,
+            totalCompletedTasks: data.totalCompletedTasks ?? 0,
+            categoryCount: data.categoryCount ?? 0,
+            averageRating: data.averageRating ?? 0
+          })
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setStats({ totalUsers: 0, totalCompletedTasks: 0, categoryCount: 0, averageRating: 0 })
+      })
+      .finally(() => {
+        if (!cancelled) setStatsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [])
 
   const categories = [
     { name: 'Cleaning', icon: '🧹' },
@@ -279,28 +311,51 @@ function Home() {
         </div>
       </section>
 
-      {/* SECTION 6: FINAL CTA */}
+      {/* SECTION 6: REAL NUMBERS + CTA */}
       <section className="bg-gray-50 dark:bg-gray-900 py-10 sm:py-14 lg:py-18 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
-            Ready to start?
-          </h2>
-          <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-300 mb-7 sm:mb-8">
-            Made for local, real-world work.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
-            <Link
-              to={isAuthenticated ? '/post-task' : '/login'}
-              className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 bg-blue-600 dark:bg-blue-500 text-white text-base sm:text-lg font-semibold rounded-xl shadow-md hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-lg transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center"
-            >
-              Post a Task
-            </Link>
-            <Link
-              to={isAuthenticated ? '/tasks' : '/login'}
-              className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-base sm:text-lg font-semibold rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center"
-            >
-              Start Earning Nearby
-            </Link>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8 sm:mb-10">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">
+              Kaam247 in numbers
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
+              Real stats from our community
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 text-center">
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+                {statsLoading ? '—' : stats.totalUsers.toLocaleString()}
+              </p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Total users
+              </p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 text-center">
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+                {statsLoading ? '—' : stats.totalCompletedTasks.toLocaleString()}
+              </p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Tasks completed
+              </p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 text-center">
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+                {statsLoading ? '—' : stats.categoryCount}
+              </p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Task categories
+              </p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 border border-gray-200 dark:border-gray-700 text-center">
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white tabular-nums">
+                {statsLoading ? '—' : (stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '—')}
+              </p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Avg. rating
+              </p>
+            </div>
           </div>
         </div>
       </section>
