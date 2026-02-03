@@ -210,6 +210,11 @@ const userSchema = new mongoose.Schema({
         trim: true,
         description: 'FCM tokens for push notifications (multiple devices: phone + Chrome, etc.)'
     },
+    onboardingFeedback: {
+        useCase: { type: String, trim: true, maxlength: 500 },
+        suggestions: { type: String, trim: true, maxlength: 1000 },
+        submittedAt: { type: Date }
+    },
     taskTemplates: {
         type: [{
             name: {

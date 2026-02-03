@@ -59,6 +59,11 @@ const taskSchema = new mongoose.Schema({
             description: 'Poster full address: room no, flat, building, landmark, etc.'
         }
     },
+    isOnCampus: {
+        type: Boolean,
+        default: false,
+        description: 'True if task is on campus (college pilot: visible within campus radius)'
+    },
     scheduledAt: {
         type: Date,
         required: false

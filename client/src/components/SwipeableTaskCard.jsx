@@ -38,6 +38,11 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
             <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-lg whitespace-nowrap">
               {task.category}
             </span>
+            {task.isOnCampus && (
+              <span className="inline-flex items-center px-2 sm:px-2.5 py-1 bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-xs font-semibold rounded-lg whitespace-nowrap border border-green-200 dark:border-green-800">
+                On-campus
+              </span>
+            )}
           </div>
         </div>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 sm:mb-5 line-clamp-2 leading-relaxed break-words w-full">

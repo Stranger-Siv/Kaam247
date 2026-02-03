@@ -5,6 +5,7 @@ import { useSocket } from '../context/SocketContext'
 import { useAuth } from '../context/AuthContext'
 import { useAvailability } from '../context/AvailabilityContext'
 import { useCancellation } from '../context/CancellationContext'
+import { usePWAInstall } from '../context/PWAInstallContext'
 import StatusBadge from '../components/StatusBadge'
 import { API_BASE_URL } from '../config/env'
 import TaskLocationMap from '../components/TaskLocationMap'
@@ -25,6 +26,7 @@ function TaskDetail() {
   const { user } = useAuth()
   const { workerLocation, isOnline, checkActiveTask } = useAvailability()
   const { cancellationStatus, refreshStatus } = useCancellation()
+  const { requestShow: requestPWAInstall } = usePWAInstall()
   const [task, setTask] = useState(null)
   const [hasActiveTask, setHasActiveTask] = useState(false)
   const [checkingActiveTask, setCheckingActiveTask] = useState(false)
@@ -144,6 +146,7 @@ function TaskDetail() {
         budget: `₹${backendTask.budget}`,
         budgetNum: typeof backendTask.budget === 'number' ? backendTask.budget : Number(backendTask.budget) || 0,
         category: backendTask.category,
+        isOnCampus: backendTask.isOnCampus === true,
         time: (backendTask.scheduledAt || backendTask.createdAt)
           ? new Date(backendTask.scheduledAt || backendTask.createdAt).toLocaleString('en-IN', {
             weekday: 'short',
@@ -693,6 +696,7 @@ function TaskDetail() {
           workerCompleted: backendTask.workerCompleted || false,
           rawStatus: backendTask.status
         }))
+        requestPWAInstall()
       }
 
       // DATA CONSISTENCY: Emit event to update task list
@@ -830,6 +834,7 @@ function TaskDetail() {
           completedAt: backendTask.completedAt || null,
           workerCompleted: backendTask.workerCompleted || false
         }))
+        if (backendTask.status === 'COMPLETED') requestPWAInstall()
       }
     } catch (err) {
       setConfirmError(err.message || 'Failed to confirm task completion. Please try again.')
@@ -1982,6 +1987,11 @@ function TaskDetail() {
               <span className="inline-flex items-center px-2.5 sm:px-3 py-1 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-lg">
                 {task.category}
               </span>
+              {task.isOnCampus && (
+                <span className="inline-flex items-center px-2.5 sm:px-3 py-1 bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-300 text-xs font-semibold rounded-lg border border-green-200 dark:border-green-800">
+                  On-campus
+                </span>
+              )}
               <StatusBadge status={task.status || task.rawStatus} />
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight">

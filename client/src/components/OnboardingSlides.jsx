@@ -2,13 +2,17 @@ import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserMode } from '../context/UserModeContext'
 import { useOnboarding } from '../context/OnboardingContext'
+import { API_BASE_URL } from '../config/env'
 
-const SLIDE_COUNT = 6
+const SLIDE_COUNT = 7
 const FADE_DURATION_MS = 280
 
 function OnboardingSlides() {
   const [step, setStep] = useState(0)
   const [exiting, setExiting] = useState(false)
+  const [feedbackUseCase, setFeedbackUseCase] = useState('')
+  const [feedbackSuggestions, setFeedbackSuggestions] = useState('')
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const navigate = useNavigate()
   const { userMode } = useUserMode()
   const { completeOnboarding } = useOnboarding()
@@ -28,10 +32,36 @@ function OnboardingSlides() {
 
   const handleNext = () => {
     if (isLast) return
+    if (step === 5) {
+      submitFeedbackAndNext()
+      return
+    }
     setStep((s) => s + 1)
   }
 
-  const handleSkip = () => finishOnboarding()
+  const handleSkip = () => {
+    if (step === 5) setStep(6)
+    else finishOnboarding()
+  }
+  const submitFeedbackAndNext = useCallback(async () => {
+    const useCase = (feedbackUseCase || '').trim()
+    const suggestions = (feedbackSuggestions || '').trim()
+    if (useCase || suggestions) {
+      setFeedbackSubmitting(true)
+      try {
+        const token = localStorage.getItem('kaam247_token')
+        if (token) {
+          await fetch(`${API_BASE_URL}/api/users/me/onboarding-feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ useCase, suggestions })
+          })
+        }
+      } catch (_) { /* non-blocking */ }
+      setFeedbackSubmitting(false)
+    }
+    setStep(6)
+  }, [feedbackUseCase, feedbackSuggestions])
   const handlePrimaryCta = () => {
     if (userMode === 'poster') finishOnboarding('/post-task')
     else finishOnboarding('/tasks')
@@ -196,7 +226,7 @@ function OnboardingSlides() {
             </>
           )}
 
-          {/* Slide 4: Controls */}
+          {/* Slide 4: Controls (unchanged) */}
           {step === 4 && (
             <>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white text-center mb-4">
@@ -223,8 +253,46 @@ function OnboardingSlides() {
             </>
           )}
 
-          {/* Slide 5: CTA */}
+          {/* Slide 5: Onboarding feedback (college pilot) */}
           {step === 5 && (
+            <>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">
+                Quick feedback (optional)
+              </h1>
+              <p className="text-gray-500 dark:text-slate-400 text-sm text-center mb-6 max-w-xs">
+                Help us improve. You can skip.
+              </p>
+              <div className="w-full space-y-4">
+                <div>
+                  <label className="block text-left text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    What do you want to use Kaam247 for?
+                  </label>
+                  <textarea
+                    value={feedbackUseCase}
+                    onChange={(e) => setFeedbackUseCase(e.target.value)}
+                    placeholder="e.g. assignments, part-time work, errands..."
+                    rows={2}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-left text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Any suggestions or expectations?
+                  </label>
+                  <textarea
+                    value={feedbackSuggestions}
+                    onChange={(e) => setFeedbackSuggestions(e.target.value)}
+                    placeholder="Optional"
+                    rows={2}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Slide 6: CTA */}
+          {step === 6 && (
             <>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">
                 What to do next
@@ -268,9 +336,10 @@ function OnboardingSlides() {
           <button
             type="button"
             onClick={handleNext}
-            className="order-1 sm:order-2 flex-1 sm:flex-none px-6 py-3.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-base font-semibold rounded-2xl transition-all duration-200 min-h-[48px] shadow-md shadow-blue-500/25 hover:scale-[1.02] active:scale-[0.98]"
+            disabled={step === 5 && feedbackSubmitting}
+            className="order-1 sm:order-2 flex-1 sm:flex-none px-6 py-3.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-base font-semibold rounded-2xl transition-all duration-200 min-h-[48px] shadow-md shadow-blue-500/25 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Next
+            {step === 5 && feedbackSubmitting ? 'Saving…' : 'Next'}
           </button>
         )}
       </div>

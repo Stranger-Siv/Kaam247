@@ -8,7 +8,7 @@ const socketManager = require('../socket/socketManager')
 
 const createTask = async (req, res) => {
   try {
-    const { title, description, category, budget, location, postedBy, expectedDuration, expiresAt: expiresAtBody, validForDays } = req.body
+    const { title, description, category, budget, location, postedBy, expectedDuration, expiresAt: expiresAtBody, validForDays, isOnCampus } = req.body
 
     // Validate required fields exist
     if (!title || !description || !category || budget === undefined || budget === null || !location || !postedBy) {
@@ -60,12 +60,12 @@ const createTask = async (req, res) => {
       }
     }
 
-    // Validate budget - must be a number and greater than 0
+    // Validate budget - must be a number and at least 50
     const budgetNumber = Number(budget)
-    if (isNaN(budgetNumber) || budgetNumber <= 0) {
+    if (isNaN(budgetNumber) || budgetNumber < 50) {
       return res.status(400).json({
         error: 'Invalid budget',
-        message: 'budget must be a positive number'
+        message: 'Minimum budget is ₹50'
       })
     }
 
@@ -170,6 +170,7 @@ const createTask = async (req, res) => {
       budget: budgetNumber,
       expectedDuration: expectedDurationNumber,
       expiresAt,
+      isOnCampus: isOnCampus === true,
       location: {
         type: 'Point',
         coordinates: normalizedCoordinates,
@@ -198,6 +199,7 @@ const createTask = async (req, res) => {
         title: savedTask.title,
         category: savedTask.category,
         budget: savedTask.budget,
+        isOnCampus: savedTask.isOnCampus === true,
         location: {
           area: savedTask.location.area,
           city: savedTask.location.city,
@@ -1524,10 +1526,10 @@ const editTask = async (req, res) => {
       const updateData = {}
       if (budget !== undefined) {
         const budgetNumber = Number(budget)
-        if (isNaN(budgetNumber) || budgetNumber <= 0) {
+        if (isNaN(budgetNumber) || budgetNumber < 50) {
           return res.status(400).json({
             error: 'Invalid budget',
-            message: 'budget must be a positive number'
+            message: 'Minimum budget is ₹50'
           })
         }
         updateData.budget = budgetNumber
@@ -1609,10 +1611,10 @@ const editTask = async (req, res) => {
     if (category !== undefined) updateData.category = category
     if (budget !== undefined) {
       const budgetNumber = Number(budget)
-      if (isNaN(budgetNumber) || budgetNumber <= 0) {
+      if (isNaN(budgetNumber) || budgetNumber < 50) {
         return res.status(400).json({
           error: 'Invalid budget',
-          message: 'budget must be a positive number'
+          message: 'Minimum budget is ₹50'
         })
       }
       updateData.budget = budgetNumber

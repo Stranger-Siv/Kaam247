@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { createUser, updateProfile, getActivity, getEarnings, getTransactions, getProfile, getCancellationStatus, getActiveTask, savePushSubscription, saveTaskTemplate, getTaskTemplates, deleteTaskTemplate, toggleSavedTask, getAvailabilitySchedule, updateAvailabilitySchedule } = require('../controllers/userController')
+const { createUser, updateProfile, getActivity, getEarnings, getTransactions, getProfile, submitOnboardingFeedback, submitProfileFeedback, getCancellationStatus, getActiveTask, savePushSubscription, saveTaskTemplate, getTaskTemplates, deleteTaskTemplate, toggleSavedTask, getAvailabilitySchedule, updateAvailabilitySchedule } = require('../controllers/userController')
 const { createTicket, getMyTickets } = require('../controllers/supportTicketController')
 const { authenticate } = require('../middleware/auth')
 
@@ -9,6 +9,12 @@ router.post('/users', createUser)
 
 // GET /api/users/me - Get current user profile (authenticated)
 router.get('/users/me', authenticate, getProfile)
+
+// POST /api/users/me/onboarding-feedback - Save onboarding feedback (authenticated)
+router.post('/users/me/onboarding-feedback', authenticate, submitOnboardingFeedback)
+
+// POST /api/users/me/feedback - Submit profile feedback & suggestions (authenticated)
+router.post('/users/me/feedback', authenticate, submitProfileFeedback)
 
 // PUT /api/users/me - Update current user profile (authenticated)
 router.put('/users/me', authenticate, updateProfile)

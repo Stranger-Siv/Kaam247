@@ -2,15 +2,13 @@ const express = require('express')
 const router = express.Router()
 const Config = require('../models/Config')
 
+// College pilot (Parul University): Academic, Hostel, Errands, Tech, Events
 const DEFAULT_CATEGORIES = [
-  'Cleaning',
-  'Delivery',
-  'Helper / Labour',
-  'Tutor / Mentor',
-  'Tech Help',
+  'Academic',
+  'Hostel',
   'Errands',
-  'Event Help',
-  'Custom Task'
+  'Tech',
+  'Events'
 ]
 
 // GET /api/categories - Public list of task categories (from Config or default)

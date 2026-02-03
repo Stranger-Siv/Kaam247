@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
 import { useCategories } from '../hooks/useCategories'
+import { usePWAInstall } from '../context/PWAInstallContext'
+import { STUDENT_TASK_TEMPLATES } from '../config/studentTemplates'
 import LocationPickerMap from '../components/LocationPickerMap'
 import { persistUserLocation } from '../utils/locationPersistence'
 import { reverseGeocode as reverseGeocodeViaApi } from '../utils/geocoding'
@@ -25,7 +27,8 @@ function PostTask() {
     fullAddress: '',
     budget: '',
     hours: '',
-    validForDays: '7'
+    validForDays: '7',
+    isOnCampus: false
   })
   const [locationData, setLocationData] = useState({
     coordinates: null,
@@ -80,6 +83,7 @@ function PostTask() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const { categories } = useCategories()
+  const { requestShow: requestPWAInstall } = usePWAInstall()
 
   const validForDaysOptions = [
     { value: '1', label: '1 day' },
@@ -88,18 +92,17 @@ function PostTask() {
     { value: '14', label: '14 days (max)' }
   ]
 
+  // College pilot: 30 min, 1 hr, same day, custom (hours)
   const hoursOptions = [
     { value: '', label: 'Select duration' },
+    { value: '0.5', label: '30 minutes' },
     { value: '1', label: '1 hour' },
     { value: '2', label: '2 hours' },
     { value: '3', label: '3 hours' },
-    { value: '4', label: '4 hours' },
-    { value: '5', label: '5 hours' },
     { value: '6', label: '6 hours' },
-    { value: '8', label: '8 hours' },
-    { value: '10', label: '10 hours' },
-    { value: '12', label: '12 hours' },
-    { value: '24', label: 'Full day (24 hours)' }
+    { value: '12', label: 'Same day (12 hours)' },
+    { value: '24', label: 'Same day (24 hours)' },
+    { value: '48', label: 'Custom (2 days)' }
   ]
 
   const handleInputChange = (field, value) => {
@@ -275,10 +278,10 @@ function PostTask() {
       return
     }
 
-    // Validate budget
+    // Validate budget (minimum ₹50)
     const budgetAmount = getBudgetAmount()
-    if (budgetAmount <= 0) {
-      setError('Please set a valid budget')
+    if (budgetAmount < 50) {
+      setError('Minimum budget is ₹50')
       return
     }
 
@@ -345,10 +348,11 @@ function PostTask() {
         description: formData.description.trim(),
         category: formData.category,
         budget: budgetAmount,
-        expectedDuration: formData.hours ? parseInt(formData.hours) : null, // Store hours as number
+        expectedDuration: formData.hours ? parseFloat(formData.hours) : null,
         location: finalLocation,
         postedBy: userId,
-        validForDays: formData.validForDays ? parseInt(formData.validForDays, 10) : 7
+        validForDays: formData.validForDays ? parseInt(formData.validForDays, 10) : 7,
+        isOnCampus: formData.isOnCampus === true
       }
 
       // Submit task to backend
@@ -368,6 +372,9 @@ function PostTask() {
 
       const data = await response.json()
       const taskId = data.task._id
+
+      // After first task post: encourage PWA install
+      requestPWAInstall()
 
       // Optionally save as template (non-blocking)
       if (saveAsTemplate) {
@@ -431,6 +438,35 @@ function PostTask() {
         {step === 1 && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">What task do you need help with?</h2>
+
+            {/* Student task templates - quick start */}
+            <div className="mb-6 sm:mb-8">
+              <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wide">Quick start from template</p>
+              <div className="flex flex-wrap gap-2">
+                {STUDENT_TASK_TEMPLATES.map((t) => (
+                  <button
+                    key={`${t.title}-${t.category}`}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        title: t.title,
+                        description: t.description,
+                        category: t.category,
+                        budget: t.budget?.toString() ?? prev.budget,
+                        hours: t.expectedDuration?.toString() ?? prev.hours
+                      }))
+                      if (fieldErrors.title || fieldErrors.description || fieldErrors.category) {
+                        setFieldErrors(prev => ({ ...prev, title: null, description: null, category: null }))
+                      }
+                    }}
+                    className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 text-xs sm:text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                  >
+                    {t.title}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
@@ -613,6 +649,18 @@ function PostTask() {
                 )}
 
                 <div className="mt-4 sm:mt-5">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.isOnCampus === true}
+                      onChange={(e) => setFormData(prev => ({ ...prev, isOnCampus: e.target.checked }))}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">This task is on campus</span>
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Tasks are shown to users within 2 km. Tick if location is on campus.</p>
+                </div>
+                <div className="mt-4 sm:mt-5">
                   <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                     Full address (optional)
                   </label>
@@ -714,20 +762,20 @@ function PostTask() {
 
             <div className="space-y-5 sm:space-y-6 lg:space-y-7">
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 sm:mb-4 uppercase tracking-wide">
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
                   Budget (₹) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
                   value={formData.budget}
                   onChange={(e) => handleInputChange('budget', e.target.value)}
-                  placeholder="Enter amount in ₹"
+                  placeholder="Enter amount (min ₹50)"
                   className="w-full px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px]"
                   required
-                  min="1"
+                  min="50"
                 />
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
-                  Enter the amount you are willing to pay. You can still negotiate with workers after they accept.
+                  Minimum ₹50. Enter the amount you are willing to pay. You can still negotiate with workers after they accept.
                 </p>
               </div>
             </div>

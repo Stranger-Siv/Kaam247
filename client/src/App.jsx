@@ -11,6 +11,7 @@ import { SocketProvider } from './context/SocketContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { CancellationProvider } from './context/CancellationContext'
 import { OnboardingProvider } from './context/OnboardingContext'
+import { PWAInstallProvider } from './context/PWAInstallContext'
 import ColdStartChecker from './components/ColdStartChecker'
 import ErrorBoundary from './components/ErrorBoundary'
 import PublicLayout from './components/layout/PublicLayout'
@@ -70,154 +71,156 @@ const AppContent = () => (
     <AuthProvider>
       <UserModeProvider>
         <OnboardingProvider>
-          <AvailabilityProvider>
-            <NotificationProvider>
-              <CancellationProvider>
-                <SocketProvider>
-                  <Router
-                    future={{
-                      v7_startTransition: true,
-                      v7_relativeSplatPath: true
-                    }}
-                  >
-                    <ErrorBoundary>
-                      <Suspense fallback={<PageLoader />}>
-                        <Routes>
-                          {/* Public Routes - logged-in users hitting / go to dashboard */}
-                          <Route
-                            path="/"
-                            element={
-                              <PublicLayout>
-                                <HomeOrRedirect />
-                              </PublicLayout>
-                            }
-                          />
-                          <Route
-                            path="/login"
-                            element={
-                              <PublicLayout>
-                                <Login />
-                              </PublicLayout>
-                            }
-                          />
-                          <Route
-                            path="/register"
-                            element={
-                              <PublicLayout>
-                                <Register />
-                              </PublicLayout>
-                            }
-                          />
-                          <Route
-                            path="/terms"
-                            element={
-                              <PublicLayout>
-                                <Terms />
-                              </PublicLayout>
-                            }
-                          />
-                          <Route
-                            path="/privacy"
-                            element={
-                              <PublicLayout>
-                                <Privacy />
-                              </PublicLayout>
-                            }
-                          />
+          <PWAInstallProvider>
+            <AvailabilityProvider>
+              <NotificationProvider>
+                <CancellationProvider>
+                  <SocketProvider>
+                    <Router
+                      future={{
+                        v7_startTransition: true,
+                        v7_relativeSplatPath: true
+                      }}
+                    >
+                      <ErrorBoundary>
+                        <Suspense fallback={<PageLoader />}>
+                          <Routes>
+                            {/* Public Routes - logged-in users hitting / go to dashboard */}
+                            <Route
+                              path="/"
+                              element={
+                                <PublicLayout>
+                                  <HomeOrRedirect />
+                                </PublicLayout>
+                              }
+                            />
+                            <Route
+                              path="/login"
+                              element={
+                                <PublicLayout>
+                                  <Login />
+                                </PublicLayout>
+                              }
+                            />
+                            <Route
+                              path="/register"
+                              element={
+                                <PublicLayout>
+                                  <Register />
+                                </PublicLayout>
+                              }
+                            />
+                            <Route
+                              path="/terms"
+                              element={
+                                <PublicLayout>
+                                  <Terms />
+                                </PublicLayout>
+                              }
+                            />
+                            <Route
+                              path="/privacy"
+                              element={
+                                <PublicLayout>
+                                  <Privacy />
+                                </PublicLayout>
+                              }
+                            />
 
-                          {/* Setup profile (after Google sign-in) - protected, no MainLayout */}
-                          <Route
-                            path="/setup-profile"
-                            element={
-                              <ProtectedRoute>
-                                <SetupProfile />
-                              </ProtectedRoute>
-                            }
-                          />
+                            {/* Setup profile (after Google sign-in) - protected, no MainLayout */}
+                            <Route
+                              path="/setup-profile"
+                              element={
+                                <ProtectedRoute>
+                                  <SetupProfile />
+                                </ProtectedRoute>
+                              }
+                            />
 
-                          {/* Authenticated Routes */}
-                          <Route
-                            element={
-                              <ProtectedRoute>
-                                <MainLayout />
-                              </ProtectedRoute>
-                            }
-                          >
-                            <Route path="/dashboard" element={<Dashboard />} />
+                            {/* Authenticated Routes */}
                             <Route
-                              path="/tasks"
                               element={
-                                <ModeProtectedRoute allowedMode="worker">
-                                  <Tasks />
-                                </ModeProtectedRoute>
+                                <ProtectedRoute>
+                                  <MainLayout />
+                                </ProtectedRoute>
                               }
-                            />
-                            <Route path="/tasks/:id" element={<TaskDetail />} />
-                            <Route
-                              path="/post-task"
-                              element={
-                                <ModeProtectedRoute allowedMode="poster">
-                                  <PostTask />
-                                </ModeProtectedRoute>
-                              }
-                            />
-                            <Route path="/profile" element={<Profile />} />
-                            <Route path="/settings" element={<Settings />} />
-                            <Route path="/settings/profile" element={<SettingsProfile />} />
-                            <Route path="/settings/preferences" element={<ModeProtectedRoute allowedMode="worker"><SettingsPreferences /></ModeProtectedRoute>} />
-                            <Route path="/settings/availability" element={<ModeProtectedRoute allowedMode="worker"><SettingsAvailability /></ModeProtectedRoute>} />
-                            <Route path="/settings/data-export" element={<SettingsDataExport />} />
-                            <Route path="/settings/notifications" element={<SettingsNotifications />} />
-                            <Route path="/settings/account" element={<SettingsAccount />} />
-                            <Route path="/activity" element={<Activity />} />
-                            <Route
-                              path="/earnings"
-                              element={
-                                <ModeProtectedRoute allowedMode="worker">
-                                  <Earnings />
-                                </ModeProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path="/transactions"
-                              element={
-                                <ModeProtectedRoute allowedMode="poster">
-                                  <Transactions />
-                                </ModeProtectedRoute>
-                              }
-                            />
-                          </Route>
+                            >
+                              <Route path="/dashboard" element={<Dashboard />} />
+                              <Route
+                                path="/tasks"
+                                element={
+                                  <ModeProtectedRoute allowedMode="worker">
+                                    <Tasks />
+                                  </ModeProtectedRoute>
+                                }
+                              />
+                              <Route path="/tasks/:id" element={<TaskDetail />} />
+                              <Route
+                                path="/post-task"
+                                element={
+                                  <ModeProtectedRoute allowedMode="poster">
+                                    <PostTask />
+                                  </ModeProtectedRoute>
+                                }
+                              />
+                              <Route path="/profile" element={<Profile />} />
+                              <Route path="/settings" element={<Settings />} />
+                              <Route path="/settings/profile" element={<SettingsProfile />} />
+                              <Route path="/settings/preferences" element={<ModeProtectedRoute allowedMode="worker"><SettingsPreferences /></ModeProtectedRoute>} />
+                              <Route path="/settings/availability" element={<ModeProtectedRoute allowedMode="worker"><SettingsAvailability /></ModeProtectedRoute>} />
+                              <Route path="/settings/data-export" element={<SettingsDataExport />} />
+                              <Route path="/settings/notifications" element={<SettingsNotifications />} />
+                              <Route path="/settings/account" element={<SettingsAccount />} />
+                              <Route path="/activity" element={<Activity />} />
+                              <Route
+                                path="/earnings"
+                                element={
+                                  <ModeProtectedRoute allowedMode="worker">
+                                    <Earnings />
+                                  </ModeProtectedRoute>
+                                }
+                              />
+                              <Route
+                                path="/transactions"
+                                element={
+                                  <ModeProtectedRoute allowedMode="poster">
+                                    <Transactions />
+                                  </ModeProtectedRoute>
+                                }
+                              />
+                            </Route>
 
-                          {/* Admin Routes */}
-                          <Route
-                            element={
-                              <AdminRoute>
-                                <AdminLayout />
-                              </AdminRoute>
-                            }
-                          >
-                            <Route path="/admin" element={<AdminOverview />} />
-                            <Route path="/admin/users" element={<AdminUsers />} />
-                            <Route path="/admin/workers" element={<AdminWorkers />} />
-                            <Route path="/admin/users/:userId" element={<AdminUserDetail />} />
-                            <Route path="/admin/tasks" element={<AdminTasks />} />
-                            <Route path="/admin/tasks/:taskId" element={<AdminTaskDetail />} />
-                            <Route path="/admin/chats" element={<AdminChats />} />
-                            <Route path="/admin/settings" element={<AdminSettings />} />
-                            <Route path="/admin/reviews" element={<AdminReviews />} />
-                            <Route path="/admin/logs" element={<AdminLogs />} />
-                            <Route path="/admin/analytics" element={<AdminAnalytics />} />
-                            <Route path="/admin/reports" element={<AdminReports />} />
-                            <Route path="/admin/tickets" element={<AdminTickets />} />
-                          </Route>
-                        </Routes>
-                      </Suspense>
-                    </ErrorBoundary>
-                  </Router>
-                </SocketProvider>
-              </CancellationProvider>
-            </NotificationProvider>
-          </AvailabilityProvider>
+                            {/* Admin Routes */}
+                            <Route
+                              element={
+                                <AdminRoute>
+                                  <AdminLayout />
+                                </AdminRoute>
+                              }
+                            >
+                              <Route path="/admin" element={<AdminOverview />} />
+                              <Route path="/admin/users" element={<AdminUsers />} />
+                              <Route path="/admin/workers" element={<AdminWorkers />} />
+                              <Route path="/admin/users/:userId" element={<AdminUserDetail />} />
+                              <Route path="/admin/tasks" element={<AdminTasks />} />
+                              <Route path="/admin/tasks/:taskId" element={<AdminTaskDetail />} />
+                              <Route path="/admin/chats" element={<AdminChats />} />
+                              <Route path="/admin/settings" element={<AdminSettings />} />
+                              <Route path="/admin/reviews" element={<AdminReviews />} />
+                              <Route path="/admin/logs" element={<AdminLogs />} />
+                              <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                              <Route path="/admin/reports" element={<AdminReports />} />
+                              <Route path="/admin/tickets" element={<AdminTickets />} />
+                            </Route>
+                          </Routes>
+                        </Suspense>
+                      </ErrorBoundary>
+                    </Router>
+                  </SocketProvider>
+                </CancellationProvider>
+              </NotificationProvider>
+            </AvailabilityProvider>
+          </PWAInstallProvider>
         </OnboardingProvider>
       </UserModeProvider>
     </AuthProvider>

@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config/env'
 
+// College pilot: Academic, Hostel, Errands, Tech, Events
 const DEFAULT_CATEGORIES = [
-  'Cleaning',
-  'Delivery',
-  'Helper / Labour',
-  'Tutor / Mentor',
-  'Tech Help',
+  'Academic',
+  'Hostel',
   'Errands',
-  'Event Help',
-  'Custom Task'
+  'Tech',
+  'Events'
 ]
 
 /**

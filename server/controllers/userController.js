@@ -1,5 +1,6 @@
 const User = require('../models/User')
 const Task = require('../models/Task')
+const UserFeedback = require('../models/UserFeedback')
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 
@@ -660,6 +661,65 @@ async function getWorkerBadges(userId) {
   return badges
 }
 
+// POST /api/users/me/feedback - Submit profile feedback & suggestions (college pilot)
+const submitProfileFeedback = async (req, res) => {
+  try {
+    const userId = req.userId
+    const { rating, text } = req.body || {}
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid user', message: 'User ID is required' })
+    }
+    const textStr = typeof text === 'string' ? text.trim().slice(0, 2000) : ''
+    if (!textStr) {
+      return res.status(400).json({ error: 'Missing text', message: 'Feedback text is required' })
+    }
+    const ratingNum = rating != null ? Number(rating) : null
+    const validRating = (ratingNum >= 1 && ratingNum <= 5) ? Math.round(ratingNum) : undefined
+    const feedback = new UserFeedback({
+      user: userId,
+      rating: validRating,
+      text: textStr
+    })
+    await feedback.save()
+    return res.status(201).json({ message: 'Thank you for your feedback' })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to submit feedback'
+    })
+  }
+}
+
+// POST /api/users/me/onboarding-feedback - Store onboarding feedback (college pilot)
+const submitOnboardingFeedback = async (req, res) => {
+  try {
+    const userId = req.userId
+    const { useCase, suggestions } = req.body || {}
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid user', message: 'User ID is required' })
+    }
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ error: 'User not found', message: 'User not found' })
+    const useCaseStr = typeof useCase === 'string' ? useCase.trim().slice(0, 500) : ''
+    const suggestionsStr = typeof suggestions === 'string' ? suggestions.trim().slice(0, 1000) : ''
+    if (!useCaseStr && !suggestionsStr) {
+      return res.status(200).json({ message: 'No feedback to save' })
+    }
+    user.onboardingFeedback = {
+      useCase: useCaseStr || undefined,
+      suggestions: suggestionsStr || undefined,
+      submittedAt: new Date()
+    }
+    await user.save()
+    return res.status(200).json({ message: 'Feedback saved' })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to save onboarding feedback'
+    })
+  }
+}
+
 // GET /api/users/me - Get current user profile (includes worker badges and savedTasks)
 const getProfile = async (req, res) => {
   try {
@@ -943,8 +1003,8 @@ const saveTaskTemplate = async (req, res) => {
       } : undefined
     }
 
-    if (isNaN(template.budget) || template.budget < 1) {
-      return res.status(400).json({ error: 'Invalid budget' })
+    if (isNaN(template.budget) || template.budget < 50) {
+      return res.status(400).json({ error: 'Invalid budget', message: 'Minimum budget is ₹50' })
     }
 
     user.taskTemplates = user.taskTemplates || []
@@ -1032,6 +1092,8 @@ module.exports = {
   getEarnings,
   getTransactions,
   getProfile,
+  submitOnboardingFeedback,
+  submitProfileFeedback,
   getCancellationStatus,
   getActiveTask,
   savePushSubscription,

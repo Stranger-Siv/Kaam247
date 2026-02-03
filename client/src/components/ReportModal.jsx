@@ -13,6 +13,8 @@ function ReportModal({ isOpen, onClose, taskId, reportedUserId, taskTitle }) {
     'User not responding',
     'Inappropriate content',
     'Safety concern',
+    'Illegal or unethical',
+    'Policy violation',
     'Other'
   ]
 
@@ -107,10 +109,11 @@ function ReportModal({ isOpen, onClose, taskId, reportedUserId, taskTitle }) {
                 </svg>
               </div>
               <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Report submitted</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Admin will review your report.</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Admin will review your report. Tasks that are illegal, unethical, or against our policy may be removed.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">We do not allow illegal, unethical, or policy-violating tasks. Flagged items go to admin moderation.</p>
               {/* Task/User info */}
               {(taskTitle || reportedUserId) && (
                 <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">

@@ -1,7 +1,9 @@
+import { useEffect, useRef } from 'react'
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useUserMode } from '../../context/UserModeContext'
 import { useOnboarding } from '../../context/OnboardingContext'
+import { usePWAInstall } from '../../context/PWAInstallContext'
 import ModeToggle from '../ModeToggle'
 import AvailabilityToggle from '../AvailabilityToggle'
 import ThemeToggle from '../ThemeToggle'
@@ -10,13 +12,24 @@ import NotificationToast from '../NotificationToast'
 import ReminderToast from '../ReminderToast'
 import BottomNav from './BottomNav'
 import OnboardingSlides from '../OnboardingSlides'
+import PWAInstallModal from '../PWAInstallModal'
 
 function MainLayout() {
     const navigate = useNavigate()
     const location = useLocation()
-    const { logout } = useAuth()
+    const { logout, user } = useAuth()
     const { userMode } = useUserMode()
     const { hasCompletedOnboarding, onboardingLoaded } = useOnboarding()
+    const { requestShow: requestPWAInstall } = usePWAInstall()
+    const pwaPromptShownRef = useRef(false)
+
+    // After login/signup: suggest PWA install once per session (when onboarding is done)
+    useEffect(() => {
+        if (!user?.id || !hasCompletedOnboarding || pwaPromptShownRef.current) return
+        pwaPromptShownRef.current = true
+        const t = setTimeout(() => requestPWAInstall(), 1500)
+        return () => clearTimeout(t)
+    }, [user?.id, hasCompletedOnboarding, requestPWAInstall])
 
     const handleLogout = () => {
         logout()
@@ -27,6 +40,7 @@ function MainLayout() {
         <div className="min-h-screen bg-slate-50 dark:bg-gray-950 flex flex-col">
             {/* First-time onboarding overlay */}
             {onboardingLoaded && !hasCompletedOnboarding && <OnboardingSlides />}
+            <PWAInstallModal />
             {/* Header */}
             <header className="bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-900/50 sticky top-0 z-[1000] border-b border-gray-200 dark:border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

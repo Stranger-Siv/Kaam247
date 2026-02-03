@@ -5,10 +5,12 @@ import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../config/env'
 import ModeToggle from '../components/ModeToggle'
+import { usePWAInstall } from '../context/PWAInstallContext'
 
 function Profile() {
     const { userMode } = useUserMode()
     const { user, logout } = useAuth()
+    const { requestShow: requestPWAInstall, isStandalone } = usePWAInstall()
     const navigate = useNavigate()
 
     const handleLogout = () => {
@@ -23,6 +25,10 @@ function Profile() {
         tasksPosted: 0
     })
     const [loading, setLoading] = useState(true)
+    const [feedbackText, setFeedbackText] = useState('')
+    const [feedbackRating, setFeedbackRating] = useState(0)
+    const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+    const [feedbackSuccess, setFeedbackSuccess] = useState(false)
 
     // Fetch profile data
     useEffect(() => {
@@ -407,10 +413,89 @@ function Profile() {
                 </div>
             </div>
 
-            {/* Account actions: Settings, Mode toggle, Logout */}
+            {/* Feedback & Suggestions (college pilot) */}
+            <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 p-5 sm:p-6 mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Feedback & Suggestions</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Share your ideas or report issues. We read every message.</p>
+                {feedbackSuccess ? (
+                    <p className="text-sm text-green-600 dark:text-green-400 font-medium">Thank you! Your feedback has been sent.</p>
+                ) : (
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault()
+                            const text = (feedbackText || '').trim()
+                            if (!text) return
+                            setFeedbackSubmitting(true)
+                            setFeedbackSuccess(false)
+                            try {
+                                const token = localStorage.getItem('kaam247_token')
+                                const res = await fetch(`${API_BASE_URL}/api/users/me/feedback`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                    body: JSON.stringify({ text, rating: feedbackRating || undefined })
+                                })
+                                if (res.ok) {
+                                    setFeedbackSuccess(true)
+                                    setFeedbackText('')
+                                    setFeedbackRating(0)
+                                }
+                            } catch (_) { }
+                            setFeedbackSubmitting(false)
+                        }}
+                        className="space-y-4"
+                    >
+                        <div>
+                            <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Your feedback</label>
+                            <textarea
+                                value={feedbackText}
+                                onChange={(e) => setFeedbackText(e.target.value)}
+                                placeholder="Suggestions, issues, or what you'd like to see..."
+                                rows={3}
+                                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Rate your experience (optional)</label>
+                            <div className="flex gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => setFeedbackRating(star)}
+                                        className={`p-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${feedbackRating >= star ? 'text-yellow-500 dark:text-yellow-400' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400'}`}
+                                        aria-label={`${star} star`}
+                                    >
+                                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                                    </button>
+                                ))}
+                            </div>
+                            {feedbackRating > 0 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{feedbackRating} / 5</p>}
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={feedbackSubmitting || !feedbackText.trim()}
+                            className="w-full sm:w-auto px-5 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                        >
+                            {feedbackSubmitting ? 'Sending…' : 'Send feedback'}
+                        </button>
+                    </form>
+                )}
+            </div>
+
+            {/* Account actions: Settings, Mode toggle, Install app, Logout */}
             <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Account</h2>
                 <div className="space-y-4">
+                    {!isStandalone && (
+                        <button
+                            type="button"
+                            onClick={() => requestPWAInstall()}
+                            className="inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 border border-blue-200 dark:border-blue-800 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                        >
+                            Install app / Add to Home Screen
+                        </button>
+                    )}
                     <Link
                         to="/settings"
                         className="inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"

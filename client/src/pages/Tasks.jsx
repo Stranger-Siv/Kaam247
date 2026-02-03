@@ -13,8 +13,9 @@ import { useSwipeGesture } from '../hooks/useSwipeGesture'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import SwipeableTaskCard from '../components/SwipeableTaskCard'
 
+// College pilot: default 2 km campus radius
 const DISTANCE_OPTIONS = [
-  { label: 'All', km: 5 },
+  { label: 'Within 2 km', km: 2 },
   { label: 'Within 1 km', km: 1 },
   { label: 'Within 3 km', km: 3 },
   { label: 'Within 5 km', km: 5 }
@@ -25,7 +26,7 @@ function Tasks() {
   const location = useLocation()
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [bannerMessage, setBannerMessage] = useState(null) // e.g. "Task already accepted by another worker"
-  const [selectedDistance, setSelectedDistance] = useState('All')
+  const [selectedDistance, setSelectedDistance] = useState('Within 2 km')
   const [selectedBudget, setSelectedBudget] = useState('All')
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -77,9 +78,10 @@ function Tasks() {
   const getRadiusKm = () => {
     switch (selectedDistance) {
       case 'Within 1 km': return 1
+      case 'Within 2 km': return 2
       case 'Within 3 km': return 3
       case 'Within 5 km': return 5
-      default: return 5
+      default: return 2
     }
   }
   const getBudgetRange = () => {
@@ -254,6 +256,7 @@ function Tasks() {
         budget: `₹${taskData.budget}`,
         budgetNum,
         category: taskData.category,
+        isOnCampus: taskData.isOnCampus === true,
         createdAt: taskData.createdAt ? new Date(taskData.createdAt).getTime() : Date.now(),
         time: 'Just now',
         status: 'open',

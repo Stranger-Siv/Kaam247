@@ -35,9 +35,9 @@ export default function SettingsPreferences() {
                   : [],
                 defaultRadiusKm: typeof userData.workerPreferences.defaultRadiusKm === 'number'
                   ? userData.workerPreferences.defaultRadiusKm
-                  : 5
+                  : 2
               }
-              : { preferredCategories: [], defaultRadiusKm: 5 }
+              : { preferredCategories: [], defaultRadiusKm: 2 }
           })
         }
       } catch {
@@ -70,7 +70,7 @@ export default function SettingsPreferences() {
     setProfile(prev => ({
       ...prev,
       workerPreferences: {
-        ...(prev.workerPreferences || { preferredCategories: [], defaultRadiusKm: 5 }),
+        ...(prev.workerPreferences || { preferredCategories: [], defaultRadiusKm: 2 }),
         defaultRadiusKm: num
       }
     }))
@@ -92,7 +92,7 @@ export default function SettingsPreferences() {
         body: JSON.stringify({
           workerPreferences: {
             preferredCategories: profile.workerPreferences.preferredCategories || [],
-            defaultRadiusKm: profile.workerPreferences.defaultRadiusKm ?? 5
+            defaultRadiusKm: profile.workerPreferences.defaultRadiusKm ?? 2
           }
         })
       })
