@@ -16,8 +16,9 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
   const [isBookmarking, setIsBookmarking] = useState(false)
   const cardRef = useRef(null)
   const touchStartRef = useRef(null)
-  const touchStartTimeRef = useRef(null)
   const currentSwipeOffsetRef = useRef(0)
+  const gestureLockedRef = useRef(false)
+  const didSwipeActionRef = useRef(false)
 
   // Handle accept task
   const handleAcceptTask = useCallback(async () => {
@@ -60,7 +61,7 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
     }
   }, [userMode, isOnline, isAccepting, task.id, user?.id, navigate, onTaskAccepted, checkActiveTask])
 
-  // Handle swipe gestures manually for better control
+  // Handle swipe gestures: distance-based trigger (swipe whole card left/right)
   useEffect(() => {
     const card = cardRef.current
     if (!card || userMode !== 'worker') return
@@ -70,7 +71,7 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
         x: e.touches[0].clientX,
         y: e.touches[0].clientY
       }
-      touchStartTimeRef.current = Date.now()
+      gestureLockedRef.current = false
       currentSwipeOffsetRef.current = swipeOffset
     }
 
@@ -79,12 +80,16 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
 
       const deltaX = e.touches[0].clientX - touchStartRef.current.x
       const deltaY = Math.abs(e.touches[0].clientY - touchStartRef.current.y)
+      const absX = Math.abs(deltaX)
 
-      // Only allow horizontal swipe if it's more horizontal than vertical
-      if (Math.abs(deltaX) > deltaY && Math.abs(deltaX) > 10) {
+      // Lock to horizontal once user has clearly swiped horizontally
+      if (!gestureLockedRef.current && absX > 10) {
+        gestureLockedRef.current = absX > deltaY
+      }
+      if (gestureLockedRef.current) {
         e.preventDefault()
-        // Limit swipe distance
-        const maxSwipe = 120
+        const cardWidth = card.offsetWidth || 280
+        const maxSwipe = Math.max(120, cardWidth * 0.5)
         const clampedX = Math.max(-maxSwipe, Math.min(maxSwipe, deltaX))
         setSwipeOffset(clampedX)
         currentSwipeOffsetRef.current = clampedX
@@ -94,21 +99,30 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
     const handleTouchEnd = () => {
       if (!touchStartRef.current) return
 
-      const deltaX = currentSwipeOffsetRef.current
-      const deltaTime = Date.now() - (touchStartTimeRef.current || Date.now())
-      const velocity = deltaTime > 0 ? Math.abs(deltaX) / deltaTime : 0
+      const offset = currentSwipeOffsetRef.current
+      const cardWidth = card.offsetWidth || 280
+      // Trigger when user has swiped at least 35% of card width (or 80px min)
+      const triggerThreshold = Math.max(80, cardWidth * 0.35)
 
-      // Swipe right (accept) - only for workers
-      if (deltaX > 80 && velocity > 0.3 && userMode === 'worker' && isOnline && !isAccepting) {
+      if (offset > triggerThreshold && userMode === 'worker' && isOnline && !isAccepting) {
+        didSwipeActionRef.current = true
+        setSwipeOffset(0)
+        currentSwipeOffsetRef.current = 0
         handleAcceptTask()
+        setTimeout(() => { didSwipeActionRef.current = false }, 400)
+      } else if (offset < -triggerThreshold && onToggleBookmark) {
+        didSwipeActionRef.current = true
+        onToggleBookmark(task.id, { preventDefault: () => { }, stopPropagation: () => { } })
+        setSwipeOffset(0)
+        currentSwipeOffsetRef.current = 0
+        setTimeout(() => { didSwipeActionRef.current = false }, 400)
       } else {
-        // Snap back
         setSwipeOffset(0)
         currentSwipeOffsetRef.current = 0
       }
 
       touchStartRef.current = null
-      touchStartTimeRef.current = null
+      gestureLockedRef.current = false
     }
 
     card.addEventListener('touchstart', handleTouchStart, { passive: true })
@@ -120,7 +134,15 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
       card.removeEventListener('touchmove', handleTouchMove)
       card.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [userMode, isOnline, isAccepting, handleAcceptTask])
+  }, [userMode, isOnline, isAccepting, handleAcceptTask, onToggleBookmark, task.id, swipeOffset])
+
+  const handleCardClick = (e) => {
+    if (didSwipeActionRef.current) {
+      e.preventDefault()
+      e.stopPropagation()
+      didSwipeActionRef.current = false
+    }
+  }
 
   return (
     <div
@@ -128,7 +150,8 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
       className="relative overflow-hidden"
       style={{
         transform: `translateX(${swipeOffset}px)`,
-        transition: swipeOffset === 0 ? 'transform 0.3s ease-out' : 'none'
+        transition: swipeOffset === 0 ? 'transform 0.3s ease-out' : 'none',
+        touchAction: 'pan-y'
       }}
     >
       {/* Swipe indicators */}
@@ -149,6 +172,7 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
 
       <Link
         to={`/tasks/${task.id}`}
+        onClick={handleCardClick}
         className={`group bg-white dark:bg-gray-800 rounded-xl p-5 sm:p-6 lg:p-7 shadow-sm dark:shadow-gray-900/50 hover:shadow-lg transition-all duration-200 border-2 active:bg-gray-50 dark:active:bg-gray-700 w-full overflow-hidden block ${task.isNew
           ? 'border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-900/20'
           : 'border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600'
@@ -226,7 +250,7 @@ function SwipeableTaskCard({ task, onTaskAccepted, onTaskRemoved, isSaved, onTog
       {userMode === 'worker' && typeof window !== 'undefined' && window.innerWidth < 768 && (
         <div className="md:hidden mt-2 text-center">
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Swipe right to accept • Swipe left to view
+            Swipe right to accept • Swipe left to save
           </p>
         </div>
       )}
