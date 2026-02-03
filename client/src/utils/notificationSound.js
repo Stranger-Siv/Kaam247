@@ -31,25 +31,41 @@ export function initNotificationSound() {
 const BUZZ_REPEAT_INTERVAL_MS = 2000
 let alertLoopIntervalId = null
 
-/** Single short buzz: 800 Hz, 0.2 s, sine (reliable on all devices). */
-const BUZZ_FREQ = 800
-const BUZZ_DURATION = 0.2
-const BUZZ_GAIN = 0.3
+/** Strong alarm: higher pitch, square wave, louder, double-beep pattern. */
+const BUZZ_FREQ = 1200
+const BEEP_DURATION = 0.15
+const GAP_BETWEEN_BEEPS = 0.12
+const BUZZ_GAIN = 0.55
 
 function playBuzzNow(ctx) {
   const t = ctx.currentTime
   const osc = ctx.createOscillator()
   const gain = ctx.createGain()
-  osc.type = 'sine'
+  osc.type = 'square'  // harsher, more alarm-like than sine
   osc.frequency.setValueAtTime(BUZZ_FREQ, t)
   gain.gain.setValueAtTime(0, t)
-  gain.gain.linearRampToValueAtTime(BUZZ_GAIN, t + 0.02)
-  gain.gain.setValueAtTime(BUZZ_GAIN, t + BUZZ_DURATION * 0.5)
-  gain.gain.linearRampToValueAtTime(0.01, t + BUZZ_DURATION)
+  gain.gain.linearRampToValueAtTime(BUZZ_GAIN, t + 0.01)
+  gain.gain.setValueAtTime(BUZZ_GAIN, t + BEEP_DURATION)
+  gain.gain.linearRampToValueAtTime(0.01, t + BEEP_DURATION + 0.02)
   osc.connect(gain)
   gain.connect(ctx.destination)
   osc.start(t)
-  osc.stop(t + BUZZ_DURATION)
+  osc.stop(t + BEEP_DURATION)
+
+  // Second beep for double-alarm effect
+  const t2 = t + BEEP_DURATION + GAP_BETWEEN_BEEPS
+  const osc2 = ctx.createOscillator()
+  const gain2 = ctx.createGain()
+  osc2.type = 'square'
+  osc2.frequency.setValueAtTime(BUZZ_FREQ, t2)
+  gain2.gain.setValueAtTime(0, t2)
+  gain2.gain.linearRampToValueAtTime(BUZZ_GAIN, t2 + 0.01)
+  gain2.gain.setValueAtTime(BUZZ_GAIN, t2 + BEEP_DURATION)
+  gain2.gain.linearRampToValueAtTime(0.01, t2 + BEEP_DURATION + 0.02)
+  osc2.connect(gain2)
+  gain2.connect(ctx.destination)
+  osc2.start(t2)
+  osc2.stop(t2 + BEEP_DURATION)
 }
 
 /**
