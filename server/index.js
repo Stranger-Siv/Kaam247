@@ -72,13 +72,6 @@ app.get('/health', (req, res) => {
   })
 })
 
-// Loader.io verification (for load testing) - must be reachable at the exact URL Loader.io gives you
-const LOADERIO_TOKEN = 'loaderio-bdfd5393212a328aba24cbffd35cf33b'
-const sendLoaderio = (req, res) => res.type('text/plain').send(LOADERIO_TOKEN)
-app.get(`/${LOADERIO_TOKEN}`, sendLoaderio)
-app.get(`/${LOADERIO_TOKEN}.txt`, sendLoaderio)
-app.get(`/${LOADERIO_TOKEN}.html`, sendLoaderio)
-
 // API Routes
 app.use('/api', authRoutes)
 app.use('/api', taskRoutes)

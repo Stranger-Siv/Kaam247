@@ -36,7 +36,7 @@ artillery quick --count 20 --num 50 https://kaam247.onrender.com/health
 
 **Option C: Online (no install)**
 
-- **Loader.io** (https://loader.io): Sign up, add your API URL (e.g. `https://kaam247.onrender.com`), then verify ownership: Loader.io gives you a token; the server serves it at `/loaderio-<token>.txt` (see `server/index.js` – Loader.io verification routes). Deploy the server, then in Loader.io click “Verify”. Set concurrent users and duration and run the test.
+- **Loader.io** (https://loader.io): Sign up, add your API URL (e.g. `https://kaam247.onrender.com`), then verify ownership: Loader.io gives you a token; you must serve it at `/loaderio-<token>.txt` (or `.html`) on your server (e.g. add a route or static file), then in Loader.io click “Verify”. Set concurrent users and duration and run the test.
 - **NBomber** (CLI) or **Apache JMeter** (GUI) if you prefer.
 
 ### 2. What to test
@@ -54,6 +54,37 @@ artillery quick --count 20 --num 50 https://kaam247.onrender.com/health
 3. **Ramp-up**  
    - Start at 5–10 concurrent users, then 20, 50, 100, etc., until latency or error rate gets bad.  
    - The number **before** that point is your practical “concurrent user” limit for that setup.
+
+---
+
+## Why `/api/users/me` fails early but `/api/tasks` works until ~250
+
+| Endpoint | Auth required? | What happens in a load test |
+|----------|-----------------|-----------------------------|
+| **GET /api/users/me** | **Yes** – needs `Authorization: Bearer <JWT>` | If the load test **does not send a valid JWT**, every request gets **401 Unauthorized**. So you see “fails on 2nd attempt” (or every attempt) because Loader.io / k6 / Artillery don’t send a token by default. |
+| **GET /api/tasks** | **No** – public | No token needed. The tool can hit it with no headers and get 200. So it “keeps working till 250” until the server or DB hits its limit. |
+
+**Takeaway:**  
+- **/api/users/me** “failing on 2nd attempt” is almost certainly **401** from missing or invalid token, not from the server dying.  
+- **/api/tasks** scales until your real limit (~250 in your test) because it’s public and doesn’t require auth.
+
+### How to load test authenticated endpoints (e.g. `/api/users/me`)
+
+1. **Get a valid JWT once**  
+   - Log in via your app or `POST /api/auth/login` (phone/OTP or Google) and copy the `token` from the response.
+
+2. **Send it on every request**  
+   - **Loader.io:** In “Custom HTTP headers” add:  
+     `Authorization: Bearer <paste-your-token-here>`
+   - **k6:** In the script, set a header:  
+     `headers: { 'Authorization': 'Bearer ' + __ENV.JWT_TOKEN }`  
+     and run:  
+     `k6 run -e JWT_TOKEN=your-token-here server/scripts/load-test.js`  
+     (or use a separate k6 script that hits `/api/users/me` with that header.)
+   - **Artillery:** In the scenario, set `headers.Authorization: "Bearer {{ $token }}"` and get the token in a flow (e.g. login step).
+
+3. **Re-run the test**  
+   - With a valid Bearer token, `/api/users/me` should return 200 and scale until the server or DB limit (similar idea to `/api/tasks`), though it does more DB work (user + badges) so the limit may be a bit lower.
 
 ---
 
