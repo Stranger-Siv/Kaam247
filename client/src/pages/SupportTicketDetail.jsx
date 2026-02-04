@@ -13,6 +13,7 @@ function SupportTicketDetail() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const DRAFT_KEY = (id) => `support_chat_draft_${id || ''}`
   const [inputText, setInputText] = useState('')
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef(null)
@@ -72,6 +73,24 @@ function SupportTicketDetail() {
   useEffect(() => {
     fetchTicket()
   }, [ticketId])
+
+  // Restore draft from sessionStorage when ticketId is available (e.g. after refresh)
+  useEffect(() => {
+    if (!ticketId) return
+    try {
+      const saved = sessionStorage.getItem(DRAFT_KEY(ticketId))
+      if (saved != null && saved !== '') setInputText(saved)
+    } catch (_) { /* ignore */ }
+  }, [ticketId])
+
+  // Persist draft so it survives refresh
+  useEffect(() => {
+    if (!ticketId) return
+    try {
+      if (inputText) sessionStorage.setItem(DRAFT_KEY(ticketId), inputText)
+      else sessionStorage.removeItem(DRAFT_KEY(ticketId))
+    } catch (_) { /* ignore */ }
+  }, [ticketId, inputText])
 
   useEffect(() => {
     if (!ticketId || !ticket) return
@@ -147,6 +166,7 @@ function SupportTicketDetail() {
             : m
         )
       )
+      try { sessionStorage.removeItem(DRAFT_KEY(ticketId)) } catch (_) { /* ignore */ }
     } catch (err) {
       setMessages((prev) => prev.filter((m) => m._id !== optimistic._id))
       setInputText(trimmed)
@@ -165,7 +185,7 @@ function SupportTicketDetail() {
 
   if (loading) {
     return (
-      <div className="p-4 flex items-center justify-center min-h-[40vh]">
+      <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-white dark:bg-gray-900">
         <p className="text-gray-500 dark:text-gray-400">Loading…</p>
       </div>
     )
@@ -173,7 +193,7 @@ function SupportTicketDetail() {
 
   if (error && !ticket) {
     return (
-      <div className="p-4">
+      <div className="fixed inset-0 z-[1100] flex flex-col bg-white dark:bg-gray-900 p-4 pt-[env(safe-area-inset-top)]">
         <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm">
           {error}
         </div>
@@ -189,8 +209,9 @@ function SupportTicketDetail() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-h-[700px] pb-20">
-      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+    <div className="fixed inset-0 z-[1100] flex flex-col bg-white dark:bg-gray-900 pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+      {/* Header */}
+      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 bg-white dark:bg-gray-900">
         <button
           type="button"
           onClick={() => navigate('/support')}
@@ -214,6 +235,7 @@ function SupportTicketDetail() {
         </div>
       </div>
 
+      {/* Messages - fills remaining space */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
         {messages.map((m) => (
           <div
@@ -221,11 +243,10 @@ function SupportTicketDetail() {
             className={`flex ${isOwn(m.senderId) ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-2 ${
-                isOwn(m.senderId)
-                  ? 'bg-blue-600 text-white rounded-br-md'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md'
-              }`}
+              className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2 ${isOwn(m.senderId)
+                ? 'bg-blue-600 text-white rounded-br-md'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md'
+                }`}
             >
               <p className="text-sm whitespace-pre-wrap break-words">{m.text}</p>
               <p className={`text-xs mt-1 ${isOwn(m.senderId) ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
@@ -238,8 +259,8 @@ function SupportTicketDetail() {
       </div>
 
       {ticket?.status === 'ACCEPTED' && (
-        <form onSubmit={handleSend} className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          <div className="flex gap-2">
+        <form onSubmit={handleSend} className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pb-[env(safe-area-inset-bottom)]">
+          <div className="flex gap-2 max-w-4xl mx-auto">
             <input
               type="text"
               value={inputText}
@@ -260,7 +281,7 @@ function SupportTicketDetail() {
       )}
 
       {ticket?.status === 'OPEN' && (
-        <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
+        <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm pb-[env(safe-area-inset-bottom)]">
           An admin will accept this ticket soon. You’ll be able to chat here once they do.
         </div>
       )}

@@ -13,6 +13,8 @@ function AdminTicketDetail() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const CHAT_DRAFT_KEY = (id) => `admin_support_chat_draft_${id || ''}`
+  const RESOLVE_DRAFT_KEY = (id) => `admin_support_resolve_${id || ''}`
   const [inputText, setInputText] = useState('')
   const [sending, setSending] = useState(false)
   const [accepting, setAccepting] = useState(false)
@@ -74,6 +76,28 @@ function AdminTicketDetail() {
   useEffect(() => {
     fetchTicket()
   }, [ticketId])
+
+  // Restore chat + resolve drafts after refresh or ticketId change
+  useEffect(() => {
+    if (!ticketId) return
+    try {
+      const chatSaved = sessionStorage.getItem(CHAT_DRAFT_KEY(ticketId))
+      if (chatSaved != null && chatSaved !== '') setInputText(chatSaved)
+      const notesSaved = sessionStorage.getItem(RESOLVE_DRAFT_KEY(ticketId))
+      if (notesSaved != null && notesSaved !== '') setResolveNotes(notesSaved)
+    } catch (_) { /* ignore */ }
+  }, [ticketId])
+
+  // Persist drafts so they survive refresh
+  useEffect(() => {
+    if (!ticketId) return
+    try {
+      if (inputText) sessionStorage.setItem(CHAT_DRAFT_KEY(ticketId), inputText)
+      else sessionStorage.removeItem(CHAT_DRAFT_KEY(ticketId))
+      if (resolveNotes) sessionStorage.setItem(RESOLVE_DRAFT_KEY(ticketId), resolveNotes)
+      else sessionStorage.removeItem(RESOLVE_DRAFT_KEY(ticketId))
+    } catch (_) { /* ignore */ }
+  }, [ticketId, inputText, resolveNotes])
 
   useEffect(() => {
     if (!ticketId || !ticket) return
@@ -145,6 +169,7 @@ function AdminTicketDetail() {
       if (!res.ok) throw new Error(data.message || 'Failed to resolve')
       await fetchTicket()
       setResolveNotes('')
+      try { sessionStorage.removeItem(RESOLVE_DRAFT_KEY(ticketId)) } catch (_) { /* ignore */ }
     } catch (err) {
       setError(err.message || 'Failed to resolve ticket')
     } finally {
@@ -194,6 +219,7 @@ function AdminTicketDetail() {
             : m
         )
       )
+      try { sessionStorage.removeItem(CHAT_DRAFT_KEY(ticketId)) } catch (_) { /* ignore */ }
     } catch (err) {
       setMessages((prev) => prev.filter((m) => m._id !== optimistic._id))
       setInputText(trimmed)
@@ -217,7 +243,7 @@ function AdminTicketDetail() {
 
   if (loading) {
     return (
-      <div className="p-4 flex items-center justify-center min-h-[40vh]">
+      <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <p className="text-gray-500 dark:text-gray-400">Loading…</p>
       </div>
     )
@@ -225,7 +251,7 @@ function AdminTicketDetail() {
 
   if (error && !ticket) {
     return (
-      <div className="p-4">
+      <div className="fixed inset-0 z-[1100] flex flex-col bg-gray-50 dark:bg-gray-950 p-4 pt-[env(safe-area-inset-top)]">
         <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm">
           {error}
         </div>
@@ -245,140 +271,129 @@ function AdminTicketDetail() {
   const canResolve = ticket?.type === 'SUPPORT' && (ticket?.status === 'OPEN' || ticket?.status === 'ACCEPTED')
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-3 mb-4">
+    <div className="fixed inset-0 z-[1100] flex flex-col bg-gray-50 dark:bg-gray-950 pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+      {/* Header: back, subject, user, status, actions */}
+      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-wrap items-center gap-2 sm:gap-3">
         <button
           type="button"
           onClick={() => navigate('/admin/tickets')}
-          className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="p-2 -ml-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 shrink-0"
           aria-label="Back"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 truncate">
-          {ticket?.subject || 'Support ticket'}
-        </h1>
-      </div>
-
-      <div className="mb-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          User: <strong className="text-gray-900 dark:text-gray-100">{ticket?.user?.name}</strong> ({ticket?.user?.email})
-          {ticket?.user?.phone && ` · ${ticket?.user?.phone}`}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-          Created {formatDate(ticket?.createdAt)}
-          {ticket?.acceptedAt && ` · Accepted ${formatDate(ticket.acceptedAt)}`}
-        </p>
-        <div className="flex flex-wrap items-center gap-2 mt-3">
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-            ticket?.status === 'OPEN' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200' :
-            ticket?.status === 'ACCEPTED' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200' :
-            ticket?.status === 'RESOLVED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
-            'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-          }`}>
-            {ticket?.status}
-          </span>
-          {canAccept && (
-            <button
-              type="button"
-              onClick={handleAccept}
-              disabled={accepting}
-              className="px-3 py-1.5 rounded-lg bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
-            >
-              {accepting ? 'Accepting…' : 'Accept & start chat'}
-            </button>
-          )}
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+            {ticket?.subject || 'Support ticket'}
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            {ticket?.user?.name}
+            {ticket?.user?.email && ` · ${ticket.user.email}`}
+          </p>
         </div>
+        <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${ticket?.status === 'OPEN' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200' :
+          ticket?.status === 'ACCEPTED' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200' :
+            ticket?.status === 'RESOLVED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
+              'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+          }`}>
+          {ticket?.status}
+        </span>
+        {canAccept && (
+          <button
+            type="button"
+            onClick={handleAccept}
+            disabled={accepting}
+            className="shrink-0 px-3 py-1.5 rounded-lg bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
+          >
+            {accepting ? 'Accepting…' : 'Accept & start chat'}
+          </button>
+        )}
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm">
+        <div className="flex-shrink-0 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm border-b border-red-200 dark:border-red-800">
           {error}
         </div>
       )}
 
-      <div className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 overflow-hidden flex flex-col" style={{ minHeight: '320px', maxHeight: '60vh' }}>
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-[200px]">
-          {messages.map((m) => (
+      {/* Messages - fills viewport */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3 bg-white dark:bg-gray-900">
+        {messages.map((m) => (
+          <div
+            key={m._id}
+            className={`flex ${isOwn(m.senderId) ? 'justify-end' : 'justify-start'}`}
+          >
             <div
-              key={m._id}
-              className={`flex ${isOwn(m.senderId) ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[85%] rounded-2xl px-4 py-2 ${
-                  isOwn(m.senderId)
-                    ? 'bg-blue-600 text-white rounded-br-md'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md'
+              className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2 ${isOwn(m.senderId)
+                ? 'bg-blue-600 text-white rounded-br-md'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md'
                 }`}
-              >
-                {!isOwn(m.senderId) && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">User</p>
-                )}
-                <p className="text-sm whitespace-pre-wrap break-words">{m.text}</p>
-                <p className={`text-xs mt-1 ${isOwn(m.senderId) ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
-                  {formatTime(m.createdAt)}
-                </p>
-              </div>
+            >
+              {!isOwn(m.senderId) && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">User</p>
+              )}
+              <p className="text-sm whitespace-pre-wrap break-words">{m.text}</p>
+              <p className={`text-xs mt-1 ${isOwn(m.senderId) ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                {formatTime(m.createdAt)}
+              </p>
             </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {canChat && (
-          <form onSubmit={handleSend} className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value.slice(0, 2000))}
-                placeholder="Reply to user…"
-                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                maxLength={2000}
-              />
-              <button
-                type="submit"
-                disabled={sending || !inputText.trim()}
-                className="px-4 py-2.5 rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-medium text-sm hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
-              >
-                Send
-              </button>
-            </div>
-          </form>
-        )}
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
       </div>
 
+      {/* Resolve bar - above input when open */}
       {canResolve && (
-        <div className="mt-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Close ticket (optional notes)</label>
+        <div className="flex-shrink-0 px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-wrap items-center gap-2">
           <input
             type="text"
             value={resolveNotes}
             onChange={(e) => setResolveNotes(e.target.value.slice(0, 500))}
             placeholder="Admin notes (optional)"
-            className="w-full px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm mb-2 focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-[120px] px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
             maxLength={500}
           />
-          <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => handleResolve('RESOLVED')}
+            disabled={resolving}
+            className="px-3 py-1.5 rounded-lg bg-green-600 dark:bg-green-500 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+          >
+            {resolving ? 'Closing…' : 'Resolve'}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleResolve('REJECTED')}
+            disabled={resolving}
+            className="px-3 py-1.5 rounded-lg bg-gray-500 dark:bg-gray-600 text-white text-sm font-medium hover:bg-gray-600 disabled:opacity-50"
+          >
+            Reject
+          </button>
+        </div>
+      )}
+
+      {canChat && (
+        <form onSubmit={handleSend} className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pb-[env(safe-area-inset-bottom)]">
+          <div className="flex gap-2 max-w-4xl mx-auto">
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value.slice(0, 2000))}
+              placeholder="Reply to user…"
+              className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              maxLength={2000}
+            />
             <button
-              type="button"
-              onClick={() => handleResolve('RESOLVED')}
-              disabled={resolving}
-              className="px-4 py-2 rounded-lg bg-green-600 dark:bg-green-500 text-white text-sm font-medium hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50"
+              type="submit"
+              disabled={sending || !inputText.trim()}
+              className="px-4 py-2.5 rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-medium text-sm hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
             >
-              {resolving ? 'Closing…' : 'Resolve & close'}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleResolve('REJECTED')}
-              disabled={resolving}
-              className="px-4 py-2 rounded-lg bg-gray-500 dark:bg-gray-600 text-white text-sm font-medium hover:bg-gray-600 dark:hover:bg-gray-700 disabled:opacity-50"
-            >
-              Reject
+              Send
             </button>
           </div>
-        </div>
+        </form>
       )}
     </div>
   )
