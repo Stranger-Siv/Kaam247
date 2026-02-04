@@ -436,7 +436,7 @@ function PostTask() {
           </p>
           <div className="mt-3 sm:mt-4 rounded-xl border border-emerald-300 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3">
             <p className="text-xs sm:text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-              We are currently charging <span className="underline">0% commission</span> on posters.
+              We are currently charging <span className="underline">0% commission</span> on tasks.
             </p>
             <p className="text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 mt-1">
               Create your first task now and every rupee you pay goes directly to the worker.

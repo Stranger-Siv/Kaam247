@@ -29,6 +29,7 @@ function AdminSettings() {
   const [newCategory, setNewCategory] = useState('')
   const [savingCategories, setSavingCategories] = useState(false)
   const [categoriesError, setCategoriesError] = useState(null)
+  const commissionSetting = list.find((i) => i.key === 'platformCommissionPercent')
 
   useEffect(() => {
     fetchSettings()
@@ -232,6 +233,53 @@ function AdminSettings() {
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed break-words">
           Platform config (commission %, limits, etc.). Values are stored by key.
         </p>
+      </div>
+
+      {/* Platform commission quick setting */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-4 sm:p-5 lg:p-6 mb-6">
+        <h2 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Platform commission</h2>
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-3">
+          Percentage fee applied on each task&apos;s budget. Workers see this as platform commission on their earnings.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            Commission %
+            <input
+              type="number"
+              min={0}
+              max={50}
+              step={0.5}
+              defaultValue={typeof commissionSetting?.value === 'number' ? commissionSetting.value : 0}
+              onBlur={async (e) => {
+                const raw = e.target.value
+                const pct = raw === '' ? 0 : Math.max(0, Math.min(50, Number(raw) || 0))
+                e.target.value = pct
+                try {
+                  const token = localStorage.getItem('kaam247_token')
+                  await fetch(`${API_BASE_URL}/api/admin/settings`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                      key: 'platformCommissionPercent',
+                      value: pct,
+                      description: 'Platform commission percentage applied on task budgets'
+                    })
+                  })
+                  fetchSettings()
+                } catch {
+                  // ignore, generic table below still allows manual fix
+                }
+              }}
+              className="w-20 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+            />
+          </label>
+          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            Current: <span className="font-semibold text-gray-900 dark:text-gray-100">{typeof commissionSetting?.value === 'number' ? commissionSetting.value : 0}%</span>
+          </span>
+        </div>
       </div>
 
       {saveError && (

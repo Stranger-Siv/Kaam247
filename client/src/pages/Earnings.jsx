@@ -160,6 +160,9 @@ function Earnings() {
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Earnings</h1>
         <p className="text-gray-600 dark:text-gray-400">View earnings and activity by date</p>
+        <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+          Platform commission currently: <span className="font-semibold text-gray-900 dark:text-gray-100">0%</span>. You keep the full task budget for now.
+        </p>
       </div>
 
       {/* Compact summary */}
