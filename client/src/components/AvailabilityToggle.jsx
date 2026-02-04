@@ -50,7 +50,7 @@ function AvailabilityToggle() {
           role="switch"
           aria-checked={isOnline}
           aria-label={isOnline ? 'On duty' : 'Off duty'}
-          className={`relative inline-flex items-center h-8 w-20 rounded-full border-2 transition-colors duration-200
+          className={`relative inline-flex h-8 w-20 rounded-full border-2 transition-colors duration-200
             focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1
             disabled:opacity-50 disabled:cursor-not-allowed shrink-0
             ${isOnline
@@ -58,20 +58,20 @@ function AvailabilityToggle() {
               : 'bg-transparent border-gray-300 dark:border-gray-500'
             }`}
         >
-          <span className="flex items-center justify-between w-full px-2">
-            <span
-              className={`text-[11px] font-semibold tracking-wide
-                ${isOnline ? 'text-gray-900' : 'text-gray-600 dark:text-gray-300'}
-              `}
-            >
-              {checkingActiveTask ? '...' : (isOnline ? 'ON' : 'OFF')}
-            </span>
-            <span
-              className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200
-                ${isOnline ? 'translate-x-0' : 'translate-x-0'}
-              `}
-            />
+          {/* Label stays left inside capsule */}
+          <span
+            className={`absolute left-2 top-1/2 -translate-y-1/2 text-[11px] font-semibold tracking-wide
+              ${isOnline ? 'text-gray-900' : 'text-gray-600 dark:text-gray-300'}
+            `}
+          >
+            {checkingActiveTask ? '...' : (isOnline ? 'ON' : 'OFF')}
           </span>
+          {/* Knob slides left/right */}
+          <span
+            className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200
+              ${isOnline ? 'right-1.5' : 'left-1.5'}
+            `}
+          />
         </button>
 
         {/* Tooltip - desktop only (no hover popover on small screens) */}
