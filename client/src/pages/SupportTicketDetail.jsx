@@ -209,9 +209,16 @@ function SupportTicketDetail() {
   }
 
   return (
-    <div className="fixed inset-0 z-[1100] flex flex-col bg-white dark:bg-gray-900 pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-      {/* Header */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 bg-white dark:bg-gray-900">
+    <div
+      className="fixed inset-0 z-[1100] flex flex-col bg-white dark:bg-gray-900"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)'
+      }}
+    >
+      {/* Header - 56px */}
+      <header className="flex-shrink-0 h-14 px-4 flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
         <button
           type="button"
           onClick={() => navigate('/support')}
@@ -223,27 +230,27 @@ function SupportTicketDetail() {
           </svg>
         </button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">
             {ticket?.subject || 'Support ticket'}
           </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {ticket?.status === 'OPEN' && 'Waiting for admin to accept'}
             {ticket?.status === 'ACCEPTED' && 'Chat with support'}
             {ticket?.status === 'RESOLVED' && 'Resolved'}
             {ticket?.status === 'REJECTED' && 'Closed'}
           </p>
         </div>
-      </div>
+      </header>
 
-      {/* Messages - fills remaining space */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
+      {/* Messages - fills remaining space, consistent padding */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-4 space-y-3">
         {messages.map((m) => (
           <div
             key={m._id}
             className={`flex ${isOwn(m.senderId) ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2 ${isOwn(m.senderId)
+              className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 ${isOwn(m.senderId)
                 ? 'bg-blue-600 text-white rounded-br-md'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md'
                 }`}
@@ -259,20 +266,24 @@ function SupportTicketDetail() {
       </div>
 
       {ticket?.status === 'ACCEPTED' && (
-        <form onSubmit={handleSend} className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pb-[env(safe-area-inset-bottom)]">
-          <div className="flex gap-2 max-w-4xl mx-auto">
+        <form
+          onSubmit={handleSend}
+          className="flex-shrink-0 px-4 pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+        >
+          <div className="flex gap-3 max-w-4xl mx-auto">
             <input
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value.slice(0, 2000))}
               placeholder="Type a message…"
-              className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 min-w-0 h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               maxLength={2000}
             />
             <button
               type="submit"
               disabled={sending || !inputText.trim()}
-              className="px-4 py-2.5 rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-medium text-sm hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
+              className="shrink-0 h-11 px-5 rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-medium text-sm hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
             >
               Send
             </button>
@@ -281,7 +292,10 @@ function SupportTicketDetail() {
       )}
 
       {ticket?.status === 'OPEN' && (
-        <div className="flex-shrink-0 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm pb-[env(safe-area-inset-bottom)]">
+        <div
+          className="flex-shrink-0 px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm"
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+        >
           An admin will accept this ticket soon. You’ll be able to chat here once they do.
         </div>
       )}
