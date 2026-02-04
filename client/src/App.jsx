@@ -59,6 +59,7 @@ const AdminAnalytics = lazyWithRetry(() => import('./pages/admin/AdminAnalytics'
 const AdminTickets = lazyWithRetry(() => import('./pages/admin/AdminTickets'))
 const AdminTicketDetail = lazyWithRetry(() => import('./pages/admin/AdminTicketDetail'))
 const AdminFeedback = lazyWithRetry(() => import('./pages/admin/AdminFeedback'))
+const PilotDashboard = lazyWithRetry(() => import('./pages/admin/PilotDashboard'))
 const SetupProfile = lazyWithRetry(() => import('./pages/SetupProfile'))
 const Support = lazyWithRetry(() => import('./pages/Support'))
 const SupportTicketDetail = lazyWithRetry(() => import('./pages/SupportTicketDetail'))
@@ -214,6 +215,7 @@ const AppContent = () => (
                               <Route path="/admin/settings" element={<AdminSettings />} />
                               <Route path="/admin/reviews" element={<AdminReviews />} />
                               <Route path="/admin/feedback" element={<AdminFeedback />} />
+                              <Route path="/admin/pilot-dashboard" element={<PilotDashboard />} />
                               <Route path="/admin/logs" element={<AdminLogs />} />
                               <Route path="/admin/analytics" element={<AdminAnalytics />} />
                               <Route path="/admin/reports" element={<AdminReports />} />

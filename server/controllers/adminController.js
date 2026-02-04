@@ -1309,6 +1309,210 @@ const getDashboardCharts = async (req, res) => {
   }
 }
 
+// GET /api/admin/pilot-dashboard?week=1 - Pilot success metrics (week 1 = last 7 days, 2 = 8-14 days ago, etc.)
+const getPilotDashboard = async (req, res) => {
+  try {
+    const weekNum = Math.min(4, Math.max(1, parseInt(req.query.week, 10) || 1))
+    const now = new Date()
+    const endDate = new Date(now)
+    endDate.setHours(23, 59, 59, 999)
+    const startDate = new Date(now)
+    startDate.setDate(startDate.getDate() - 7 * weekNum)
+    startDate.setHours(0, 0, 0, 0)
+    const weekEnd = new Date(startDate)
+    weekEnd.setDate(weekEnd.getDate() + 7)
+    weekEnd.setHours(23, 59, 59, 999)
+
+    // For "current" week window: [startDate, weekEnd] where for week 1 startDate = now-7, weekEnd = now
+    const periodStart = new Date(now)
+    periodStart.setDate(periodStart.getDate() - 7 * weekNum)
+    periodStart.setHours(0, 0, 0, 0)
+    const periodEnd = new Date(periodStart)
+    periodEnd.setDate(periodEnd.getDate() + 7)
+    periodEnd.setMilliseconds(periodEnd.getMilliseconds() - 1)
+
+    const start = periodStart
+    const end = new Date(periodEnd)
+    end.setHours(23, 59, 59, 999)
+
+    // ---- WAU: users active in period (created account, posted, or accepted in window) ----
+    const postedInPeriod = await Task.distinct('postedBy', { createdAt: { $gte: start, $lte: end } })
+    const acceptedInPeriod = await Task.distinct('acceptedBy', { acceptedAt: { $gte: start, $lte: end } })
+    const createdInPeriod = await User.find(
+      { role: 'user', createdAt: { $gte: start, $lte: end } },
+      { _id: 1 }
+    ).lean()
+    const allActiveIds = [...new Set([
+      ...postedInPeriod.map((id) => id.toString()),
+      ...acceptedInPeriod.filter(Boolean).map((id) => id.toString()),
+      ...createdInPeriod.map((u) => u._id.toString())
+    ])]
+    const wau = allActiveIds.length
+
+    // ---- Tasks posted this week ----
+    const tasksPostedThisWeek = await Task.countDocuments({ createdAt: { $gte: start, $lte: end } })
+
+    // ---- Task completion rate (for tasks created in period: COMPLETED / (COMPLETED + cancelled)) ----
+    const completedInPeriod = await Task.countDocuments({
+      createdAt: { $gte: start, $lte: end },
+      status: 'COMPLETED'
+    })
+    const cancelledInPeriod = await Task.countDocuments({
+      createdAt: { $gte: start, $lte: end },
+      status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] }
+    })
+    const closedCount = completedInPeriod + cancelledInPeriod
+    const taskCompletionRate = closedCount > 0 ? Math.round((completedInPeriod / closedCount) * 100) : 0
+
+    // ---- Avg time to accept (hours) - tasks accepted in period ----
+    const acceptedTasks = await Task.find(
+      { acceptedAt: { $gte: start, $lte: end } },
+      { createdAt: 1, acceptedAt: 1 }
+    ).lean()
+    let avgTimeToAcceptHours = 0
+    if (acceptedTasks.length > 0) {
+      const totalMs = acceptedTasks.reduce((sum, t) => sum + (new Date(t.acceptedAt) - new Date(t.createdAt)), 0)
+      avgTimeToAcceptHours = Math.round((totalMs / (acceptedTasks.length * 3600000)) * 10) / 10
+    }
+
+    // ---- Repeat user rate: users with 2+ tasks (posted or accepted) in period / WAU ----
+    const taskCountByUser = {}
+    const addTask = (userId) => {
+      if (!userId) return
+      const id = userId.toString()
+      taskCountByUser[id] = (taskCountByUser[id] || 0) + 1
+    }
+    const tasksInPeriod = await Task.find(
+      {
+        $or: [
+          { createdAt: { $gte: start, $lte: end } },
+          { acceptedAt: { $gte: start, $lte: end } }
+        ]
+      },
+      { postedBy: 1, acceptedBy: 1, createdAt: 1, acceptedAt: 1 }
+    ).lean()
+    tasksInPeriod.forEach((t) => {
+      if (t.createdAt >= start && t.createdAt <= end) addTask(t.postedBy)
+      if (t.acceptedAt && t.acceptedAt >= start && t.acceptedAt <= end) addTask(t.acceptedBy)
+    })
+    const repeatUsers = Object.values(taskCountByUser).filter((c) => c >= 2).length
+    const repeatUserRate = wau > 0 ? Math.round((repeatUsers / wau) * 100) : 0
+
+    // ---- Weekly growth: last 4 weeks (users, tasks posted, tasks completed) ----
+    const weeklyGrowth = []
+    for (let w = 1; w <= 4; w++) {
+      const ws = new Date(now)
+      ws.setDate(ws.getDate() - 7 * w)
+      ws.setHours(0, 0, 0, 0)
+      const we = new Date(ws)
+      we.setDate(we.getDate() + 7)
+      we.setMilliseconds(-1)
+      const usersW = await User.countDocuments({ role: 'user', createdAt: { $gte: ws, $lte: we } })
+      const postedW = await Task.countDocuments({ createdAt: { $gte: ws, $lte: we } })
+      const completedW = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: ws, $lte: we } })
+      weeklyGrowth.push({
+        weekLabel: `Week ${w}`,
+        weekIndex: w,
+        users: usersW,
+        tasksPosted: postedW,
+        tasksCompleted: completedW
+      })
+    }
+    weeklyGrowth.reverse()
+
+    // ---- Top 5 categories by volume (in selected period) ----
+    const categoriesAgg = await Task.aggregate([
+      { $match: { createdAt: { $gte: start, $lte: end } } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ])
+    const categories = categoriesAgg.map(({ _id, count }) => ({ name: _id || 'Other', count }))
+
+    // ---- User type: posters vs doers (in period) ----
+    const postersSet = new Set(postedInPeriod.map((id) => id.toString()))
+    const doersSet = new Set(acceptedInPeriod.filter(Boolean).map((id) => id.toString()))
+    const posters = postersSet.size
+    const doers = doersSet.size
+
+    // ---- Alerts ----
+    const alerts = []
+    if (taskCompletionRate < 60 && closedCount > 0) {
+      alerts.push({ type: 'completion_low', message: `Task completion rate is ${taskCompletionRate}% (target >70%)`, severity: 'high' })
+    }
+    const tasksLast24h = await Task.countDocuments({ createdAt: { $gte: new Date(Date.now() - 24 * 3600000) } })
+    if (tasksLast24h === 0) {
+      alerts.push({ type: 'no_tasks_24h', message: 'No tasks posted in the last 24 hours', severity: 'high' })
+    }
+    if (doers > 0 && tasksInPeriod.length > 0) {
+      const doerCounts = {}
+      tasksInPeriod.forEach((t) => {
+        if (t.acceptedBy && t.acceptedAt >= start && t.acceptedAt <= end) {
+          const id = t.acceptedBy.toString()
+          doerCounts[id] = (doerCounts[id] || 0) + 1
+        }
+      })
+      const topDoers = Object.entries(doerCounts).sort((a, b) => b[1] - a[1]).slice(0, 3)
+      const topDoersTasks = topDoers.reduce((s, [, c]) => s + c, 0)
+      if (topDoers.length <= 3 && topDoersTasks >= tasksInPeriod.length * 0.8) {
+        alerts.push({ type: 'same_doers', message: 'Most tasks completed by same few doers (diversify worker base)', severity: 'medium' })
+      }
+    }
+    if (wau < 100 && weekNum === 1) {
+      alerts.push({ type: 'wau_low', message: `WAU is ${wau} (target 100+)`, severity: 'medium' })
+    }
+    if (tasksPostedThisWeek < 21 && weekNum === 1) {
+      const perDay = (tasksPostedThisWeek / 7).toFixed(1)
+      if (parseFloat(perDay) < 3) {
+        alerts.push({ type: 'tasks_per_day', message: `Tasks posted ~${perDay}/day (target 3–5/day)`, severity: 'medium' })
+      }
+    }
+
+    // ---- Health score 0–100: completion 40%, growth 30%, satisfaction 30% ----
+    const completionScore = Math.min(100, Math.round((taskCompletionRate / 70) * 40))
+    const growthScore = (() => {
+      const lastWeek = weeklyGrowth[weeklyGrowth.length - 1]
+      const prevWeek = weeklyGrowth[weeklyGrowth.length - 2]
+      if (!lastWeek || !prevWeek) return 30
+      const growth = lastWeek.tasksPosted + lastWeek.tasksCompleted - (prevWeek.tasksPosted + prevWeek.tasksCompleted)
+      return Math.min(30, Math.max(0, 15 + Math.round(growth * 2)))
+    })()
+    const ratedInPeriod = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end }, rating: { $exists: true, $gte: 1 } })
+    const completedTotal = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end } })
+    const satisfactionScore = completedTotal > 0 ? Math.min(30, Math.round((ratedInPeriod / completedTotal) * 30)) : 10
+    const healthScore = Math.min(100, Math.round(completionScore + growthScore + satisfactionScore))
+
+    res.json({
+      week: weekNum,
+      periodStart: start,
+      periodEnd: end,
+      metrics: {
+        wau,
+        wauTarget: 100,
+        tasksPostedThisWeek,
+        tasksPerDayTarget: { min: 3, max: 5 },
+        taskCompletionRate,
+        completionTarget: 70,
+        avgTimeToAcceptHours,
+        avgTimeToAcceptTarget: 2,
+        repeatUserRate,
+        repeatUserTarget: 40
+      },
+      weeklyGrowth,
+      categories,
+      userType: { posters, doers },
+      alerts,
+      healthScore,
+      lastUpdated: new Date()
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch pilot dashboard'
+    })
+  }
+}
+
 const getStats = async (req, res) => {
   try {
     const today = new Date()
@@ -1737,6 +1941,7 @@ module.exports = {
   getStats,
   getDashboard,
   getDashboardCharts,
+  getPilotDashboard,
   // Workers
   getWorkers,
   // Chats

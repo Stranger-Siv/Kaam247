@@ -16,6 +16,7 @@ function AdminLayout() {
 
   const menuItems = [
     { path: '/admin', label: 'Overview', icon: '📊' },
+    { path: '/admin/pilot-dashboard', label: 'Pilot Dashboard', icon: '🎯' },
     { path: '/admin/users', label: 'Users', icon: '👥' },
     { path: '/admin/workers', label: 'Workers', icon: '🔧' },
     { path: '/admin/tasks', label: 'Tasks', icon: '📋' },

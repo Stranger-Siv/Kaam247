@@ -21,6 +21,7 @@ const {
   getStats,
   getDashboard,
   getDashboardCharts,
+  getPilotDashboard,
   getWorkers,
   getChats,
   getChatByTaskId,
@@ -107,6 +108,9 @@ router.get('/dashboard', getDashboard)
 
 // GET /api/admin/dashboard/charts?period=daily|weekly|monthly - Time-series for graphs
 router.get('/dashboard/charts', getDashboardCharts)
+
+// GET /api/admin/pilot-dashboard?week=1 - Pilot success dashboard (week 1–4)
+router.get('/pilot-dashboard', getPilotDashboard)
 
 // ============================================
 // WORKERS
