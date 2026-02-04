@@ -18,9 +18,13 @@ function SupportTicketDetail() {
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef(null)
   const receiveHandlerRef = useRef(null)
+  const inputRef = useRef(null)
+  const messagesContainerRef = useRef(null)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  const scrollToBottom = (smooth = true) => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'end' })
+    }
   }
 
   const fetchTicket = async () => {
@@ -95,9 +99,6 @@ function SupportTicketDetail() {
   useEffect(() => {
     if (!ticketId || !ticket) return
     const socket = getSocket && getSocket()
-    if (!socket || !socket.connected) return
-
-    socket.emit('join_ticket_chat', { ticketId })
 
     const handleReceive = (payload) => {
       if (String(payload.ticketId) !== String(ticketId)) return
@@ -111,18 +112,60 @@ function SupportTicketDetail() {
       })
     }
 
-    receiveHandlerRef.current = handleReceive
-    socket.on('ticket_message', handleReceive)
+    const joinAndListen = () => {
+      if (!socket || !ticketId) return
+      socket.emit('join_ticket_chat', { ticketId })
+      receiveHandlerRef.current = handleReceive
+      socket.off('ticket_message', handleReceive)
+      socket.on('ticket_message', handleReceive)
+    }
+
+    if (socket) {
+      if (socket.connected) {
+        joinAndListen()
+      } else {
+        socket.once('connect', joinAndListen)
+      }
+    }
 
     return () => {
-      socket.off('ticket_message', receiveHandlerRef.current)
-      socket.emit('leave_ticket_chat', { ticketId })
+      if (socket) {
+        socket.off('ticket_message', handleReceive)
+        socket.off('connect', joinAndListen)
+        socket.emit('leave_ticket_chat', { ticketId })
+      }
     }
   }, [ticketId, ticket, getSocket, user?.id])
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // When keyboard opens (input focus or viewport resize), keep latest message in view
+  useEffect(() => {
+    const inputEl = inputRef.current
+    const onFocus = () => {
+      setTimeout(() => scrollToBottom(false), 150)
+      setTimeout(() => scrollToBottom(false), 400)
+    }
+    const onResize = () => {
+      scrollToBottom(false)
+    }
+    if (inputEl) {
+      inputEl.addEventListener('focus', onFocus)
+    }
+    if (typeof window !== 'undefined' && window.visualViewport) {
+      window.visualViewport.addEventListener('resize', onResize)
+      window.visualViewport.addEventListener('scroll', onResize)
+    }
+    return () => {
+      if (inputEl) inputEl.removeEventListener('focus', onFocus)
+      if (typeof window !== 'undefined' && window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', onResize)
+        window.visualViewport.removeEventListener('scroll', onResize)
+      }
+    }
+  }, [ticket?.status])
 
   const handleSend = async (e) => {
     e.preventDefault()
@@ -167,6 +210,10 @@ function SupportTicketDetail() {
         )
       )
       try { sessionStorage.removeItem(DRAFT_KEY(ticketId)) } catch (_) { /* ignore */ }
+      scrollToBottom(false)
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
     } catch (err) {
       setMessages((prev) => prev.filter((m) => m._id !== optimistic._id))
       setInputText(trimmed)
@@ -243,7 +290,7 @@ function SupportTicketDetail() {
       </header>
 
       {/* Messages - fills remaining space, consistent padding */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-4 space-y-3">
+      <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-4 space-y-3">
         {messages.map((m) => (
           <div
             key={m._id}
@@ -276,12 +323,14 @@ function SupportTicketDetail() {
           )}
           <div className="flex gap-3 max-w-4xl mx-auto">
             <input
+              ref={inputRef}
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value.slice(0, 2000))}
               placeholder="Type a message…"
               className="flex-1 min-w-0 h-11 px-4 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               maxLength={2000}
+              autoComplete="off"
             />
             <button
               type="submit"

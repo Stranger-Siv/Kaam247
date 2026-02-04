@@ -32,9 +32,10 @@ export function SocketProvider({ children }) {
       return
     }
 
-    // Connect socket when: logged in AND (worker mode OR poster mode)
+    // Connect socket when logged in (support chat, task chat, etc. need it for all users)
     // Socket is OPTIONAL - app works without it using REST APIs
-    if (isAuthenticated && (userMode === 'worker' || userMode === 'poster')) {
+    const mode = userMode === 'worker' || userMode === 'poster' ? userMode : 'poster'
+    if (isAuthenticated) {
       if (!socketRef.current) {
         try {
           // Only call io() when socket is enabled and module is loaded
@@ -70,14 +71,14 @@ export function SocketProvider({ children }) {
           // STATE RECOVERY: Emit clientConnected with full user context
           socketRef.current.emit('clientConnected', {
             userId: userId,
-            role: userMode === 'worker' ? 'worker' : 'poster',
-            mode: userMode,
+            role: mode === 'worker' ? 'worker' : 'poster',
+            mode: mode,
             isOnline: isOnline,
             location: workerLocation
           })
 
           // Register based on current mode
-          if (userMode === 'worker') {
+          if (mode === 'worker') {
             // Register worker (only if online)
             if (isOnline) {
               socketRef.current.emit('worker_online', {
@@ -86,8 +87,8 @@ export function SocketProvider({ children }) {
                 radius: 5 // Default 5 km radius
               })
             }
-          } else if (userMode === 'poster') {
-            // Register user (for poster notifications)
+          } else {
+            // Register user (for poster notifications / support chat)
             socketRef.current.emit('user_online', { userId: userId })
           }
 
@@ -130,8 +131,7 @@ export function SocketProvider({ children }) {
           // Store userId on socket
           socketRef.current.userId = userId
 
-          if (userMode === 'worker') {
-            // If switching to worker mode, register as worker (only if online)
+          if (mode === 'worker') {
             if (isOnline) {
               socketRef.current.emit('worker_online', {
                 userId: userId,
@@ -139,13 +139,10 @@ export function SocketProvider({ children }) {
                 radius: 5
               })
             } else {
-              // If offline, ensure worker is offline
               socketRef.current.emit('worker_offline')
             }
-          } else if (userMode === 'poster') {
-            // If switching to poster mode, register as user
+          } else {
             socketRef.current.emit('user_online', { userId: userId })
-            // Also emit worker_offline to remove from worker list if was a worker
             socketRef.current.emit('worker_offline')
           }
         }

@@ -102,9 +102,6 @@ function AdminTicketDetail() {
   useEffect(() => {
     if (!ticketId || !ticket) return
     const socket = getSocket && getSocket()
-    if (!socket || !socket.connected) return
-
-    socket.emit('join_ticket_chat', { ticketId })
 
     const handleReceive = (payload) => {
       if (String(payload.ticketId) !== String(ticketId)) return
@@ -118,12 +115,28 @@ function AdminTicketDetail() {
       })
     }
 
-    receiveHandlerRef.current = handleReceive
-    socket.on('ticket_message', handleReceive)
+    const joinAndListen = () => {
+      if (!socket || !ticketId) return
+      socket.emit('join_ticket_chat', { ticketId })
+      receiveHandlerRef.current = handleReceive
+      socket.off('ticket_message', handleReceive)
+      socket.on('ticket_message', handleReceive)
+    }
+
+    if (socket) {
+      if (socket.connected) {
+        joinAndListen()
+      } else {
+        socket.once('connect', joinAndListen)
+      }
+    }
 
     return () => {
-      socket.off('ticket_message', receiveHandlerRef.current)
-      socket.emit('leave_ticket_chat', { ticketId })
+      if (socket) {
+        socket.off('ticket_message', handleReceive)
+        socket.off('connect', joinAndListen)
+        socket.emit('leave_ticket_chat', { ticketId })
+      }
     }
   }, [ticketId, ticket, getSocket, user?.id])
 
