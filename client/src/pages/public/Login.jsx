@@ -98,7 +98,7 @@ function Login() {
 
     return (
         <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-16 w-full overflow-x-hidden">
-            <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="max-w-6xl mx-auto w-full min-w-0 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
                 {/* Left Side - Welcome Content */}
                 <div className="hidden lg:block space-y-6">
                     <div>
@@ -151,8 +151,8 @@ function Login() {
                 </div>
 
                 {/* Right Side - Login Form */}
-                <div className="w-full">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 sm:p-8 lg:p-10 border border-gray-200 dark:border-gray-700">
+                <div className="w-full min-w-0">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-6 sm:p-8 lg:p-10 border border-gray-200 dark:border-gray-700 max-w-full min-w-0">
                         <div className="text-center mb-8">
                             <div className="lg:hidden mb-4">
                                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -169,7 +169,7 @@ function Login() {
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
+                        <form onSubmit={handleSubmit} className="space-y-5 min-w-0">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Email / Phone
@@ -179,7 +179,7 @@ function Login() {
                                     value={formData.identifier}
                                     onChange={(e) => handleInputChange('identifier', e.target.value)}
                                     placeholder="Enter your email or phone"
-                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
+                                    className="w-full min-w-0 max-w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
                                     required
                                 />
                             </div>
@@ -193,7 +193,7 @@ function Login() {
                                     value={formData.password}
                                     onChange={(e) => handleInputChange('password', e.target.value)}
                                     placeholder="Enter your password"
-                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
+                                    className="w-full min-w-0 max-w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-base"
                                     required
                                 />
                             </div>
@@ -227,7 +227,7 @@ function Login() {
                                 )}
                             </button>
 
-                            <div className="mt-4">
+                            <div className="mt-4 min-w-0 max-w-full overflow-hidden">
                                 <div className="relative my-4">
                                     <div className="absolute inset-0 flex items-center">
                                         <div className="w-full border-t border-gray-200 dark:border-gray-600" />
@@ -236,7 +236,7 @@ function Login() {
                                         <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with</span>
                                     </div>
                                 </div>
-                                <div className="flex justify-center">
+                                <div className="flex justify-center min-w-0 max-w-full">
                                     {GOOGLE_CLIENT_ID ? (
                                         <GoogleLogin
                                             onSuccess={async (credentialResponse) => {
