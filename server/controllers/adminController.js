@@ -1310,8 +1310,17 @@ const getDashboardCharts = async (req, res) => {
 }
 
 // GET /api/admin/pilot-dashboard?week=1 - Pilot success metrics (week 1 = last 7 days, 2 = 8-14 days ago, etc.)
+// Only includes data on or after pilotStartDate (Config key 'pilotStartDate', ISO date string) when set.
 const getPilotDashboard = async (req, res) => {
   try {
+    let pilotStartDate = null
+    const configDoc = await Config.findOne({ key: 'pilotStartDate' })
+    if (configDoc && configDoc.value) {
+      const d = new Date(configDoc.value)
+      if (!isNaN(d.getTime())) pilotStartDate = d
+    }
+    const effStart = (rangeStart) => (pilotStartDate && pilotStartDate > rangeStart ? pilotStartDate : rangeStart)
+
     const weekNum = Math.min(4, Math.max(1, parseInt(req.query.week, 10) || 1))
     const now = new Date()
     const endDate = new Date(now)
@@ -1323,7 +1332,6 @@ const getPilotDashboard = async (req, res) => {
     weekEnd.setDate(weekEnd.getDate() + 7)
     weekEnd.setHours(23, 59, 59, 999)
 
-    // For "current" week window: [startDate, weekEnd] where for week 1 startDate = now-7, weekEnd = now
     const periodStart = new Date(now)
     periodStart.setDate(periodStart.getDate() - 7 * weekNum)
     periodStart.setHours(0, 0, 0, 0)
@@ -1334,12 +1342,13 @@ const getPilotDashboard = async (req, res) => {
     const start = periodStart
     const end = new Date(periodEnd)
     end.setHours(23, 59, 59, 999)
+    const startEff = effStart(start)
 
-    // ---- WAU: users active in period (created account, posted, or accepted in window) ----
-    const postedInPeriod = await Task.distinct('postedBy', { createdAt: { $gte: start, $lte: end } })
-    const acceptedInPeriod = await Task.distinct('acceptedBy', { acceptedAt: { $gte: start, $lte: end } })
+    // ---- WAU: users active in period (created account, posted, or accepted in window), on or after pilot start ----
+    const postedInPeriod = await Task.distinct('postedBy', { createdAt: { $gte: startEff, $lte: end } })
+    const acceptedInPeriod = await Task.distinct('acceptedBy', { acceptedAt: { $gte: startEff, $lte: end } })
     const createdInPeriod = await User.find(
-      { role: 'user', createdAt: { $gte: start, $lte: end } },
+      { role: 'user', createdAt: { $gte: startEff, $lte: end } },
       { _id: 1 }
     ).lean()
     const allActiveIds = [...new Set([
@@ -1350,15 +1359,15 @@ const getPilotDashboard = async (req, res) => {
     const wau = allActiveIds.length
 
     // ---- Tasks posted this week ----
-    const tasksPostedThisWeek = await Task.countDocuments({ createdAt: { $gte: start, $lte: end } })
+    const tasksPostedThisWeek = await Task.countDocuments({ createdAt: { $gte: startEff, $lte: end } })
 
     // ---- Task completion rate (for tasks created in period: COMPLETED / (COMPLETED + cancelled)) ----
     const completedInPeriod = await Task.countDocuments({
-      createdAt: { $gte: start, $lte: end },
+      createdAt: { $gte: startEff, $lte: end },
       status: 'COMPLETED'
     })
     const cancelledInPeriod = await Task.countDocuments({
-      createdAt: { $gte: start, $lte: end },
+      createdAt: { $gte: startEff, $lte: end },
       status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] }
     })
     const closedCount = completedInPeriod + cancelledInPeriod
@@ -1366,7 +1375,7 @@ const getPilotDashboard = async (req, res) => {
 
     // ---- Avg time to accept (hours) - tasks accepted in period ----
     const acceptedTasks = await Task.find(
-      { acceptedAt: { $gte: start, $lte: end } },
+      { acceptedAt: { $gte: startEff, $lte: end } },
       { createdAt: 1, acceptedAt: 1 }
     ).lean()
     let avgTimeToAcceptHours = 0
@@ -1385,20 +1394,20 @@ const getPilotDashboard = async (req, res) => {
     const tasksInPeriod = await Task.find(
       {
         $or: [
-          { createdAt: { $gte: start, $lte: end } },
-          { acceptedAt: { $gte: start, $lte: end } }
+          { createdAt: { $gte: startEff, $lte: end } },
+          { acceptedAt: { $gte: startEff, $lte: end } }
         ]
       },
       { postedBy: 1, acceptedBy: 1, createdAt: 1, acceptedAt: 1 }
     ).lean()
     tasksInPeriod.forEach((t) => {
-      if (t.createdAt >= start && t.createdAt <= end) addTask(t.postedBy)
-      if (t.acceptedAt && t.acceptedAt >= start && t.acceptedAt <= end) addTask(t.acceptedBy)
+      if (t.createdAt >= startEff && t.createdAt <= end) addTask(t.postedBy)
+      if (t.acceptedAt && t.acceptedAt >= startEff && t.acceptedAt <= end) addTask(t.acceptedBy)
     })
     const repeatUsers = Object.values(taskCountByUser).filter((c) => c >= 2).length
     const repeatUserRate = wau > 0 ? Math.round((repeatUsers / wau) * 100) : 0
 
-    // ---- Weekly growth: last 4 weeks (users, tasks posted, tasks completed) ----
+    // ---- Weekly growth: last 4 weeks (users, tasks posted, tasks completed), on or after pilot start ----
     const weeklyGrowth = []
     for (let w = 1; w <= 4; w++) {
       const ws = new Date(now)
@@ -1407,22 +1416,27 @@ const getPilotDashboard = async (req, res) => {
       const we = new Date(ws)
       we.setDate(we.getDate() + 7)
       we.setMilliseconds(-1)
-      const usersW = await User.countDocuments({ role: 'user', createdAt: { $gte: ws, $lte: we } })
-      const postedW = await Task.countDocuments({ createdAt: { $gte: ws, $lte: we } })
-      const completedW = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: ws, $lte: we } })
-      weeklyGrowth.push({
-        weekLabel: `Week ${w}`,
-        weekIndex: w,
-        users: usersW,
-        tasksPosted: postedW,
-        tasksCompleted: completedW
-      })
+      const wsEff = effStart(ws)
+      if (wsEff > we) {
+        weeklyGrowth.push({ weekLabel: `Week ${w}`, weekIndex: w, users: 0, tasksPosted: 0, tasksCompleted: 0 })
+      } else {
+        const usersW = await User.countDocuments({ role: 'user', createdAt: { $gte: wsEff, $lte: we } })
+        const postedW = await Task.countDocuments({ createdAt: { $gte: wsEff, $lte: we } })
+        const completedW = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: wsEff, $lte: we } })
+        weeklyGrowth.push({
+          weekLabel: `Week ${w}`,
+          weekIndex: w,
+          users: usersW,
+          tasksPosted: postedW,
+          tasksCompleted: completedW
+        })
+      }
     }
     weeklyGrowth.reverse()
 
     // ---- Top 5 categories by volume (in selected period) ----
     const categoriesAgg = await Task.aggregate([
-      { $match: { createdAt: { $gte: start, $lte: end } } },
+      { $match: { createdAt: { $gte: startEff, $lte: end } } },
       { $group: { _id: '$category', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 5 }
@@ -1447,14 +1461,14 @@ const getPilotDashboard = async (req, res) => {
     if (doers > 0 && tasksInPeriod.length > 0) {
       const doerCounts = {}
       tasksInPeriod.forEach((t) => {
-        if (t.acceptedBy && t.acceptedAt >= start && t.acceptedAt <= end) {
+        if (t.acceptedBy && t.acceptedAt >= startEff && t.acceptedAt <= end) {
           const id = t.acceptedBy.toString()
           doerCounts[id] = (doerCounts[id] || 0) + 1
         }
       })
       const topDoers = Object.entries(doerCounts).sort((a, b) => b[1] - a[1]).slice(0, 3)
       const topDoersTasks = topDoers.reduce((s, [, c]) => s + c, 0)
-      if (topDoers.length <= 3 && topDoersTasks >= tasksInPeriod.length * 0.8) {
+      if (topDoers.length <= 3 && tasksInPeriod.length > 0 && topDoersTasks >= tasksInPeriod.length * 0.8) {
         alerts.push({ type: 'same_doers', message: 'Most tasks completed by same few doers (diversify worker base)', severity: 'medium' })
       }
     }
@@ -1486,6 +1500,7 @@ const getPilotDashboard = async (req, res) => {
       week: weekNum,
       periodStart: start,
       periodEnd: end,
+      pilotStartDate: pilotStartDate ? pilotStartDate.toISOString().slice(0, 10) : null,
       metrics: {
         wau,
         wauTarget: 100,
@@ -1509,6 +1524,43 @@ const getPilotDashboard = async (req, res) => {
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'Failed to fetch pilot dashboard'
+    })
+  }
+}
+
+// PUT /api/admin/pilot-dashboard/start-date - Set pilot start date (body: { pilotStartDate: "YYYY-MM-DD" }). Only data on or after this date is included.
+const setPilotStartDate = async (req, res) => {
+  try {
+    const { pilotStartDate } = req.body
+    if (pilotStartDate === undefined || pilotStartDate === null) {
+      return res.status(400).json({ error: 'Missing pilotStartDate', message: 'pilotStartDate is required (YYYY-MM-DD or null to clear)' })
+    }
+    let value = null
+    if (pilotStartDate !== '') {
+      const str = String(pilotStartDate).trim()
+      const d = new Date(str)
+      if (isNaN(d.getTime())) {
+        return res.status(400).json({ error: 'Invalid date', message: 'pilotStartDate must be YYYY-MM-DD or empty to clear' })
+      }
+      value = d.toISOString().slice(0, 10)
+    }
+    await Config.findOneAndUpdate(
+      { key: 'pilotStartDate' },
+      {
+        $set: {
+          value,
+          description: 'Pilot start date: only data on or after this date is included in pilot dashboard metrics.',
+          updatedAt: new Date(),
+          updatedBy: req.user?._id
+        }
+      },
+      { upsert: true, new: true }
+    )
+    res.json({ message: 'Pilot start date updated', pilotStartDate: value })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to update pilot start date'
     })
   }
 }
@@ -1942,6 +1994,7 @@ module.exports = {
   getDashboard,
   getDashboardCharts,
   getPilotDashboard,
+  setPilotStartDate,
   // Workers
   getWorkers,
   // Chats

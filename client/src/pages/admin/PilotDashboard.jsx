@@ -14,7 +14,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts'
-import { apiGet } from '../../utils/api'
+import { apiGet, apiPut } from '../../utils/api'
 
 const REFRESH_MS = 30 * 60 * 1000 // 30 minutes
 const BLUE = '#2563eb'
@@ -50,6 +50,9 @@ function PilotDashboard() {
   const [week, setWeek] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [pilotStartDateInput, setPilotStartDateInput] = useState('')
+  const [savingStartDate, setSavingStartDate] = useState(false)
+  const [startDateError, setStartDateError] = useState(null)
   const stopRef = useRef(false)
 
   const fetchData = async () => {
@@ -76,6 +79,40 @@ function PilotDashboard() {
     const interval = setInterval(fetchData, REFRESH_MS)
     return () => clearInterval(interval)
   }, [week])
+
+  useEffect(() => {
+    if (data?.pilotStartDate != null) setPilotStartDateInput(data.pilotStartDate)
+    else setPilotStartDateInput('')
+  }, [data?.pilotStartDate])
+
+  const savePilotStartDate = async () => {
+    setSavingStartDate(true)
+    setStartDateError(null)
+    const { data: res, error: apiError } = await apiPut('/api/admin/pilot-dashboard/start-date', {
+      pilotStartDate: pilotStartDateInput.trim() || ''
+    })
+    setSavingStartDate(false)
+    if (apiError) {
+      setStartDateError(apiError)
+      return
+    }
+    setStartDateError(null)
+    if (res?.pilotStartDate !== undefined) setPilotStartDateInput(res.pilotStartDate ?? '')
+    fetchData()
+  }
+
+  const clearPilotStartDate = async () => {
+    setStartDateError(null)
+    setSavingStartDate(true)
+    const { error: apiError } = await apiPut('/api/admin/pilot-dashboard/start-date', { pilotStartDate: '' })
+    setSavingStartDate(false)
+    if (apiError) {
+      setStartDateError(apiError)
+      return
+    }
+    setPilotStartDateInput('')
+    fetchData()
+  }
 
   const exportJSON = () => {
     if (!data) return
@@ -140,6 +177,44 @@ function PilotDashboard() {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+      {/* Pilot start date: only data from this date onwards */}
+      <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Pilot start date</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Only data on or after this date is included in metrics. Leave empty to include all historical data.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="date"
+            value={pilotStartDateInput}
+            onChange={(e) => setPilotStartDateInput(e.target.value)}
+            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm min-w-[160px]"
+          />
+          <button
+            type="button"
+            onClick={savePilotStartDate}
+            disabled={savingStartDate}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {savingStartDate ? 'Saving…' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={clearPilotStartDate}
+            disabled={savingStartDate}
+            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Clear (use all data)
+          </button>
+        </div>
+        {data?.pilotStartDate && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Current filter: from <strong>{data.pilotStartDate}</strong>
+          </p>
+        )}
+        {startDateError && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{startDateError}</p>}
+      </section>
+
       {/* Header: title, week selector, last updated, export */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

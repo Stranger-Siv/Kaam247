@@ -22,6 +22,7 @@ const {
   getDashboard,
   getDashboardCharts,
   getPilotDashboard,
+  setPilotStartDate,
   getWorkers,
   getChats,
   getChatByTaskId,
@@ -111,6 +112,8 @@ router.get('/dashboard/charts', getDashboardCharts)
 
 // GET /api/admin/pilot-dashboard?week=1 - Pilot success dashboard (week 1–4)
 router.get('/pilot-dashboard', getPilotDashboard)
+// PUT /api/admin/pilot-dashboard/start-date - Set pilot start date (body: { pilotStartDate: "YYYY-MM-DD" })
+router.put('/pilot-dashboard/start-date', setPilotStartDate)
 
 // ============================================
 // WORKERS
