@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { createUser, updateProfile, getActivity, getEarnings, getTransactions, getProfile, submitOnboardingFeedback, submitProfileFeedback, getCancellationStatus, getActiveTask, savePushSubscription, saveTaskTemplate, getTaskTemplates, deleteTaskTemplate, toggleSavedTask, getAvailabilitySchedule, updateAvailabilitySchedule } = require('../controllers/userController')
-const { createTicket, getMyTickets } = require('../controllers/supportTicketController')
+const { createTicket, getMyTickets, getMyTicketById, sendUserTicketMessage } = require('../controllers/supportTicketController')
 const { authenticate } = require('../middleware/auth')
 
 // POST /api/users - Create user (public)
@@ -48,6 +48,12 @@ router.post('/users/me/tickets', authenticate, createTicket)
 
 // GET /api/users/me/tickets - List current user's tickets
 router.get('/users/me/tickets', authenticate, getMyTickets)
+
+// GET /api/users/me/tickets/:ticketId - Get one ticket with messages (own only)
+router.get('/users/me/tickets/:ticketId', authenticate, getMyTicketById)
+
+// POST /api/users/me/tickets/:ticketId/messages - Send message (only when ticket ACCEPTED)
+router.post('/users/me/tickets/:ticketId/messages', authenticate, sendUserTicketMessage)
 
 // POST /api/users/me/push-subscription - Save FCM token for push notifications
 router.post('/users/me/push-subscription', authenticate, savePushSubscription)

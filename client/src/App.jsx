@@ -57,8 +57,11 @@ const AdminReviews = lazyWithRetry(() => import('./pages/admin/AdminReviews'))
 const AdminLogs = lazyWithRetry(() => import('./pages/admin/AdminLogs'))
 const AdminAnalytics = lazyWithRetry(() => import('./pages/admin/AdminAnalytics'))
 const AdminTickets = lazyWithRetry(() => import('./pages/admin/AdminTickets'))
+const AdminTicketDetail = lazyWithRetry(() => import('./pages/admin/AdminTicketDetail'))
 const AdminFeedback = lazyWithRetry(() => import('./pages/admin/AdminFeedback'))
 const SetupProfile = lazyWithRetry(() => import('./pages/SetupProfile'))
+const Support = lazyWithRetry(() => import('./pages/Support'))
+const SupportTicketDetail = lazyWithRetry(() => import('./pages/SupportTicketDetail'))
 
 const HomeOrRedirect = () => {
   const { isAuthenticated, loading } = useAuth()
@@ -165,6 +168,8 @@ const AppContent = () => (
                                 }
                               />
                               <Route path="/profile" element={<Profile />} />
+                              <Route path="/support" element={<Support />} />
+                              <Route path="/support/:ticketId" element={<SupportTicketDetail />} />
                               <Route path="/settings" element={<Settings />} />
                               <Route path="/settings/profile" element={<SettingsProfile />} />
                               <Route path="/settings/preferences" element={<ModeProtectedRoute allowedMode="worker"><SettingsPreferences /></ModeProtectedRoute>} />
@@ -213,6 +218,7 @@ const AppContent = () => (
                               <Route path="/admin/analytics" element={<AdminAnalytics />} />
                               <Route path="/admin/reports" element={<AdminReports />} />
                               <Route path="/admin/tickets" element={<AdminTickets />} />
+                              <Route path="/admin/tickets/:ticketId" element={<AdminTicketDetail />} />
                             </Route>
                           </Routes>
                         </Suspense>

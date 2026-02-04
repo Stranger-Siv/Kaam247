@@ -7,6 +7,7 @@ function AdminTickets() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [statusFilter, setStatusFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
   const [resolvingId, setResolvingId] = useState(null)
   const [resolveForm, setResolveForm] = useState({ newPhone: '', adminNotes: '', action: 'RESOLVED' })
 
@@ -15,9 +16,11 @@ function AdminTickets() {
       setLoading(true)
       setError(null)
       const token = localStorage.getItem('kaam247_token')
-      const url = statusFilter
-        ? `${API_BASE_URL}/api/admin/tickets?status=${statusFilter}`
-        : `${API_BASE_URL}/api/admin/tickets`
+      const params = new URLSearchParams()
+      if (statusFilter) params.set('status', statusFilter)
+      if (typeFilter) params.set('type', typeFilter)
+      const query = params.toString()
+      const url = `${API_BASE_URL}/api/admin/tickets${query ? '?' + query : ''}`
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.message || 'Failed to fetch tickets')
@@ -32,7 +35,7 @@ function AdminTickets() {
 
   useEffect(() => {
     fetchTickets()
-  }, [statusFilter])
+  }, [statusFilter, typeFilter])
 
   const handleResolve = async (ticketId, actionOverride) => {
     const action = actionOverride || resolveForm.action
@@ -75,23 +78,40 @@ function AdminTickets() {
     <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Support tickets</h1>
-        <p className="text-gray-600 dark:text-gray-400">Phone change requests. Resolve to update the user&apos;s phone.</p>
+        <p className="text-gray-600 dark:text-gray-400">Support chat tickets and phone change requests.</p>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        <span className="text-sm text-gray-600 dark:text-gray-400">Filter:</span>
-        {['', 'PENDING', 'RESOLVED', 'REJECTED'].map((s) => (
-          <button
-            key={s || 'all'}
-            onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${statusFilter === s
-              ? 'bg-blue-600 dark:bg-blue-500 text-white'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-          >
-            {s || 'All'}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
+          {['', 'PENDING', 'OPEN', 'ACCEPTED', 'RESOLVED', 'REJECTED'].map((s) => (
+            <button
+              key={s || 'all'}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${statusFilter === s
+                ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+            >
+              {s || 'All'}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-sm text-gray-600 dark:text-gray-400">Type:</span>
+          {['', 'SUPPORT', 'MOBILE_UPDATE'].map((t) => (
+            <button
+              key={t || 'all'}
+              onClick={() => setTypeFilter(t)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${typeFilter === t
+                ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+            >
+              {t || 'All'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {error && (
@@ -117,20 +137,35 @@ function AdminTickets() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-2">
                     <span className="font-medium text-gray-900 dark:text-gray-100">{t.type}</span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${t.status === 'PENDING' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200' :
-                      t.status === 'RESOLVED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
-                        'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${t.status === 'PENDING' || t.status === 'OPEN' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200' :
+                      t.status === 'ACCEPTED' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200' :
+                        t.status === 'RESOLVED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
+                          'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                       }`}>
                       {t.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    User: {t.user?.name} ({t.user?.email}) — Current phone: {t.user?.phone || '—'}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Requested: <strong>{t.requestedPhone || '—'}</strong>
-                    {t.reason && ` · Reason: ${t.reason}`}
-                  </p>
+                  {t.type === 'SUPPORT' ? (
+                    <>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{t.subject || 'Support'}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        User: {t.user?.name} ({t.user?.email})
+                      </p>
+                      {t.initialMessage && (
+                        <p className="text-sm text-gray-500 dark:text-gray-500 mt-1 line-clamp-2">{t.initialMessage}</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        User: {t.user?.name} ({t.user?.email}) — Current phone: {t.user?.phone || '—'}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Requested: <strong>{t.requestedPhone || '—'}</strong>
+                        {t.reason && ` · Reason: ${t.reason}`}
+                      </p>
+                    </>
+                  )}
                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">Created {formatDate(t.createdAt)}</p>
                   {t.resolvedAt && (
                     <p className="text-xs text-gray-500 dark:text-gray-500">Resolved {formatDate(t.resolvedAt)}</p>
@@ -139,7 +174,7 @@ function AdminTickets() {
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Admin: {t.adminNotes}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   {t.user?._id && (
                     <Link
                       to={`/admin/users/${t.user._id}`}
@@ -148,7 +183,15 @@ function AdminTickets() {
                       View user
                     </Link>
                   )}
-                  {t.status === 'PENDING' && (
+                  {t.type === 'SUPPORT' && (
+                    <Link
+                      to={`/admin/tickets/${t._id}`}
+                      className="px-3 py-1.5 text-sm font-medium bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600"
+                    >
+                      {t.status === 'OPEN' ? 'Accept & chat' : 'View chat'}
+                    </Link>
+                  )}
+                  {t.type === 'MOBILE_UPDATE' && t.status === 'PENDING' && (
                     <div className="flex flex-col gap-2">
                       <input
                         type="tel"

@@ -6,6 +6,7 @@ const { calculateDistance } = require('../utils/distance')
 const { sendPushToUser } = require('../utils/pushNotifications')
 
 const CHAT_ROOM_PREFIX = 'chat_'
+const TICKET_CHAT_ROOM_PREFIX = 'ticket_'
 
 let io = null
 
@@ -212,6 +213,31 @@ const initializeSocket = (server) => {
         socket.on('leave_task_chat', (data) => {
             const taskId = (data && data.taskId) ? data.taskId : data
             if (taskId) socket.leave(CHAT_ROOM_PREFIX + taskId)
+        })
+
+        // Support ticket chat: join room (user who owns ticket, or admin)
+        socket.on('join_ticket_chat', async (data) => {
+            try {
+                const ticketId = (data && data.ticketId) ? data.ticketId : data
+                if (!ticketId || !socket.userId) return
+                const mongoose = require('mongoose')
+                const SupportTicket = require('../models/SupportTicket')
+                const User = require('../models/User')
+                if (!mongoose.Types.ObjectId.isValid(ticketId)) return
+                const ticket = await SupportTicket.findById(ticketId).select('user status acceptedBy').lean()
+                if (!ticket) return
+                const userIdStr = socket.userId.toString()
+                const isUser = ticket.user && ticket.user.toString() === userIdStr
+                const isAdmin = await User.findById(userIdStr).then(u => u && (u.role === 'admin' || u.isAdmin === true)).catch(() => false)
+                if (isUser || isAdmin) {
+                    socket.join(TICKET_CHAT_ROOM_PREFIX + ticketId)
+                }
+            } catch (err) { }
+        })
+
+        socket.on('leave_ticket_chat', (data) => {
+            const ticketId = (data && data.ticketId) ? data.ticketId : data
+            if (ticketId) socket.leave(TICKET_CHAT_ROOM_PREFIX + ticketId)
         })
 
         // Handle disconnect
@@ -589,6 +615,17 @@ const emitReceiveMessage = (taskId, message) => {
     } catch (error) { }
 }
 
+// Support ticket chat: broadcast new message to ticket room
+const emitTicketMessage = (ticketId, message) => {
+    if (!io) return
+    try {
+        io.to(TICKET_CHAT_ROOM_PREFIX + ticketId).emit('ticket_message', {
+            ticketId: ticketId.toString(),
+            message
+        })
+    } catch (error) { }
+}
+
 module.exports = {
     initializeSocket,
     getIO,
@@ -601,6 +638,7 @@ module.exports = {
     notifyUserUpdated,
     notifyTaskUpdated,
     notifyAdminStatsRefresh,
-    emitReceiveMessage
+    emitReceiveMessage,
+    emitTicketMessage
 }
 

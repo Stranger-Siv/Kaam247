@@ -31,7 +31,7 @@ const {
   getLogs,
   getAnalytics
 } = require('../controllers/adminController')
-const { getTickets, resolveTicket } = require('../controllers/supportTicketController')
+const { getTickets, getAdminTicketById, acceptTicket, sendAdminTicketMessage, resolveTicket } = require('../controllers/supportTicketController')
 
 // All admin routes require authentication AND admin role
 // Apply both middlewares to all routes
@@ -146,9 +146,12 @@ router.get('/logs', getLogs)
 router.get('/analytics', getAnalytics)
 
 // ============================================
-// SUPPORT TICKETS (phone change etc.)
+// SUPPORT TICKETS (phone change + support chat)
 // ============================================
 router.get('/tickets', getTickets)
+router.get('/tickets/:ticketId', getAdminTicketById)
+router.patch('/tickets/:ticketId/accept', acceptTicket)
+router.post('/tickets/:ticketId/messages', sendAdminTicketMessage)
 router.patch('/tickets/:ticketId/resolve', resolveTicket)
 
 module.exports = router
