@@ -50,7 +50,7 @@ function AvailabilityToggle() {
           role="switch"
           aria-checked={isOnline}
           aria-label={isOnline ? 'On duty' : 'Off duty'}
-          className={`relative inline-flex h-8 w-20 rounded-full border-2 transition-colors duration-200
+          className={`relative inline-flex h-8 w-20 rounded-full border-2 transition-all duration-300 ease-out
             focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1
             disabled:opacity-50 disabled:cursor-not-allowed shrink-0
             ${isOnline
@@ -60,7 +60,7 @@ function AvailabilityToggle() {
         >
           {/* Label switches side with state */}
           <span
-            className={`absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold tracking-wide transition-all duration-200
+            className={`absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold tracking-wide transition-all duration-300 ease-out
               ${isOnline
                 ? 'left-3 text-gray-900'
                 : 'right-3 text-gray-600 dark:text-gray-300'
@@ -68,9 +68,9 @@ function AvailabilityToggle() {
           >
             {checkingActiveTask ? '...' : (isOnline ? 'ON' : 'OFF')}
           </span>
-          {/* Knob slides opposite to label */}
+          {/* Knob slides opposite to label with smooth easing */}
           <span
-            className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200
+            className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-md transition-all duration-300 ease-out
               ${isOnline ? 'right-1.5' : 'left-1.5'}
             `}
           />

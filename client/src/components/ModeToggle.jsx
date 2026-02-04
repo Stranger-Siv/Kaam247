@@ -66,7 +66,7 @@ function ModeToggle({ isMobile = false }) {
         <button
           onClick={handleToggleMode}
           disabled={checkingActiveTask}
-          className={`relative inline-flex items-center h-8 w-24 rounded-full border-2 transition-colors duration-200
+          className={`relative inline-flex items-center h-8 w-24 rounded-full border-2 transition-all duration-300 ease-out
             focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1
             disabled:opacity-50 disabled:cursor-not-allowed shrink-0
             ${userMode === 'worker'
@@ -76,7 +76,7 @@ function ModeToggle({ isMobile = false }) {
         >
           {/* Label switches side with mode */}
           <span
-            className={`absolute top-1/2 -translate-y-1/2 text-[10px] md:text-[11px] font-semibold tracking-wide transition-all duration-200
+            className={`absolute top-1/2 -translate-y-1/2 text-[10px] md:text-[11px] font-semibold tracking-wide transition-all duration-300 ease-out
               ${userMode === 'worker'
                 ? 'left-3 text-white'
                 : 'right-3 text-blue-600 dark:text-blue-300'
@@ -84,9 +84,9 @@ function ModeToggle({ isMobile = false }) {
           >
             {checkingActiveTask ? '...' : modeLabelShort.toUpperCase()}
           </span>
-          {/* Knob slides opposite to label */}
+          {/* Knob slides opposite to label with smooth easing */}
           <span
-            className="absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200"
+            className="absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-md transition-all duration-300 ease-out"
             style={userMode === 'worker' ? { right: '0.35rem' } : { left: '0.35rem' }}
           />
         </button>
