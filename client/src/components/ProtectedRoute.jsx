@@ -30,11 +30,16 @@ function ProtectedRoute({ children }) {
     }
   })()
 
-  // After Google login: profile not completed → must visit setup first
-  if (effectiveUser?.profileSetupCompleted === false && location.pathname !== '/setup-profile') {
+  // Require name and 10-digit phone (no bypass for Google auth)
+  const nameOk = effectiveUser?.name && String(effectiveUser.name).trim().length > 0
+  const phoneDigits = (effectiveUser?.phone && String(effectiveUser.phone).replace(/\D/g, '')) || ''
+  const phoneOk = phoneDigits.length === 10
+  const setupRequired = effectiveUser?.profileSetupCompleted === false || !nameOk || !phoneOk
+
+  if (setupRequired && location.pathname !== '/setup-profile') {
     return <Navigate to="/setup-profile" replace />
   }
-  if (effectiveUser?.profileSetupCompleted !== false && location.pathname === '/setup-profile') {
+  if (!setupRequired && location.pathname === '/setup-profile') {
     return <Navigate to={effectiveUser?.role === 'admin' ? '/admin' : '/dashboard'} replace />
   }
 

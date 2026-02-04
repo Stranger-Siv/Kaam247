@@ -302,8 +302,14 @@ const googleLogin = async (req, res) => {
       })
     }
 
-    const token = generateToken(user._id)
-    res.cookie('token', token, getCookieOptions())
+    // Require name and 10-digit phone for Google sign-in: cannot bypass setup
+    const nameOk = user.name && String(user.name).trim().length > 0
+    const phoneDigits = (user.phone && String(user.phone).replace(/\D/g, '')) || ''
+    const phoneOk = phoneDigits.length === 10
+    if (!nameOk || !phoneOk) {
+      user.profileSetupCompleted = false
+      await user.save()
+    }
 
     const profileSetupRequired = user.profileSetupCompleted === false
 
