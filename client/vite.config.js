@@ -10,7 +10,7 @@ export default defineConfig({
       // Manifest/icons are still generated, but SW is only registered if you manually do it.
       injectRegister: null,
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo.svg', 'icons/*.png'],
+      includeAssets: ['favicon.ico', 'logo.svg', 'icons/kaam247_pw.jpeg', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifestFilename: 'manifest.json',
       // Disable PWA service worker in development for cleaner console
       // PWA will still work in production builds
@@ -30,6 +30,18 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
+            src: '/icons/kaam247_pw.jpeg',
+            sizes: '192x192',
+            type: 'image/jpeg',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/kaam247_pw.jpeg',
+            sizes: '512x512',
+            type: 'image/jpeg',
+            purpose: 'any maskable'
+          },
+          {
             src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
@@ -45,6 +57,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Exclude large PWA icon from precache (Workbox default limit is 2 MiB)
+        globIgnores: ['**/kaam247_pwa.png'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB for other assets
         // Exclude API routes from precaching
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],

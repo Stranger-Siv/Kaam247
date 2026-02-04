@@ -10,15 +10,15 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/kaam247_pwa.png",
+      "src": "/icons/kaam247_pw.jpeg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/kaam247_pwa.png",
+      "src": "/icons/kaam247_pw.jpeg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {

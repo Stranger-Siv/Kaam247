@@ -48,6 +48,10 @@ const initializeSocket = (server) => {
                     return
                 }
 
+                // Store userId on socket so join_ticket_chat, join_task_chat, etc. can identify this client
+                socket.userId = userId.toString()
+                socket.roleMode = mode || role || 'poster'
+
                 // Update lastSeen timestamp (if user exists)
                 const mongoose = require('mongoose')
                 if (mongoose.Types.ObjectId.isValid(userId)) {
@@ -59,7 +63,7 @@ const initializeSocket = (server) => {
                 // Register worker if mode is worker and online
                 if (mode === 'worker' && isOnline) {
                     socketManager.addOnlineWorker(socket.id, userId, location, 5)
-                } else if (mode === 'poster') {
+                } else {
                     socketManager.addOnlineUser(socket.id, userId)
                 }
             } catch (error) { }
