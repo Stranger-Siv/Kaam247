@@ -90,7 +90,7 @@ function PostTask() {
   useEffect(() => {
     const fetchCommission = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/platform-config`)
+        const res = await fetch(`${API_BASE_URL}/api/platform-config`)
         if (!res.ok) return
         const data = await res.json().catch(() => ({}))
         if (typeof data.platformCommissionPercent === 'number') {
