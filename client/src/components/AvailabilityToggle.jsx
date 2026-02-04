@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAvailability } from '../context/AvailabilityContext'
 import { useUserMode } from '../context/UserModeContext'
 import ActiveTaskModal from './ActiveTaskModal'
@@ -8,6 +8,12 @@ function AvailabilityToggle() {
   const { userMode } = useUserMode()
   const [modalOpen, setModalOpen] = useState(false)
   const [activeTaskData, setActiveTaskData] = useState(null)
+  const [uiOnline, setUiOnline] = useState(isOnline)
+
+  // Keep visual state in sync with context
+  useEffect(() => {
+    setUiOnline(isOnline)
+  }, [isOnline])
 
   // Disable toggle in POST TASK mode
   const isDisabled = userMode === 'poster' || checkingActiveTask
@@ -15,7 +21,10 @@ function AvailabilityToggle() {
   const toggleAvailability = async () => {
     if (isDisabled) return
 
-    const newStatus = !isOnline
+    const newStatus = !uiOnline
+
+    // Optimistically update UI for snappy feel
+    setUiOnline(newStatus)
 
     // Only check for active tasks when trying to go offline
     if (!newStatus) {
@@ -25,7 +34,8 @@ function AvailabilityToggle() {
       })
 
       if (!success) {
-        // Going offline was blocked
+        // Going offline was blocked, revert UI
+        setUiOnline(true)
         return
       }
     } else {
@@ -34,6 +44,8 @@ function AvailabilityToggle() {
       if (!success) {
         // Block going ON DUTY if we couldn't get location or permission
         alert('Location permission is required to go ON DUTY. Please enable location access and try again.')
+        // Revert UI
+        setUiOnline(false)
         return
       }
     }
@@ -48,12 +60,12 @@ function AvailabilityToggle() {
           disabled={isDisabled}
           type="button"
           role="switch"
-          aria-checked={isOnline}
-          aria-label={isOnline ? 'On duty' : 'Off duty'}
+          aria-checked={uiOnline}
+          aria-label={uiOnline ? 'On duty' : 'Off duty'}
           className={`relative inline-flex h-8 w-20 rounded-full border-2 transition-all duration-300 ease-out
             focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1
             disabled:opacity-50 disabled:cursor-not-allowed shrink-0
-            ${isOnline
+            ${uiOnline
               ? 'bg-emerald-400 border-emerald-400'
               : 'bg-transparent border-gray-300 dark:border-gray-500'
             }`}
@@ -61,17 +73,17 @@ function AvailabilityToggle() {
           {/* Label switches side with state */}
           <span
             className={`absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold tracking-wide transition-all duration-300 ease-out
-              ${isOnline
+              ${uiOnline
                 ? 'left-3 text-gray-900'
                 : 'right-3 text-gray-600 dark:text-gray-300'
               }`}
           >
-            {checkingActiveTask ? '...' : (isOnline ? 'ON' : 'OFF')}
+            {checkingActiveTask ? '...' : (uiOnline ? 'ON' : 'OFF')}
           </span>
           {/* Knob slides opposite to label with smooth easing */}
           <span
             className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-md transition-all duration-300 ease-out
-              ${isOnline ? 'right-1.5' : 'left-1.5'}
+              ${uiOnline ? 'right-1.5' : 'left-1.5'}
             `}
           />
         </button>
