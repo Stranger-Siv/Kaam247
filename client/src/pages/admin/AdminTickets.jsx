@@ -91,11 +91,14 @@ function AdminTickets() {
         <p className="text-gray-600 dark:text-gray-400">Support chat tickets and phone change requests.</p>
       </div>
 
-      <div className="mb-4 relative inline-block" ref={filterRef}>
+      <div
+        className="mb-4 relative inline-block w-full max-w-xs sm:max-w-sm md:w-auto"
+        ref={filterRef}
+      >
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); setFilterOpen((o) => !o) }}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${statusFilter || typeFilter
+          className={`flex items-center justify-between md:justify-start gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full md:w-auto ${statusFilter || typeFilter
               ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
               : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
@@ -111,7 +114,7 @@ function AdminTickets() {
           )}
         </button>
         {filterOpen && (
-          <div className="absolute left-0 top-full mt-1 z-50 w-72 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg py-3 px-4">
+          <div className="absolute left-0 top-full mt-1 z-50 w-full sm:w-72 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg py-3 px-4">
             <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Status</p>
             <div className="flex flex-wrap gap-2 mb-3">
               {['', 'PENDING', 'OPEN', 'ACCEPTED', 'RESOLVED', 'REJECTED'].map((s) => (
