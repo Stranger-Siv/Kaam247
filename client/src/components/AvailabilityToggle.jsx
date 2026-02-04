@@ -91,7 +91,7 @@ function AvailabilityToggle() {
         {/* Tooltip - desktop only (no hover popover on small screens) */}
         {userMode === 'worker' && !isOnline && (
           <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 hidden md:group-hover:block z-50">
-            <div className="relative inline-block bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap text-center border border-gray-700">
+            <div className="relative inline-flex items-center justify-center bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 text-xs rounded-lg px-4 py-2 shadow-lg w-[260px] whitespace-nowrap text-center border border-gray-700">
               Go online to receive nearby task alerts
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45 border-l border-t border-gray-700" />
             </div>
