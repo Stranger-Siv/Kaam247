@@ -6,6 +6,7 @@ import { useOnboarding } from '../../context/OnboardingContext'
 import { usePWAInstall } from '../../context/PWAInstallContext'
 import ModeToggle from '../ModeToggle'
 import AvailabilityToggle from '../AvailabilityToggle'
+import ThemeToggle from '../ThemeToggle'
 import Footer from './Footer'
 import NotificationToast from '../NotificationToast'
 import ReminderToast from '../ReminderToast'
@@ -131,6 +132,7 @@ function MainLayout() {
                             </Link>
                             <div className="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-1"></div>
                             {userMode === 'worker' && <AvailabilityToggle />}
+                            <ThemeToggle />
                             <ModeToggle />
                             <button
                                 onClick={handleLogout}
