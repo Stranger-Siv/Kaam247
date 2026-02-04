@@ -1222,7 +1222,7 @@ function Dashboard() {
                     </div>
 
                     {/* Task Stats - Worker Mode */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6 mb-10 sm:mb-12 lg:mb-14">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6 mb-4 sm:mb-6">
                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
@@ -1287,6 +1287,11 @@ function Dashboard() {
                                 )}
                             </div>
                         </div>
+                    </div>
+                    <div className="mb-10 sm:mb-12 lg:mb-14">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
+                            Platform commission: {platformCommissionPercent}% · You receive ~{Math.max(0, 100 - platformCommissionPercent)}% of task budget
+                        </span>
                     </div>
 
                     {/* Pending Confirmations (poster actions) - shown even in worker mode */}
@@ -1518,7 +1523,7 @@ function Dashboard() {
                     </div>
 
                     {/* Task Stats - Poster Mode */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mb-10 sm:mb-12 lg:mb-14">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mb-4 sm:mb-6">
                         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-7 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
@@ -1564,9 +1569,11 @@ function Dashboard() {
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{posterStats.cancelled}</p>
                         </div>
                     </div>
-                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-10 sm:mb-12">
-                        Current platform commission on tasks: <span className="font-semibold text-gray-900 dark:text-gray-100">{platformCommissionPercent}%</span>.
-                    </p>
+                    <div className="mb-10 sm:mb-12 lg:mb-14">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
+                            Platform commission on tasks: {platformCommissionPercent}% · Worker receives ~{Math.max(0, 100 - platformCommissionPercent)}%
+                        </span>
+                    </div>
 
                     {/* Task Templates Section */}
                     <div className="mb-10 sm:mb-12 lg:mb-14">

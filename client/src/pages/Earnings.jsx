@@ -175,12 +175,14 @@ function Earnings() {
 
   return (
     <div className="max-w-6xl mx-auto px-2 sm:px-8 md:px-0">
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-5">
         <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Earnings</h1>
         <p className="text-gray-600 dark:text-gray-400">View earnings and activity by date</p>
-        <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-          Platform commission currently: <span className="font-semibold text-gray-900 dark:text-gray-100">{platformCommissionPercent}%</span>. Earnings shown here are before any offline payment adjustments.
-        </p>
+      </div>
+      <div className="mb-6">
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700">
+          Platform commission: {platformCommissionPercent}% · You receive ~{Math.max(0, 100 - platformCommissionPercent)}% of each task budget
+        </span>
       </div>
 
       {/* Compact summary */}
