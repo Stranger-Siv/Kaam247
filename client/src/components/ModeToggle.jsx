@@ -66,11 +66,26 @@ function ModeToggle({ isMobile = false }) {
         <button
           onClick={handleToggleMode}
           disabled={checkingActiveTask}
-          className="px-2.5 md:px-3.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] md:text-xs font-semibold rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-7 md:h-8 flex items-center touch-manipulation"
+          className={`relative inline-flex items-center h-8 w-24 rounded-full border-2 transition-colors duration-200
+            focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1
+            disabled:opacity-50 disabled:cursor-not-allowed shrink-0
+            ${userMode === 'worker'
+              ? 'bg-blue-500 border-blue-500'
+              : 'bg-transparent border-blue-400 dark:border-blue-500'
+            }`}
         >
-          {checkingActiveTask ? 'Checking...' : (
-            <span className="px-1">{modeLabelShort}</span>
-          )}
+          <span className="flex items-center justify-between w-full px-2">
+            <span
+              className={`text-[10px] md:text-[11px] font-semibold tracking-wide
+                ${userMode === 'worker' ? 'text-white' : 'text-blue-600 dark:text-blue-300'}
+              `}
+            >
+              {checkingActiveTask ? '...' : modeLabelShort.toUpperCase()}
+            </span>
+            <span
+              className="h-5 w-5 rounded-full bg-white shadow-sm"
+            />
+          </span>
         </button>
       </div>
       <ActiveTaskModal

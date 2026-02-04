@@ -42,7 +42,7 @@ function AvailabilityToggle() {
   return (
     <>
       <div className="flex items-center gap-2 relative group flex-shrink-0">
-        {/* Compact capsule toggle with ON/OFF text inside */}
+        {/* Capsule toggle with ON/OFF text and knob, similar to reference */}
         <button
           onClick={toggleAvailability}
           disabled={isDisabled}
@@ -50,30 +50,38 @@ function AvailabilityToggle() {
           role="switch"
           aria-checked={isOnline}
           aria-label={isOnline ? 'On duty' : 'Off duty'}
-          className={`inline-flex items-center justify-center px-3 h-8 rounded-full text-xs font-semibold tracking-wide
+          className={`relative inline-flex items-center h-8 w-20 rounded-full border-2 transition-colors duration-200
             focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1
             disabled:opacity-50 disabled:cursor-not-allowed shrink-0
             ${isOnline
-              ? 'bg-green-500 dark:bg-green-600 text-white'
-              : 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
+              ? 'bg-emerald-400 border-emerald-400'
+              : 'bg-transparent border-gray-300 dark:border-gray-500'
             }`}
         >
-          {checkingActiveTask
-            ? '...'
-            : isOnline
-              ? 'ON'
-              : 'OFF'}
+          <span className="flex items-center justify-between w-full px-2">
+            <span
+              className={`text-[11px] font-semibold tracking-wide
+                ${isOnline ? 'text-gray-900' : 'text-gray-600 dark:text-gray-300'}
+              `}
+            >
+              {checkingActiveTask ? '...' : (isOnline ? 'ON' : 'OFF')}
+            </span>
+            <span
+              className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200
+                ${isOnline ? 'translate-x-0' : 'translate-x-0'}
+              `}
+            />
+          </span>
         </button>
 
-        {/* Tooltip - Desktop Only */}
+        {/* Tooltip - desktop only (no hover popover on small screens) */}
         {userMode === 'worker' && !isOnline && (
-          <div className="absolute left-0 top-full mt-2 hidden md:block group-hover:block z-50">
-            <div className="bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 text-xs rounded-lg px-4 py-2 shadow-lg w-56 text-left border border-gray-700">
+          <div className="absolute left-0 top-full mt-2 hidden md:group-hover:block z-50">
+            <div className="relative bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 text-xs rounded-lg px-3 py-2 shadow-lg w-52 text-left border border-gray-700">
               Go online to receive nearby task alerts
-              <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45 border-l border-t border-gray-700"></div>
+              <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45 border-l border-t border-gray-700" />
             </div>
           </div>
-
         )}
       </div>
       <ActiveTaskModal
