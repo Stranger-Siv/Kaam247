@@ -88,7 +88,7 @@ function AdminLogs() {
 
       {/* Filter icon + dropdown */}
       <div
-        className="mb-6 relative inline-block w-full max-w-xs sm:max-w-sm md:w-auto"
+        className="mb-6 relative block w-full max-w-md"
         ref={filterRef}
       >
         <button

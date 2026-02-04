@@ -128,7 +128,7 @@ function AdminWorkers() {
       </div>
 
       {/* Filter icon + dropdown */}
-      <div className="mb-5 sm:mb-6 lg:mb-8 relative inline-block" ref={filterRef}>
+      <div className="mb-5 sm:mb-6 lg:mb-8 relative block w-full max-w-md" ref={filterRef}>
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); setFilterOpen((o) => !o) }}

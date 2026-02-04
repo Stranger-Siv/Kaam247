@@ -92,7 +92,7 @@ function AdminTickets() {
       </div>
 
       <div
-        className="mb-4 relative inline-block w-full max-w-xs sm:max-w-sm md:w-auto"
+        className="mb-4 relative block w-full max-w-md"
         ref={filterRef}
       >
         <button
