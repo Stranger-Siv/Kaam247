@@ -4,8 +4,8 @@ import { useUserMode } from '../context/UserModeContext'
 import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../config/env'
-import ModeToggle from '../components/ModeToggle'
 import { usePWAInstall } from '../context/PWAInstallContext'
+import ThemeToggle from '../components/ThemeToggle'
 
 function Profile() {
     const { userMode } = useUserMode()
@@ -483,7 +483,7 @@ function Profile() {
                 )}
             </div>
 
-            {/* Account actions: Settings, Mode toggle, Install app, Logout */}
+            {/* Account actions: Settings, theme, Install app, Logout */}
             <div className="bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-0 sm:border border-gray-200 dark:border-gray-700 p-5 sm:p-6">
                 <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Account</h2>
                 <div className="space-y-4">
@@ -508,8 +508,12 @@ function Profile() {
                     >
                         Help & Support
                     </Link>
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-                        <ModeToggle isMobile={true} />
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Appearance</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Switch between light and dark mode</p>
+                        </div>
+                        <ThemeToggle />
                     </div>
                     <button
                         onClick={handleLogout}
