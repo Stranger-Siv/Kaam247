@@ -143,7 +143,8 @@ function MainLayout() {
                         {/* Mobile Header Right Side - Availability + Mode toggle (small screens) */}
                         <div className="md:hidden flex items-center gap-2">
                             {userMode === 'worker' && <AvailabilityToggle />}
-                            <ModeToggle isMobile={true} />
+                            {/* Use compact header variant (same as desktop button, works well on small screens) */}
+                            <ModeToggle />
                         </div>
                     </div>
                 </div>
