@@ -131,6 +131,8 @@ function PilotDashboard() {
       ['Metric', 'Value', 'Target'],
       ['WAU', data.metrics?.wau ?? '', data.metrics?.wauTarget ?? '100+'],
       ['Tasks Posted (week)', data.metrics?.tasksPostedThisWeek ?? '', '3-5/day'],
+      ['New Users (week)', data.metrics?.newUsersThisWeek ?? '', '—'],
+      ['New Users per day', data.metrics?.newUsersPerDay ?? '', '—'],
       ['Completion Rate %', data.metrics?.taskCompletionRate ?? '', '>70%'],
       ['Avg Time to Accept (h)', data.metrics?.avgTimeToAcceptHours ?? '', '<2'],
       ['Repeat User Rate %', data.metrics?.repeatUserRate ?? '', '>40%'],
@@ -257,10 +259,10 @@ function PilotDashboard() {
         </div>
       </div>
 
-      {/* Top row: 5 KPI cards */}
+      {/* Top row: KPI cards */}
       <section>
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Key metrics</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
           <MetricCard
             label="Weekly Active Users (WAU)"
             value={m.wau ?? 0}
@@ -294,6 +296,14 @@ function PilotDashboard() {
             target={m.repeatUserTarget ?? 40}
             unit="%"
             goodWhenAbove
+          />
+          <MetricCard
+            label="New users (this week)"
+            value={m.newUsersThisWeek ?? 0}
+          />
+          <MetricCard
+            label="New users per day"
+            value={m.newUsersPerDay ?? 0}
           />
         </div>
       </section>

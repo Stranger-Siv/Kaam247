@@ -1407,6 +1407,10 @@ const getPilotDashboard = async (req, res) => {
     const repeatUsers = Object.values(taskCountByUser).filter((c) => c >= 2).length
     const repeatUserRate = wau > 0 ? Math.round((repeatUsers / wau) * 100) : 0
 
+    // ---- New registered users in period (for this week) ----
+    const newUsersInPeriod = await User.countDocuments({ role: 'user', createdAt: { $gte: startEff, $lte: end } })
+    const newUsersPerDay = Math.round((newUsersInPeriod / 7) * 10) / 10
+
     // ---- Weekly growth: last 4 weeks (users, tasks posted, tasks completed), on or after pilot start ----
     const weeklyGrowth = []
     for (let w = 1; w <= 4; w++) {
@@ -1511,7 +1515,9 @@ const getPilotDashboard = async (req, res) => {
         avgTimeToAcceptHours,
         avgTimeToAcceptTarget: 2,
         repeatUserRate,
-        repeatUserTarget: 40
+        repeatUserTarget: 40,
+        newUsersThisWeek: newUsersInPeriod,
+        newUsersPerDay
       },
       weeklyGrowth,
       categories,
