@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../../config/env'
 
@@ -9,12 +9,22 @@ function AdminTasks() {
   const [statusFilter, setStatusFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [cityFilter, setCityFilter] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const filterRef = useRef(null)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
     total: 0,
     pages: 0
   })
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false)
+    }
+    if (filterOpen) document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [filterOpen])
 
   useEffect(() => {
     fetchTasks()
@@ -124,55 +134,68 @@ function AdminTasks() {
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed break-words">Monitor and manage all tasks</p>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-4 sm:p-5 lg:p-6 mb-5 sm:mb-6 lg:mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value)
-                setPagination(prev => ({ ...prev, page: 1 }))
-              }}
-              className="w-full px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation"
-            >
-              <option value="">All Status</option>
-              <option value="SEARCHING">Searching</option>
-              <option value="ACCEPTED">Accepted</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="CANCELLED">Cancelled</option>
-              <option value="CANCELLED_BY_ADMIN">Cancelled by Admin</option>
-            </select>
+      {/* Filter icon + dropdown */}
+      <div className="mb-5 sm:mb-6 lg:mb-8 relative inline-block" ref={filterRef}>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setFilterOpen((o) => !o) }}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${statusFilter || categoryFilter || cityFilter
+              ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          aria-label="Filters"
+          aria-expanded={filterOpen}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filter
+          {(statusFilter || categoryFilter || cityFilter) && (
+            <span className="ml-1 w-2 h-2 rounded-full bg-blue-500" aria-hidden />
+          )}
+        </button>
+        {filterOpen && (
+          <div className="absolute left-0 top-full mt-1 z-50 w-80 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg py-4 px-4">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => { setStatusFilter(e.target.value); setPagination(prev => ({ ...prev, page: 1 })) }}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Status</option>
+                  <option value="SEARCHING">Searching</option>
+                  <option value="ACCEPTED">Accepted</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="CANCELLED">Cancelled</option>
+                  <option value="CANCELLED_BY_ADMIN">Cancelled by Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Category</label>
+                <input
+                  type="text"
+                  value={categoryFilter}
+                  onChange={(e) => { setCategoryFilter(e.target.value); setPagination(prev => ({ ...prev, page: 1 })) }}
+                  placeholder="Filter by category"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">City</label>
+                <input
+                  type="text"
+                  value={cityFilter}
+                  onChange={(e) => { setCityFilter(e.target.value); setPagination(prev => ({ ...prev, page: 1 })) }}
+                  placeholder="Filter by city"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Category</label>
-            <input
-              type="text"
-              value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value)
-                setPagination(prev => ({ ...prev, page: 1 }))
-              }}
-              placeholder="Filter by category"
-              className="w-full px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px]"
-            />
-          </div>
-          <div>
-            <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">City</label>
-            <input
-              type="text"
-              value={cityFilter}
-              onChange={(e) => {
-                setCityFilter(e.target.value)
-                setPagination(prev => ({ ...prev, page: 1 }))
-              }}
-              placeholder="Filter by city"
-              className="w-full px-4 sm:px-5 py-3 sm:py-3.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base transition-colors min-h-[48px] sm:min-h-[52px]"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Tasks - Mobile Cards / Desktop Table */}

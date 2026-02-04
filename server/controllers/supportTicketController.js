@@ -117,7 +117,7 @@ const getMyTicketById = async (req, res) => {
   }
 }
 
-// POST /api/users/me/tickets/:ticketId/messages - Send message (user; only when ACCEPTED)
+// POST /api/users/me/tickets/:ticketId/messages - Send message (user; when OPEN or ACCEPTED)
 const sendUserTicketMessage = async (req, res) => {
   try {
     const userId = req.userId
@@ -137,10 +137,10 @@ const sendUserTicketMessage = async (req, res) => {
     if (!ticket) {
       return res.status(404).json({ error: 'Not found', message: 'Ticket not found' })
     }
-    if (ticket.status !== 'ACCEPTED') {
+    if (!['OPEN', 'ACCEPTED'].includes(ticket.status)) {
       return res.status(403).json({
         error: 'Chat not available',
-        message: 'You can send messages only after an admin accepts this ticket.'
+        message: 'You cannot send messages on a closed or rejected ticket.'
       })
     }
     const message = {

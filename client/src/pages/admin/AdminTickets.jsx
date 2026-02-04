@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../../config/env'
 
@@ -8,8 +8,18 @@ function AdminTickets() {
   const [error, setError] = useState(null)
   const [statusFilter, setStatusFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const filterRef = useRef(null)
   const [resolvingId, setResolvingId] = useState(null)
   const [resolveForm, setResolveForm] = useState({ newPhone: '', adminNotes: '', action: 'RESOLVED' })
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false)
+    }
+    if (filterOpen) document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [filterOpen])
 
   const fetchTickets = async () => {
     try {
@@ -81,37 +91,59 @@ function AdminTickets() {
         <p className="text-gray-600 dark:text-gray-400">Support chat tickets and phone change requests.</p>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-4">
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
-          {['', 'PENDING', 'OPEN', 'ACCEPTED', 'RESOLVED', 'REJECTED'].map((s) => (
-            <button
-              key={s || 'all'}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${statusFilter === s
-                ? 'bg-blue-600 dark:bg-blue-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-            >
-              {s || 'All'}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-sm text-gray-600 dark:text-gray-400">Type:</span>
-          {['', 'SUPPORT', 'MOBILE_UPDATE'].map((t) => (
-            <button
-              key={t || 'all'}
-              onClick={() => setTypeFilter(t)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${typeFilter === t
-                ? 'bg-blue-600 dark:bg-blue-500 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-            >
-              {t || 'All'}
-            </button>
-          ))}
-        </div>
+      <div className="mb-4 relative inline-block" ref={filterRef}>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setFilterOpen((o) => !o) }}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${statusFilter || typeFilter
+              ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          aria-label="Filters"
+          aria-expanded={filterOpen}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filter
+          {(statusFilter || typeFilter) && (
+            <span className="ml-1 w-2 h-2 rounded-full bg-blue-500" aria-hidden />
+          )}
+        </button>
+        {filterOpen && (
+          <div className="absolute left-0 top-full mt-1 z-50 w-72 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg py-3 px-4">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Status</p>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {['', 'PENDING', 'OPEN', 'ACCEPTED', 'RESOLVED', 'REJECTED'].map((s) => (
+                <button
+                  key={s || 'all'}
+                  onClick={() => setStatusFilter(s)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium ${statusFilter === s
+                    ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                >
+                  {s || 'All'}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Type</p>
+            <div className="flex flex-wrap gap-2">
+              {['', 'SUPPORT', 'MOBILE_UPDATE'].map((t) => (
+                <button
+                  key={t || 'all'}
+                  onClick={() => setTypeFilter(t)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium ${typeFilter === t
+                    ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                >
+                  {t || 'All'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (

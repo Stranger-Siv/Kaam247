@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../../config/env'
 import AdminConfirmModal from '../../components/admin/AdminConfirmModal'
@@ -10,6 +10,8 @@ function AdminReports() {
   const [error, setError] = useState(null)
   const [statusFilter, setStatusFilter] = useState('open')
   const [reasonFilter, setReasonFilter] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const filterRef = useRef(null)
   const [selectedReport, setSelectedReport] = useState(null)
   const [showResolveModal, setShowResolveModal] = useState(false)
   const [isResolving, setIsResolving] = useState(false)
@@ -20,6 +22,14 @@ function AdminReports() {
     total: 0,
     pages: 0
   })
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false)
+    }
+    if (filterOpen) document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [filterOpen])
 
   useEffect(() => {
     fetchReports()
@@ -149,42 +159,58 @@ function AdminReports() {
         <p className="text-gray-600 dark:text-gray-400 break-words">Review and manage user reports</p>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 p-3 sm:p-4 mb-4 sm:mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value)
-                setPagination(prev => ({ ...prev, page: 1 }))
-              }}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 min-h-[44px]"
-            >
-              <option value="open">Open</option>
-              <option value="resolved">Resolved</option>
-            </select>
+      {/* Filter icon + dropdown */}
+      <div className="mb-4 sm:mb-6 relative inline-block" ref={filterRef}>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setFilterOpen((o) => !o) }}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${reasonFilter || statusFilter !== 'open'
+              ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          aria-label="Filters"
+          aria-expanded={filterOpen}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filter
+          {(reasonFilter || statusFilter !== 'open') && (
+            <span className="ml-1 w-2 h-2 rounded-full bg-blue-500" aria-hidden />
+          )}
+        </button>
+        {filterOpen && (
+          <div className="absolute left-0 top-full mt-1 z-50 w-72 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg py-4 px-4">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => { setStatusFilter(e.target.value); setPagination(prev => ({ ...prev, page: 1 })) }}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="open">Open</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Reason</label>
+                <select
+                  value={reasonFilter}
+                  onChange={(e) => { setReasonFilter(e.target.value); setPagination(prev => ({ ...prev, page: 1 })) }}
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Reasons</option>
+                  <option value="Fake or misleading task">Fake or misleading task</option>
+                  <option value="User not responding">User not responding</option>
+                  <option value="Inappropriate content">Inappropriate content</option>
+                  <option value="Safety concern">Safety concern</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason</label>
-            <select
-              value={reasonFilter}
-              onChange={(e) => {
-                setReasonFilter(e.target.value)
-                setPagination(prev => ({ ...prev, page: 1 }))
-              }}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 min-h-[44px]"
-            >
-              <option value="">All Reasons</option>
-              <option value="Fake or misleading task">Fake or misleading task</option>
-              <option value="User not responding">User not responding</option>
-              <option value="Inappropriate content">Inappropriate content</option>
-              <option value="Safety concern">Safety concern</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Reports List */}
@@ -237,7 +263,7 @@ function AdminReports() {
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 break-words">{report.reportedUser.email}</p>
                         </div>
                       )}
-                      
+
                       {report.reportedTask && (
                         <div className="min-w-0">
                           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Reported Task</p>

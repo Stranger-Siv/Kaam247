@@ -127,7 +127,7 @@ function SupportTicketDetail() {
   const handleSend = async (e) => {
     e.preventDefault()
     const trimmed = inputText.trim()
-    if (!trimmed || sending || ticket?.status !== 'ACCEPTED') return
+    if (!trimmed || sending || !['OPEN', 'ACCEPTED'].includes(ticket?.status)) return
 
     const token = localStorage.getItem('kaam247_token')
     const optimistic = {
@@ -234,7 +234,7 @@ function SupportTicketDetail() {
             {ticket?.subject || 'Support ticket'}
           </h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {ticket?.status === 'OPEN' && 'Waiting for admin to accept'}
+            {ticket?.status === 'OPEN' && 'You can message now; admin will see when they accept'}
             {ticket?.status === 'ACCEPTED' && 'Chat with support'}
             {ticket?.status === 'RESOLVED' && 'Resolved'}
             {ticket?.status === 'REJECTED' && 'Closed'}
@@ -265,12 +265,15 @@ function SupportTicketDetail() {
         <div ref={messagesEndRef} />
       </div>
 
-      {ticket?.status === 'ACCEPTED' && (
+      {(ticket?.status === 'OPEN' || ticket?.status === 'ACCEPTED') && (
         <form
           onSubmit={handleSend}
           className="flex-shrink-0 px-4 pt-3 pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
           style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
         >
+          {ticket?.status === 'OPEN' && (
+            <p className="text-xs text-amber-700 dark:text-amber-300 mb-2">Admin hasn’t joined yet. Your messages will be visible when they accept.</p>
+          )}
           <div className="flex gap-3 max-w-4xl mx-auto">
             <input
               type="text"
@@ -289,15 +292,6 @@ function SupportTicketDetail() {
             </button>
           </div>
         </form>
-      )}
-
-      {ticket?.status === 'OPEN' && (
-        <div
-          className="flex-shrink-0 px-4 py-4 border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm"
-          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
-        >
-          An admin will accept this ticket soon. You’ll be able to chat here once they do.
-        </div>
       )}
     </div>
   )
