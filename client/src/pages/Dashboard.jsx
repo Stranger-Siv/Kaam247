@@ -55,6 +55,7 @@ function Dashboard() {
         cancelled: 0
     })
     const [pendingConfirmations, setPendingConfirmations] = useState([])
+    const [platformCommissionPercent, setPlatformCommissionPercent] = useState(0)
     const [taskTemplates, setTaskTemplates] = useState([])
     const [templatesLoading, setTemplatesLoading] = useState(false)
 
@@ -248,6 +249,23 @@ function Dashboard() {
             recoverState()
         }
     }, [user?.id, userMode]) // Run on mount and mode change
+
+    // Fetch platform commission (public config) for display to both worker and poster
+    useEffect(() => {
+        const fetchCommission = async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/platform-config`)
+                if (!res.ok) return
+                const data = await res.json().catch(() => ({}))
+                if (typeof data.platformCommissionPercent === 'number') {
+                    setPlatformCommissionPercent(data.platformCommissionPercent)
+                }
+            } catch {
+                // ignore
+            }
+        }
+        fetchCommission()
+    }, [])
 
     // STATE RECOVERY: Listen for socket reconnection
     useEffect(() => {
@@ -1546,6 +1564,9 @@ function Dashboard() {
                             <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 leading-none">{posterStats.cancelled}</p>
                         </div>
                     </div>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-10 sm:mb-12">
+                        Current platform commission on tasks: <span className="font-semibold text-gray-900 dark:text-gray-100">{platformCommissionPercent}%</span>.
+                    </p>
 
                     {/* Task Templates Section */}
                     <div className="mb-10 sm:mb-12 lg:mb-14">

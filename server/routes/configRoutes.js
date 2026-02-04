@@ -27,4 +27,23 @@ router.get('/categories', async (req, res) => {
   }
 })
 
+// GET /api/platform-config - Public platform config (commission %, etc.)
+router.get('/platform-config', async (req, res) => {
+  try {
+    let commissionPercent = 0
+    const doc = await Config.findOne({ key: 'platformCommissionPercent' }).lean()
+    if (doc && typeof doc.value === 'number') {
+      commissionPercent = doc.value
+    }
+    res.json({
+      platformCommissionPercent: commissionPercent
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch platform config'
+    })
+  }
+})
+
 module.exports = router

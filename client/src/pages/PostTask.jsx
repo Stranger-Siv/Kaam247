@@ -38,6 +38,7 @@ function PostTask() {
   const [isGettingLocation, setIsGettingLocation] = useState(false)
   const [locationError, setLocationError] = useState(null)
   const [mapCenter, setMapCenter] = useState([12.9716, 77.5946]) // Bangalore default [lat, lng]
+  const [platformCommissionPercent, setPlatformCommissionPercent] = useState(0)
 
   // Load template from URL query params
   useEffect(() => {
@@ -84,6 +85,23 @@ function PostTask() {
 
   const { categories } = useCategories()
   const { requestShow: requestPWAInstall } = usePWAInstall()
+
+  // Fetch platform commission percent (public config)
+  useEffect(() => {
+    const fetchCommission = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/platform-config`)
+        if (!res.ok) return
+        const data = await res.json().catch(() => ({}))
+        if (typeof data.platformCommissionPercent === 'number') {
+          setPlatformCommissionPercent(data.platformCommissionPercent)
+        }
+      } catch {
+        // ignore, default 0%
+      }
+    }
+    fetchCommission()
+  }, [])
 
   const validForDaysOptions = [
     { value: '1', label: '1 day' },
@@ -436,10 +454,10 @@ function PostTask() {
           </p>
           <div className="mt-3 sm:mt-4 rounded-xl border border-emerald-300 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3">
             <p className="text-xs sm:text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-              We are currently charging <span className="underline">0% commission</span> on tasks.
+              We are currently charging <span className="underline">{platformCommissionPercent}% commission</span> on tasks.
             </p>
             <p className="text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 mt-1">
-              Create your first task now and every rupee you pay goes directly to the worker.
+              Workers receive approximately <span className="font-semibold">{Math.max(0, 100 - platformCommissionPercent)}%</span> of the task budget.
             </p>
           </div>
         </div>

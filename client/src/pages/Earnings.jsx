@@ -42,6 +42,7 @@ function Earnings() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [platformCommissionPercent, setPlatformCommissionPercent] = useState(0)
 
   const [viewMonth, setViewMonth] = useState(() => {
     const n = new Date()
@@ -134,6 +135,23 @@ function Earnings() {
     setViewMonth(new Date(n.getFullYear(), n.getMonth(), 1))
   }
 
+  // Fetch platform commission (public config)
+  useEffect(() => {
+    const fetchCommission = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/platform-config`)
+        if (!res.ok) return
+        const data = await res.json().catch(() => ({}))
+        if (typeof data.platformCommissionPercent === 'number') {
+          setPlatformCommissionPercent(data.platformCommissionPercent)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    fetchCommission()
+  }, [])
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto w-full px-2 sm:px-4 md:px-6 overflow-x-hidden">
@@ -161,7 +179,7 @@ function Earnings() {
         <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Earnings</h1>
         <p className="text-gray-600 dark:text-gray-400">View earnings and activity by date</p>
         <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-          Platform commission currently: <span className="font-semibold text-gray-900 dark:text-gray-100">0%</span>. You keep the full task budget for now.
+          Platform commission currently: <span className="font-semibold text-gray-900 dark:text-gray-100">{platformCommissionPercent}%</span>. Earnings shown here are before any offline payment adjustments.
         </p>
       </div>
 
