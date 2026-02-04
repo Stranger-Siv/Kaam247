@@ -42,40 +42,28 @@ function AvailabilityToggle() {
   return (
     <>
       <div className="flex items-center gap-2 relative group flex-shrink-0">
-        {/* Toggle Switch - 72×36px track */}
+        {/* Compact capsule toggle with ON/OFF text inside */}
         <button
           onClick={toggleAvailability}
           disabled={isDisabled}
           type="button"
           role="switch"
           aria-checked={isOnline}
-          aria-label={isOnline ? "Online" : "Offline"}
-          className={`relative inline-flex h-9 w-[72px] rounded-full transition-colors duration-200
-    focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2
-    disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden shrink-0
-    ${isOnline
-              ? "bg-green-500 dark:bg-green-600 hover:bg-green-600 dark:hover:bg-green-500"
-              : "bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600"
+          aria-label={isOnline ? 'On duty' : 'Off duty'}
+          className={`inline-flex items-center justify-center px-3 h-8 rounded-full text-xs font-semibold tracking-wide
+            focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1
+            disabled:opacity-50 disabled:cursor-not-allowed shrink-0
+            ${isOnline
+              ? 'bg-green-500 dark:bg-green-600 text-white'
+              : 'bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
             }`}
         >
-          {/* KNOB (BIG PILL) */}
-          <span
-            className={`absolute top-1/2 left-[2px] -translate-y-1/2 flex items-center justify-center
-      h-8 w-11 rounded-full bg-white dark:bg-gray-100 shadow-md
-      transition-transform duration-200 ease-out
-      ${isOnline ? "translate-x-[27px]" : "translate-x-0"}
-    `}
-          >
-            {/* INNER BALL */}
-            <span className="h-[22px] w-[22px] rounded-full bg-gray-300 dark:bg-gray-400" />
-          </span>
+          {checkingActiveTask
+            ? '...'
+            : isOnline
+              ? 'ON'
+              : 'OFF'}
         </button>
-
-        {/* Status Text - fixed width so layout doesn't shift */}
-        <span className={`text-xs font-semibold whitespace-nowrap w-[70px] text-left ${isOnline ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
-          }`}>
-          {isOnline ? 'ON DUTY' : 'OFF DUTY'}
-        </span>
 
         {/* Tooltip - Desktop Only */}
         {userMode === 'worker' && !isOnline && (

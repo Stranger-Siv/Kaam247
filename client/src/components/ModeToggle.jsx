@@ -9,7 +9,8 @@ function ModeToggle({ isMobile = false }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [activeTaskData, setActiveTaskData] = useState(null)
 
-  const modeLabel = userMode === 'worker' ? 'Perform Tasks' : 'Post Tasks'
+  const modeLabelLong = userMode === 'worker' ? 'Perform Tasks' : 'Post Tasks'
+  const modeLabelShort = userMode === 'worker' ? 'Worker' : 'Poster'
 
   const handleToggleMode = async () => {
     const success = await toggleMode(
@@ -36,7 +37,7 @@ function ModeToggle({ isMobile = false }) {
       <>
         <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mode: {modeLabel}</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mode: {modeLabelLong}</span>
           </div>
           <button
             onClick={handleToggleMode}
@@ -62,17 +63,13 @@ function ModeToggle({ isMobile = false }) {
   return (
     <>
       <div className="flex items-center gap-2 md:gap-3">
-        <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap hidden sm:inline">Mode:</span>
         <button
           onClick={handleToggleMode}
           disabled={checkingActiveTask}
-          className="px-2 md:px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs md:text-sm font-medium rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-7 md:h-8 flex items-center touch-manipulation"
+          className="px-2.5 md:px-3.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[11px] md:text-xs font-semibold rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed h-7 md:h-8 flex items-center touch-manipulation"
         >
           {checkingActiveTask ? 'Checking...' : (
-            <>
-              <span className="hidden sm:inline">{modeLabel}</span>
-              <span className="sm:hidden">Mode</span>
-            </>
+            <span className="px-1">{modeLabelShort}</span>
           )}
         </button>
       </div>
