@@ -88,15 +88,6 @@ function AvailabilityToggle() {
           />
         </button>
 
-        {/* Tooltip - desktop only (no hover popover on small screens) */}
-        {userMode === 'worker' && !isOnline && (
-          <div className="absolute left-0 top-full mt-2 hidden md:group-hover:block z-50">
-            <div className="relative bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 text-xs rounded-lg px-3 py-2 shadow-lg max-w-xs text-left border border-gray-700">
-              Go online to receive nearby task alerts
-              <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900 dark:bg-gray-800 transform rotate-45 border-l border-t border-gray-700" />
-            </div>
-          </div>
-        )}
       </div>
       <ActiveTaskModal
         isOpen={modalOpen}
