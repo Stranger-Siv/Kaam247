@@ -74,18 +74,21 @@ function ModeToggle({ isMobile = false }) {
               : 'bg-transparent border-blue-400 dark:border-blue-500'
             }`}
         >
-          <span className="flex items-center justify-between w-full px-2">
-            <span
-              className={`text-[10px] md:text-[11px] font-semibold tracking-wide
-                ${userMode === 'worker' ? 'text-white' : 'text-blue-600 dark:text-blue-300'}
-              `}
-            >
-              {checkingActiveTask ? '...' : modeLabelShort.toUpperCase()}
-            </span>
-            <span
-              className="h-5 w-5 rounded-full bg-white shadow-sm"
-            />
+          {/* Label switches side with mode */}
+          <span
+            className={`absolute top-1/2 -translate-y-1/2 text-[10px] md:text-[11px] font-semibold tracking-wide transition-all duration-200
+              ${userMode === 'worker'
+                ? 'left-3 text-white'
+                : 'right-3 text-blue-600 dark:text-blue-300'
+              }`}
+          >
+            {checkingActiveTask ? '...' : modeLabelShort.toUpperCase()}
           </span>
+          {/* Knob slides opposite to label */}
+          <span
+            className="absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200"
+            style={userMode === 'worker' ? { right: '0.35rem' } : { left: '0.35rem' }}
+          />
         </button>
       </div>
       <ActiveTaskModal

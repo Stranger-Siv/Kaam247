@@ -58,15 +58,17 @@ function AvailabilityToggle() {
               : 'bg-transparent border-gray-300 dark:border-gray-500'
             }`}
         >
-          {/* Label stays left inside capsule */}
+          {/* Label switches side with state */}
           <span
-            className={`absolute left-2 top-1/2 -translate-y-1/2 text-[11px] font-semibold tracking-wide
-              ${isOnline ? 'text-gray-900' : 'text-gray-600 dark:text-gray-300'}
-            `}
+            className={`absolute top-1/2 -translate-y-1/2 text-[11px] font-semibold tracking-wide transition-all duration-200
+              ${isOnline
+                ? 'left-3 text-gray-900'
+                : 'right-3 text-gray-600 dark:text-gray-300'
+              }`}
           >
             {checkingActiveTask ? '...' : (isOnline ? 'ON' : 'OFF')}
           </span>
-          {/* Knob slides left/right */}
+          {/* Knob slides opposite to label */}
           <span
             className={`absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200
               ${isOnline ? 'right-1.5' : 'left-1.5'}
