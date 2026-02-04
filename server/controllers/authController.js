@@ -311,6 +311,9 @@ const googleLogin = async (req, res) => {
       await user.save()
     }
 
+    const token = generateToken(user._id)
+    res.cookie('token', token, getCookieOptions())
+
     const profileSetupRequired = user.profileSetupCompleted === false
 
     return res.status(200).json({
