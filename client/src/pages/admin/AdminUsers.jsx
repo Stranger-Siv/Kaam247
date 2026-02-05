@@ -135,8 +135,8 @@ function AdminUsers() {
           type="button"
           onClick={(e) => { e.stopPropagation(); setFilterOpen((o) => !o) }}
           className={`flex items-center justify-between md:justify-start gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full md:w-auto ${search || statusFilter || roleFilter
-              ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
-              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           aria-label="Filters"
           aria-expanded={filterOpen}
@@ -303,8 +303,8 @@ function AdminUsers() {
             </div>
           </div>
 
-          {/* Pagination */}
-          {pagination.pages > 1 && (
+          {/* Pagination - show whenever we have users so "Next" is visible when there are more pages */}
+          {(pagination.total > 0 || users.length > 0) && (
             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400 text-center sm:text-left leading-relaxed">
                 Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} users
