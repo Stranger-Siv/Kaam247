@@ -7,6 +7,10 @@ const { calculateDistance } = require('../utils/distance')
 const socketManager = require('../socket/socketManager')
 const { parsePagination, paginationMeta } = require('../utils/pagination')
 
+// Geo query: radius required when lat/lng provided; cap to avoid expensive scans
+const GEO_RADIUS_DEFAULT_KM = 5
+const GEO_RADIUS_MAX_KM = 15
+
 const createTask = async (req, res) => {
   try {
     const { title, description, category, budget, location, postedBy, expectedDuration, expiresAt: expiresAtBody, validForDays, isOnCampus } = req.body
@@ -501,18 +505,51 @@ const acceptTask = async (req, res) => {
 
 const getAvailableTasks = async (req, res) => {
   try {
-    // Get worker location and filters from query params
-    const workerLat = req.query.lat ? parseFloat(req.query.lat) : null
-    const workerLng = req.query.lng ? parseFloat(req.query.lng) : null
-    const radiusKm = req.query.radius ? parseFloat(req.query.radius) : 5
     const category = req.query.category && String(req.query.category).trim() ? String(req.query.category).trim() : null
     const minBudget = req.query.minBudget != null && req.query.minBudget !== '' ? Number(req.query.minBudget) : null
     const maxBudget = req.query.maxBudget != null && req.query.maxBudget !== '' ? Number(req.query.maxBudget) : null
     const search = req.query.search && String(req.query.search).trim() ? String(req.query.search).trim() : null
     const sort = req.query.sort ? String(req.query.sort) : 'distance'
 
+    const rawLat = req.query.lat != null && req.query.lat !== '' ? req.query.lat : null
+    const rawLng = req.query.lng != null && req.query.lng !== '' ? req.query.lng : null
+    const rawRadius = req.query.radius != null && req.query.radius !== '' ? req.query.radius : null
+
+    const workerLat = rawLat !== null ? parseFloat(rawLat) : null
+    const workerLng = rawLng !== null ? parseFloat(rawLng) : null
+    const hasGeo = workerLat !== null || workerLng !== null
+
+    if (hasGeo) {
+      if (workerLat === null || workerLng === null || isNaN(workerLat) || isNaN(workerLng)) {
+        return res.status(400).json({
+          error: 'Invalid coordinates',
+          message: 'When using geo search, both lat and lng are required and must be valid numbers'
+        })
+      }
+      if (workerLat < -90 || workerLat > 90 || workerLng < -180 || workerLng > 180) {
+        return res.status(400).json({
+          error: 'Invalid coordinates',
+          message: 'Latitude must be between -90 and 90, longitude must be between -180 and 180'
+        })
+      }
+    }
+
+    const radiusKm = rawRadius !== null ? parseFloat(rawRadius) : (hasGeo ? GEO_RADIUS_DEFAULT_KM : null)
+    if (hasGeo && (isNaN(radiusKm) || radiusKm <= 0)) {
+      return res.status(400).json({
+        error: 'Invalid radius',
+        message: 'radius must be a positive number (in km)'
+      })
+    }
+    if (hasGeo && radiusKm > GEO_RADIUS_MAX_KM) {
+      return res.status(400).json({
+        error: 'Radius too large',
+        message: `radius must not exceed ${GEO_RADIUS_MAX_KM} km`
+      })
+    }
+
     const now = new Date()
-    const query = {
+    const baseQuery = {
       status: { $in: ['OPEN', 'SEARCHING'] },
       isHidden: { $ne: true },
       isRecurringTemplate: { $ne: true },
@@ -522,100 +559,92 @@ const getAvailableTasks = async (req, res) => {
         { expiresAt: { $gt: now } }
       ]
     }
-    if (category) query.category = category
+    if (category) baseQuery.category = category
     if (minBudget != null && !isNaN(minBudget) || maxBudget != null && !isNaN(maxBudget)) {
-      query.budget = {}
-      if (minBudget != null && !isNaN(minBudget)) query.budget.$gte = minBudget
-      if (maxBudget != null && !isNaN(maxBudget)) query.budget.$lte = maxBudget
+      baseQuery.budget = {}
+      if (minBudget != null && !isNaN(minBudget)) baseQuery.budget.$gte = minBudget
+      if (maxBudget != null && !isNaN(maxBudget)) baseQuery.budget.$lte = maxBudget
     }
     if (search) {
-      query.$and = (query.$and || []).concat([
+      baseQuery.$and = (baseQuery.$and || []).concat([
         { $or: [{ title: new RegExp(search, 'i') }, { description: new RegExp(search, 'i') }] }
       ])
     }
 
     const { page, limit, skip } = parsePagination(req.query)
     const listFields = '_id title description category budget status location createdAt'
-    const maxRead = 500
-    let tasks = await Task.find(query).select(listFields).limit(maxRead).lean()
 
-    // Calculate distances and filter if worker location is provided
-    if (workerLat !== null && workerLng !== null && !isNaN(workerLat) && !isNaN(workerLng)) {
-      // Validate worker coordinates
-      if (workerLat < -90 || workerLat > 90 || workerLng < -180 || workerLng > 180) {
-        return res.status(400).json({
-          error: 'Invalid coordinates',
-          message: 'Latitude must be between -90 and 90, longitude must be between -180 and 180'
-        })
+    if (hasGeo) {
+      // MongoDB $geoNear uses 2dsphere index on location; distance and radius filter in DB
+      const maxDistanceMeters = radiusKm * 1000
+      const geoNearStage = {
+        $geoNear: {
+          near: { type: 'Point', coordinates: [workerLng, workerLat] },
+          distanceField: 'distanceKm',
+          distanceMultiplier: 0.001,
+          maxDistance: maxDistanceMeters,
+          key: 'location',
+          spherical: true,
+          query: baseQuery,
+          num: 500
+        }
       }
 
-      tasks = tasks.map(task => {
-        if (task.location && task.location.coordinates && task.location.coordinates.length === 2) {
-          try {
-            const [taskLng, taskLat] = task.location.coordinates
-            // Validate task coordinates
-            if (isNaN(taskLat) || isNaN(taskLng) || taskLat < -90 || taskLat > 90 || taskLng < -180 || taskLng > 180) {
-              return {
-                ...task,
-                distanceKm: null
+      const sortStage = {}
+      if (sort === 'budget_desc') sortStage.budget = -1
+      else if (sort === 'budget_asc') sortStage.budget = 1
+      else if (sort === 'newest') sortStage.createdAt = -1
+      else sortStage.distanceKm = 1
+
+      const pipeline = [
+        geoNearStage,
+        { $sort: sortStage },
+        {
+          $facet: {
+            count: [{ $count: 'total' }],
+            items: [
+              { $skip: skip },
+              { $limit: limit },
+              {
+                $project: {
+                  _id: 1,
+                  title: 1,
+                  description: 1,
+                  category: 1,
+                  budget: 1,
+                  status: 1,
+                  location: 1,
+                  createdAt: 1,
+                  distanceKm: 1
+                }
               }
-            }
-            const distance = calculateDistance(workerLat, workerLng, taskLat, taskLng)
-            return {
-              ...task,
-              distanceKm: distance
-            }
-          } catch (error) {
-            return {
-              ...task,
-              distanceKm: null
-            }
+            ]
           }
         }
-        return {
-          ...task,
-          distanceKm: null
-        }
-      })
+      ]
 
-      // Filter by radius
-      tasks = tasks.filter(task => {
-        if (task.distanceKm === null) return false // Exclude tasks without location
-        return task.distanceKm <= radiusKm
-      })
+      const [facetResult] = await Task.aggregate(pipeline)
+      const total = (facetResult && facetResult.count && facetResult.count[0]) ? facetResult.count[0].total : 0
+      const tasks = (facetResult && facetResult.items) ? facetResult.items : []
 
-      // Sort: distance (default), budget_desc, budget_asc, newest
-      if (sort === 'budget_desc') {
-        tasks.sort((a, b) => (b.budget || 0) - (a.budget || 0))
-      } else if (sort === 'budget_asc') {
-        tasks.sort((a, b) => (a.budget || 0) - (b.budget || 0))
-      } else if (sort === 'newest') {
-        tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      } else {
-        tasks.sort((a, b) => {
-          if (a.distanceKm === null) return 1
-          if (b.distanceKm === null) return -1
-          return a.distanceKm - b.distanceKm
-        })
-      }
-    } else {
-      // No location provided - sort by createdAt (latest first) and set distanceKm to null
-      tasks = tasks.map(task => ({
-        ...task,
-        distanceKm: null
-      }))
-      if (sort === 'budget_desc') tasks.sort((a, b) => (b.budget || 0) - (a.budget || 0))
-      else if (sort === 'budget_asc') tasks.sort((a, b) => (a.budget || 0) - (b.budget || 0))
-      else tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      return res.status(200).json({
+        message: 'Tasks fetched successfully',
+        tasks,
+        pagination: paginationMeta(page, limit, total, tasks.length)
+      })
     }
 
-    const total = tasks.length
-    const pageTasks = tasks.slice(skip, skip + limit)
+    // No geo: sort by createdAt, paginate at DB
+    const [tasks, total] = await Promise.all([
+      Task.find(baseQuery).select(listFields).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Task.countDocuments(baseQuery)
+    ])
+    const tasksWithDistance = tasks.map(t => ({ ...t, distanceKm: null }))
 
     return res.status(200).json({
       message: 'Tasks fetched successfully',
-      tasks: pageTasks,
-      pagination: paginationMeta(page, limit, total, pageTasks.length)
+      tasks: tasksWithDistance,
+      pagination: paginationMeta(page, limit, total, tasksWithDistance.length)
     })
   } catch (error) {
     res.status(500).json({

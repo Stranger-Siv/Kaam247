@@ -4,21 +4,17 @@ Applied across task, user, and admin controllers for lower memory use and better
 
 ---
 
-## 1. GET /api/tasks (getAvailableTasks)
+## 1. GET /api/tasks (getAvailableTasks) – geo and projection
 
-**Before**
-```js
-let tasks = await Task.find(query).lean()
-```
-- Fetched every field (title, description, category, budget, status, location, postedBy, acceptedBy, expiresAt, viewCount, recurring fields, etc.).
+**Geo (when `lat`/`lng`/`radius` provided)**
 
-**After**
-```js
-const listFields = '_id title description category budget status location createdAt'
-let tasks = await Task.find(query).select(listFields).lean()
-```
-- Only list-needed fields; `location` includes coordinates/area/city for distance and display.
-- **Impact:** Less data over the wire and less in-memory per doc; same index use. On 100 open tasks, doc size drops from ~1–2 KB each to ~400–600 bytes.
+- **Before:** `Task.find(query).limit(500)` then in-app Haversine for every doc, filter by radius, sort by distance → high CPU and many docs read.
+- **After:** Single aggregation with `$geoNear` (first stage). MongoDB uses the **2dsphere index on `Task.location`** to filter by `maxDistance` and return `distanceKm`; no in-app distance math. `lat`/`lng`/`radius` validated; radius capped at 15 km.
+- **Impact:** One indexed geo op instead of read-then-filter; fewer DB docs and much less CPU per request.
+
+**Projection (unchanged)**
+
+- Only list-needed fields via `listFields` / `$project`; `location` and `distanceKm` included where relevant.
 
 ---
 
