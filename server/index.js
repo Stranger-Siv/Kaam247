@@ -89,29 +89,26 @@ app.use((req, res) => {
   })
 })
 
-// Connect to MongoDB and start server
+// Connect to MongoDB first; only then start the server (no connection storms, single connection)
 const startServer = async () => {
   try {
-    // Connect to MongoDB first
-    try {
-      await connectDB()
-    } catch (dbError) {
-    }
-
-    // Start recurring-tasks job (create tasks from recurring templates every 10 min)
-    try {
-      const { runRecurringTasks } = require('./controllers/taskController')
-      setInterval(() => runRecurringTasks(), 10 * 60 * 1000)
-      runRecurringTasks()
-    } catch (e) {
-      // ignore if controller not loaded
-    }
-
-    // Start server with Socket.IO
-    server.listen(PORT, () => { })
-  } catch (error) {
+    await connectDB()
+  } catch (dbError) {
+    console.error('Startup aborted: MongoDB connection failed.', dbError.message)
     process.exit(1)
   }
+
+  try {
+    const { runRecurringTasks } = require('./controllers/taskController')
+    setInterval(() => runRecurringTasks(), 10 * 60 * 1000)
+    runRecurringTasks()
+  } catch (e) {
+    // ignore if controller not loaded
+  }
+
+  server.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`)
+  })
 }
 
 startServer()

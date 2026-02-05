@@ -87,7 +87,7 @@ async function addTaskIndexes() {
                 // Ignore (e.g. index already exists)
             }
         }
-    } catch (error) {}
+    } catch (error) { }
 }
 
 /**
@@ -104,7 +104,7 @@ async function addUserIndexes() {
                 // Ignore (e.g. index already exists)
             }
         }
-    } catch (error) {}
+    } catch (error) { }
 }
 
 /**
@@ -128,12 +128,15 @@ module.exports = {
     userIndexes
 }
 
-// If run directly, add indexes
+// If run directly, add indexes (call connectDB first; one connection)
 if (require.main === module) {
-    require('../config/db').then(() => {
-        addAllIndexes().then(() => {
-            process.exit(0)
+    const connectDB = require('../config/db')
+    connectDB()
+        .then(() => addAllIndexes())
+        .then(() => process.exit(0))
+        .catch((err) => {
+            console.error(err)
+            process.exit(1)
         })
-    })
 }
 
