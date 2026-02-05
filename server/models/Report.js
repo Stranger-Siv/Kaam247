@@ -60,6 +60,10 @@ const reportSchema = new mongoose.Schema({
     }
 })
 
+// Admin list: filter by status, sort by createdAt
+reportSchema.index({ status: 1 })
+reportSchema.index({ createdAt: -1 })
+
 const Report = mongoose.model('Report', reportSchema)
 
 module.exports = Report

@@ -149,6 +149,27 @@ const taskSchema = new mongoose.Schema({
     }
 })
 
+// Indexes aligned to actual query patterns (see docs/INDEX_AUDIT.md). No text/wildcard; no status+geo (getAvailableTasks filters in app).
+taskSchema.index({ status: 1 })
+taskSchema.index({ postedBy: 1 })
+taskSchema.index({ acceptedBy: 1 })
+taskSchema.index({ category: 1 })
+taskSchema.index({ createdAt: -1 })
+taskSchema.index({ completedAt: 1 })
+taskSchema.index({ acceptedAt: 1 })
+// getAvailableTasks: status + isHidden + isRecurringTemplate, sort by createdAt
+taskSchema.index({ status: 1, isHidden: 1, isRecurringTemplate: 1, createdAt: -1 })
+// getTasksByUser / getActivity: postedBy + sort or filter by status/createdAt
+taskSchema.index({ postedBy: 1, status: 1 })
+taskSchema.index({ postedBy: 1, createdAt: -1 })
+// getEarnings / getActivity / getWorkers: acceptedBy + status or createdAt
+taskSchema.index({ acceptedBy: 1, status: 1 })
+taskSchema.index({ acceptedBy: 1, createdAt: -1 })
+// Admin task list + dashboard: category+status, status+createdAt
+taskSchema.index({ category: 1, status: 1 })
+taskSchema.index({ status: 1, createdAt: -1 })
+// location.coordinates: 2dsphere is defined on the subdocument above
+
 const Task = mongoose.model('Task', taskSchema)
 
 module.exports = Task

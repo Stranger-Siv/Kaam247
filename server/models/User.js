@@ -267,6 +267,16 @@ const userSchema = new mongoose.Schema({
     }
 })
 
+// Indexes aligned to actual query patterns (see docs/INDEX_AUDIT.md). email/phone/googleId from unique; location from subdocument.
+userSchema.index({ role: 1 })
+userSchema.index({ status: 1 })
+userSchema.index({ createdAt: -1 })
+userSchema.index({ lastOnlineAt: -1 })
+// Admin: count/list by status+role; list users by role, sort by createdAt
+userSchema.index({ status: 1, role: 1 })
+userSchema.index({ role: 1, createdAt: -1 })
+// location.coordinates: 2dsphere is defined on the subdocument above
+
 const User = mongoose.model('User', userSchema)
 
 module.exports = User
