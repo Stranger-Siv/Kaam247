@@ -1,9 +1,12 @@
 const express = require('express')
 const http = require('http')
 const cors = require('cors')
+const compression = require('compression')
 const cookieParser = require('cookie-parser')
 require('dotenv').config({ silent: true })
 const connectDB = require('./config/db')
+const requestTiming = require('./middleware/requestTiming')
+const globalErrorHandler = require('./middleware/errorHandler')
 const taskRoutes = require('./routes/taskRoutes')
 const userRoutes = require('./routes/userRoutes')
 const authRoutes = require('./routes/authRoutes')
@@ -21,6 +24,14 @@ const PORT = process.env.PORT || 3001
 
 // Initialize Socket.IO
 initializeSocket(server)
+
+// Compression: gzip JSON/text responses to reduce bandwidth (skip if x-no-compression)
+app.use(compression({
+  level: 6, filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false
+    return compression.filter(req, res)
+  }
+}))
 
 // Middleware
 // CORS configuration - production origins + localhost in development
@@ -58,6 +69,7 @@ const corsOptions = {
 app.use(cors(corsOptions))
 app.use(express.json())
 app.use(cookieParser())
+app.use(requestTiming)
 
 // Request logging middleware (only log in development)
 if (process.env.NODE_ENV !== 'production') {
@@ -89,6 +101,11 @@ app.use((req, res) => {
   })
 })
 
+// Global error handler (must be last; 4-arg form)
+app.use(globalErrorHandler)
+
+// TODO: Add graceful shutdown (SIGTERM handling) before production launch
+
 // Connect to MongoDB first; only then start the server (no connection storms, single connection)
 const startServer = async () => {
   try {
@@ -110,6 +127,17 @@ const startServer = async () => {
     console.log(`Server listening on port ${PORT}`)
   })
 }
+
+// Unhandled errors: log and avoid silent failures; uncaughtException is fatal
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err.message)
+  if (process.env.NODE_ENV !== 'production') console.error(err.stack)
+  process.exit(1)
+})
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[unhandledRejection]', reason && (reason.message || reason))
+  if (process.env.NODE_ENV !== 'production') console.error(promise)
+})
 
 startServer()
 

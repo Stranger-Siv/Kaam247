@@ -15,8 +15,13 @@ const CONNECT_OPTIONS = {
   serverSelectionTimeoutMS: 10000,
   maxPoolSize: 10,
   minPoolSize: 1,
-  retryWrites: true
+  retryWrites: true,
+  monitorCommands: true // Required for slow-query logging (no payloads logged)
 }
+
+const SLOW_QUERY_MS = 200
+const SLOW_QUERY_MAP_MAX = 5000
+const slowQueryByRequestId = new Map()
 
 let connectionPromise = null
 
@@ -45,6 +50,7 @@ const connectDB = async () => {
       await mongoose.connect(uri.trim(), CONNECT_OPTIONS)
       if (mongoose.connection.readyState === 1) {
         console.log('[db] MongoDB connected successfully')
+        registerSlowQueryLogging()
       }
     } catch (error) {
       console.error('[db] MongoDB connection error:', error.message)
@@ -70,6 +76,40 @@ const disconnectDB = async () => {
     console.error('[db] MongoDB disconnect error:', error.message)
     connectionPromise = null
     throw error
+  }
+}
+
+/**
+ * Log slow MongoDB commands (>SLOW_QUERY_MS). Only collection name and operation type;
+ * no query payloads to avoid sensitive data.
+ */
+function registerSlowQueryLogging() {
+  try {
+    const client = mongoose.connection.getClient()
+    if (!client || typeof client.on !== 'function') return
+
+    client.on('commandStarted', (ev) => {
+      if (slowQueryByRequestId.size >= SLOW_QUERY_MAP_MAX) return
+      const cmd = ev.command || {}
+      const coll = cmd.find ?? cmd.aggregate ?? cmd.insert ?? cmd.update ?? cmd.delete ?? cmd.count
+      const name = typeof coll === 'string' ? coll : (coll != null ? '(coll)' : 'n/a')
+      slowQueryByRequestId.set(ev.requestId, name)
+    })
+
+    client.on('commandSucceeded', (ev) => {
+      if (ev.duration <= SLOW_QUERY_MS) return
+      const coll = slowQueryByRequestId.get(ev.requestId) ?? 'n/a'
+      slowQueryByRequestId.delete(ev.requestId)
+      setImmediate(() => {
+        console.warn('[slow-query]', ev.commandName, coll, `${ev.duration}ms`)
+      })
+    })
+
+    client.on('commandFailed', (ev) => {
+      slowQueryByRequestId.delete(ev.requestId)
+    })
+  } catch (e) {
+    console.error('[db] slow-query logging setup failed:', e.message)
   }
 }
 

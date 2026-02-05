@@ -634,8 +634,8 @@ const getTasks = async (req, res) => {
     const taskListFields = '_id title category budget status createdAt location.city postedBy acceptedBy'
     const tasks = await Task.find(query)
       .select(taskListFields)
-      .populate('postedBy', 'name email phone')
-      .populate('acceptedBy', 'name email phone')
+      .populate('postedBy', 'name')
+      .populate('acceptedBy', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -697,6 +697,11 @@ const getTaskById = async (req, res) => {
     if (task.completedAt) {
       timeline.push({ event: 'Task Completed', timestamp: task.completedAt })
     }
+
+    // Strip internal fields from response
+    delete task.__v
+    if (task.postedBy && typeof task.postedBy === 'object') delete task.postedBy.__v
+    if (task.acceptedBy && typeof task.acceptedBy === 'object') delete task.acceptedBy.__v
 
     res.json({
       task,

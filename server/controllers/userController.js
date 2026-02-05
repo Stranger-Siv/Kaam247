@@ -248,7 +248,7 @@ const updateProfile = async (req, res) => {
 
 const CSV_EXPORT_MAX_ROWS = 2000
 
-function buildCategorizedActivity (postedTasks, acceptedTasks, userId) {
+function buildCategorizedActivity(postedTasks, acceptedTasks, userId) {
   return {
     posted: postedTasks.map(task => ({
       id: task._id,
@@ -480,7 +480,7 @@ const getEarnings = async (req, res) => {
     const earningsThisWeek = summary[0]?.week?.[0]?.sum ?? 0
     const earningsThisMonth = summary[0]?.month?.[0]?.sum ?? 0
     const byCategory = {}
-    ;(summary[0]?.byCat || []).forEach(({ _id, total }) => { byCategory[_id] = total })
+      ; (summary[0]?.byCat || []).forEach(({ _id, total }) => { byCategory[_id] = total })
     const last7Days = (summary[0]?.last7 || []).map(({ _id, total, count }) => ({ date: _id, total, count }))
     const last30Days = (summary[0]?.last30 || []).map(({ _id, total, count }) => ({ date: _id, total, count }))
     const taskList = pageTasks.map(task => ({
@@ -574,7 +574,7 @@ const getTransactions = async (req, res) => {
     const spentThisWeek = summary[0]?.week?.[0]?.sum ?? 0
     const spentThisMonth = summary[0]?.month?.[0]?.sum ?? 0
     const byCategory = {}
-    ;(summary[0]?.byCat || []).forEach(({ _id, total }) => { byCategory[_id] = total })
+      ; (summary[0]?.byCat || []).forEach(({ _id, total }) => { byCategory[_id] = total })
     const last7Days = (summary[0]?.last7 || []).map(({ _id, total, count }) => ({ date: _id, total, count }))
     const last30Days = (summary[0]?.last30 || []).map(({ _id, total, count }) => ({ date: _id, total, count }))
     const taskList = pageTasks.map(task => ({
@@ -724,8 +724,9 @@ const getProfile = async (req, res) => {
       })
     }
 
-    // Build a plain object safe for JSON (convert ObjectIds to string)
+    // Build a plain object safe for JSON (convert ObjectIds to string); strip internal fields
     const response = JSON.parse(JSON.stringify(user))
+    delete response.__v
     response.savedTasks = (user.savedTasks || []).map(id => (id && id.toString ? id.toString() : String(id)))
 
     if (user.roleMode === 'worker') {

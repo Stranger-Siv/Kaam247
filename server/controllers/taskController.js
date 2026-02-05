@@ -734,6 +734,11 @@ const getTaskById = async (req, res) => {
       delete taskResponse.acceptedBy.phone
     }
 
+    // Strip internal fields to reduce payload and avoid exposing schema version
+    delete taskResponse.__v
+    if (taskResponse.postedBy && typeof taskResponse.postedBy === 'object') delete taskResponse.postedBy.__v
+    if (taskResponse.acceptedBy && typeof taskResponse.acceptedBy === 'object') delete taskResponse.acceptedBy.__v
+
     // Build location object explicitly so fullAddress is always included in the API response
     const loc = task.location || taskResponse.location
     taskResponse.location = {
