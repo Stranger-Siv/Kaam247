@@ -1694,6 +1694,9 @@ const getChats = async (req, res) => {
     const { taskId, userId } = req.query
     const query = {}
     if (taskId) query.taskId = taskId
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+      query.participants = userId
+    }
     const { page, limit, skip } = parsePagination(req.query)
     const [chats, total] = await Promise.all([
       Chat.find(query)
@@ -1705,15 +1708,6 @@ const getChats = async (req, res) => {
         .lean(),
       Chat.countDocuments(query)
     ])
-
-    if (userId) {
-      const uid = userId.toString()
-      const filtered = chats.filter((c) => c.participants?.some((p) => p?._id?.toString() === uid))
-      return res.json({
-        chats: filtered,
-        pagination: paginationMeta(page, limit, total, filtered.length)
-      })
-    }
     res.json({
       chats,
       pagination: paginationMeta(page, limit, total, chats.length)
