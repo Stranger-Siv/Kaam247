@@ -45,7 +45,6 @@ const taskSchema = new mongoose.Schema({
         },
         coordinates: {
             type: [Number],
-            index: '2dsphere',
             description: '[longitude, latitude]'
         },
         area: {
@@ -168,7 +167,8 @@ taskSchema.index({ acceptedBy: 1, createdAt: -1 })
 // Admin task list + dashboard: category+status, status+createdAt
 taskSchema.index({ category: 1, status: 1 })
 taskSchema.index({ status: 1, createdAt: -1 })
-// location.coordinates: 2dsphere is defined on the subdocument above
+// GeoJSON 2dsphere index on location (parent field, not location.coordinates)
+taskSchema.index({ location: '2dsphere' })
 
 const Task = mongoose.model('Task', taskSchema)
 

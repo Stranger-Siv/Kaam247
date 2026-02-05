@@ -60,7 +60,6 @@ const userSchema = new mongoose.Schema({
         },
         coordinates: {
             type: [Number],
-            index: '2dsphere',
             description: '[longitude, latitude]'
         },
         area: {
@@ -275,7 +274,8 @@ userSchema.index({ lastOnlineAt: -1 })
 // Admin: count/list by status+role; list users by role, sort by createdAt
 userSchema.index({ status: 1, role: 1 })
 userSchema.index({ role: 1, createdAt: -1 })
-// location.coordinates: 2dsphere is defined on the subdocument above
+// GeoJSON 2dsphere index on location (parent field, not location.coordinates)
+userSchema.index({ location: '2dsphere' })
 
 const User = mongoose.model('User', userSchema)
 

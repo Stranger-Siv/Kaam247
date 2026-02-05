@@ -566,7 +566,8 @@ const getAvailableTasks = async (req, res) => {
     const listFields = '_id title description category budget status location createdAt'
 
     if (hasGeo) {
-      // MongoDB $geoNear uses 2dsphere index on location; distance and radius filter in DB
+      // MongoDB $geoNear uses 2dsphere index on location (GeoJSON Point format)
+      // Removed 'num' limit and 'key' parameter to let MongoDB optimize and auto-detect index
       const maxDistanceMeters = radiusKm * 1000
       const geoNearStage = {
         $geoNear: {
@@ -574,10 +575,8 @@ const getAvailableTasks = async (req, res) => {
           distanceField: 'distanceKm',
           distanceMultiplier: 0.001,
           maxDistance: maxDistanceMeters,
-          key: 'location',
           spherical: true,
-          query: baseQuery,
-          num: 500
+          query: baseQuery
         }
       }
 
@@ -587,6 +586,7 @@ const getAvailableTasks = async (req, res) => {
       else if (sort === 'newest') sortStage.createdAt = -1
       else sortStage.distanceKm = 1
 
+      // Optimize: count and items in parallel, but limit items early
       const pipeline = [
         geoNearStage,
         { $sort: sortStage },
@@ -614,9 +614,24 @@ const getAvailableTasks = async (req, res) => {
         }
       ]
 
-      const [facetResult] = await Task.aggregate(pipeline)
-      const total = (facetResult && facetResult.count && facetResult.count[0]) ? facetResult.count[0].total : 0
-      const tasks = (facetResult && facetResult.items) ? facetResult.items : []
+      let facetResult
+      try {
+        facetResult = await Task.aggregate(pipeline).allowDiskUse(true)
+      } catch (aggError) {
+        // If geo index is missing or wrong, provide helpful error
+        if (aggError.message && (aggError.message.includes('geoNear') || aggError.message.includes('2dsphere') || aggError.message.includes('index'))) {
+          console.error('Geo index error in getAvailableTasks:', aggError.message)
+          return res.status(500).json({
+            error: 'Geo index error',
+            message: 'Geospatial index is missing or incorrect. Please run: node server/models/indexes.js'
+          })
+        }
+        throw aggError
+      }
+
+      const [result] = facetResult || [{}]
+      const total = (result && result.count && result.count[0]) ? result.count[0].total : 0
+      const tasks = (result && result.items) ? result.items : []
 
       return res.status(200).json({
         message: 'Tasks fetched successfully',
