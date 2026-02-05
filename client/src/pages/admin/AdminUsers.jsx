@@ -56,11 +56,18 @@ function AdminUsers() {
       }
 
       const data = await response.json()
-      setUsers(data.users || [])
+      const list = data.users || []
+      setUsers(list)
+
+      const rawTotal = Number(data.pagination?.total)
+      const total = rawTotal >= 0 ? rawTotal : list.length
+      const limit = Number(data.pagination?.limit) || pagination.limit
+      const rawPages = Number(data.pagination?.pages)
+      const pages = rawPages >= 1 ? rawPages : Math.max(1, Math.ceil(total / limit))
       setPagination(prev => ({
         ...prev,
-        total: data.pagination?.total || 0,
-        pages: data.pagination?.pages || 0
+        total,
+        pages
       }))
     } catch (err) {
       setError(err.message || 'Failed to load users')
