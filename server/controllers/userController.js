@@ -268,13 +268,15 @@ const getActivity = async (req, res) => {
     }
     const createdAtQuery = Object.keys(dateFilter).length ? { createdAt: dateFilter } : {}
 
-    // Fetch all tasks where user is either poster or worker
+    const activityFields = '_id title category budget status workerCompleted createdAt completedAt rating'
     const postedTasks = await Task.find({ postedBy: userId, ...createdAtQuery })
+      .select(activityFields)
       .populate('acceptedBy', 'name')
       .sort({ createdAt: -1 })
       .lean()
 
     const acceptedTasks = await Task.find({ acceptedBy: userId, ...createdAtQuery })
+      .select(activityFields)
       .populate('postedBy', 'name')
       .sort({ createdAt: -1 })
       .lean()
@@ -396,11 +398,12 @@ const getEarnings = async (req, res) => {
       })
     }
 
-    // Fetch all completed tasks where user is the worker
+    const earningsFields = '_id title category budget completedAt rating'
     const completedTasks = await Task.find({
       acceptedBy: userId,
       status: 'COMPLETED'
     })
+      .select(earningsFields)
       .populate('postedBy', 'name')
       .sort({ completedAt: -1 })
       .lean()
@@ -520,10 +523,12 @@ const getTransactions = async (req, res) => {
       })
     }
 
+    const txFields = '_id title category budget completedAt'
     const completedTasks = await Task.find({
       postedBy: userId,
       status: 'COMPLETED'
     })
+      .select(txFields)
       .populate('acceptedBy', 'name')
       .sort({ completedAt: -1 })
       .lean()
@@ -629,7 +634,9 @@ async function getWorkerBadges(userId) {
   const completedAsWorker = await Task.find({
     acceptedBy: userId,
     status: 'COMPLETED'
-  }).lean()
+  })
+    .select('budget')
+    .lean()
 
   const totalEarnings = completedAsWorker.reduce((s, t) => s + (t.budget || 0), 0)
   const cancelledByWorker = await Task.countDocuments({

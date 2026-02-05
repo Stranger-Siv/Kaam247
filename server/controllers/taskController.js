@@ -533,7 +533,8 @@ const getAvailableTasks = async (req, res) => {
       ])
     }
 
-    let tasks = await Task.find(query).lean()
+    const listFields = '_id title description category budget status location createdAt'
+    let tasks = await Task.find(query).select(listFields).lean()
 
     // Calculate distances and filter if worker location is provided
     if (workerLat !== null && workerLng !== null && !isNaN(workerLat) && !isNaN(workerLng)) {
@@ -634,12 +635,12 @@ const getTaskById = async (req, res) => {
     const workerLat = req.query.lat ? parseFloat(req.query.lat) : null
     const workerLng = req.query.lng ? parseFloat(req.query.lng) : null
 
-    // Fetch task from MongoDB by _id and populate postedBy and acceptedBy
+    // Fetch task (read-only: lean + minimal populate for phone visibility)
     const task = await Task.findById(taskId)
       .populate('postedBy', 'name email phone')
       .populate('acceptedBy', 'name email phone')
+      .lean()
 
-    // If task not found, return 404
     if (!task) {
       return res.status(404).json({
         error: 'Task not found',
@@ -647,11 +648,8 @@ const getTaskById = async (req, res) => {
       })
     }
 
-    // Get requester userId from query params (for authorization check)
     const requesterUserId = req.query.userId ? req.query.userId.toString() : null
-
-    // Prepare response - conditionally include phone numbers
-    const taskResponse = task.toObject()
+    const taskResponse = { ...task }
 
     // Calculate distance if worker location is provided
     if (workerLat !== null && workerLng !== null && !isNaN(workerLat) && !isNaN(workerLng)) {
@@ -683,8 +681,8 @@ const getTaskById = async (req, res) => {
     // 2. AND requester is authorized (either the assigned worker OR the poster)
 
     const isTaskAccepted = task.status === 'ACCEPTED' || task.status === 'IN_PROGRESS' || task.status === 'COMPLETED'
-    const isRequesterWorker = requesterUserId && task.acceptedBy && task.acceptedBy._id.toString() === requesterUserId
-    const isRequesterPoster = requesterUserId && task.postedBy._id.toString() === requesterUserId
+    const isRequesterWorker = requesterUserId && task.acceptedBy && String(task.acceptedBy._id) === requesterUserId
+    const isRequesterPoster = requesterUserId && task.postedBy && String(task.postedBy._id) === requesterUserId
 
     // Initialize phone number fields
     taskResponse.posterPhone = null
@@ -780,7 +778,9 @@ const getTasksByUser = async (req, res) => {
     else if (sort === 'status') sortOption = { status: 1, createdAt: -1 }
     else if (sort === 'date') sortOption = { createdAt: -1 }
 
+    const listFields = '_id title description category budget status location createdAt acceptedAt completedAt'
     const tasks = await Task.find(filter)
+      .select(listFields)
       .sort(sortOption)
       .lean()
 
@@ -2069,7 +2069,9 @@ const getPosterTaskAnalytics = async (req, res) => {
       })
     }
 
-    const tasks = await Task.find({ postedBy: userId }).lean()
+    const tasks = await Task.find({ postedBy: userId })
+      .select('status viewCount acceptedAt createdAt')
+      .lean()
     const openOrSearching = tasks.filter(t => ['OPEN', 'SEARCHING'].includes(t.status))
     const accepted = tasks.filter(t => t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS')
     const completed = tasks.filter(t => t.status === 'COMPLETED')

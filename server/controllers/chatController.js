@@ -19,7 +19,7 @@ async function validateChatAccess(taskId, userId, allowedStatuses) {
     return { errorResponse: { status: 400, body: { error: 'Invalid ID', message: 'Invalid task or user ID' } } }
   }
 
-  const task = await Task.findById(taskId).select('status postedBy acceptedBy')
+  const task = await Task.findById(taskId).select('status postedBy acceptedBy').lean()
   if (!task) {
     return { errorResponse: { status: 404, body: { error: 'Task not found', message: 'Task does not exist' } } }
   }

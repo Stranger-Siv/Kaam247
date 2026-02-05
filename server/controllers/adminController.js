@@ -55,14 +55,14 @@ const getUsers = async (req, res) => {
       query.dailyCancelCount = { $gte: 2 }
     }
 
-    // Fetch users
+    const userListFields = '_id name email phone role status createdAt averageRating'
     const users = await User.find(query)
-      .select('-password')
+      .select(userListFields)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
+      .lean()
 
-    // Get user stats
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
         const tasksPosted = await Task.countDocuments({ postedBy: user._id })
@@ -79,7 +79,7 @@ const getUsers = async (req, res) => {
         })
 
         return {
-          ...user.toObject(),
+          ...user,
           stats: {
             tasksPosted,
             tasksAccepted,
@@ -123,7 +123,7 @@ const getUserById = async (req, res) => {
       })
     }
 
-    const user = await User.findById(userId).select('-password')
+    const user = await User.findById(userId).select('-password').lean()
     if (!user) {
       return res.status(404).json({
         error: 'User not found',
@@ -131,8 +131,7 @@ const getUserById = async (req, res) => {
       })
     }
 
-    // Ensure dailyCancelCount and totalCancelLimit are included and properly set
-    const userObject = user.toObject()
+    const userObject = { ...user }
     if (userObject.dailyCancelCount === undefined || userObject.dailyCancelCount === null) {
       userObject.dailyCancelCount = 0
     }
@@ -140,16 +139,17 @@ const getUserById = async (req, res) => {
       userObject.totalCancelLimit = 2 // Default to 2 if not set
     }
 
-    // Get user activity
     const tasksPosted = await Task.find({ postedBy: userId })
       .select('title status budget createdAt')
       .sort({ createdAt: -1 })
       .limit(50)
+      .lean()
 
     const tasksAccepted = await Task.find({ acceptedBy: userId })
       .select('title status budget createdAt')
       .sort({ createdAt: -1 })
       .limit(50)
+      .lean()
 
     const cancellationHistory = await Task.find({
       $or: [
@@ -160,16 +160,16 @@ const getUserById = async (req, res) => {
       .select('title status createdAt')
       .sort({ createdAt: -1 })
       .limit(50)
+      .lean()
 
-    // Get ratings received (for workers)
     const ratingsReceived = await Task.find({
       acceptedBy: userId,
       rating: { $exists: true, $ne: null }
     })
       .select('rating review ratedAt')
       .sort({ ratedAt: -1 })
+      .lean()
 
-    // Earnings / spend analytics
     const now = new Date()
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -177,12 +177,16 @@ const getUserById = async (req, res) => {
     const completedAsWorker = await Task.find({
       acceptedBy: userId,
       status: 'COMPLETED'
-    }).select('budget completedAt')
+    })
+      .select('budget completedAt')
+      .lean()
 
     const completedAsPoster = await Task.find({
       postedBy: userId,
       status: 'COMPLETED'
-    }).select('budget completedAt')
+    })
+      .select('budget completedAt')
+      .lean()
 
     const sumBudgets = (tasks = []) =>
       tasks.reduce((sum, t) => sum + (t.budget || 0), 0)
@@ -629,13 +633,15 @@ const getTasks = async (req, res) => {
       query._id = { $in: reportedTaskIds }
     }
 
-    // Fetch tasks
+    const taskListFields = '_id title category budget status createdAt location.city postedBy acceptedBy'
     const tasks = await Task.find(query)
+      .select(taskListFields)
       .populate('postedBy', 'name email phone')
       .populate('acceptedBy', 'name email phone')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
+      .lean()
 
     // Total count for pagination
     const total = await Task.countDocuments(query)
@@ -672,6 +678,7 @@ const getTaskById = async (req, res) => {
     const task = await Task.findById(taskId)
       .populate('postedBy', 'name email phone status')
       .populate('acceptedBy', 'name email phone status')
+      .lean()
 
     if (!task) {
       return res.status(404).json({
@@ -680,13 +687,14 @@ const getTaskById = async (req, res) => {
       })
     }
 
-    // Get status timeline (simplified - can be enhanced)
     const timeline = []
     if (task.createdAt) {
       timeline.push({ event: 'Task Posted', timestamp: task.createdAt })
     }
     if (task.acceptedBy) {
       const acceptedTask = await Task.findOne({ _id: taskId, status: 'ACCEPTED' })
+        .select('createdAt')
+        .lean()
       if (acceptedTask) {
         timeline.push({ event: 'Task Accepted', timestamp: acceptedTask.createdAt })
       }
@@ -699,7 +707,7 @@ const getTaskById = async (req, res) => {
     }
 
     res.json({
-      task: task.toObject(),
+      task,
       timeline
     })
   } catch (error) {
@@ -885,6 +893,7 @@ const getReports = async (req, res) => {
     }
 
     const reports = await Report.find(query)
+      .select('reporter reportedUser reportedTask reason status createdAt resolvedAt adminNotes resolvedBy')
       .populate('reporter', 'name email')
       .populate('reportedUser', 'name email status')
       .populate('reportedTask', 'title status')
@@ -892,6 +901,7 @@ const getReports = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
+      .lean()
 
     const total = await Report.countDocuments(query)
 
@@ -1026,7 +1036,9 @@ const getPublicStats = async (req, res) => {
     const completedTasksWithRatings = await Task.find({
       status: 'COMPLETED',
       rating: { $exists: true, $ne: null }
-    }).select('rating')
+    })
+      .select('rating')
+      .lean()
 
     let averageRating = 0
     if (completedTasksWithRatings.length > 0) {
@@ -1154,17 +1166,18 @@ const getDashboard = async (req, res) => {
     const platformCommissionTotal = Math.round((totalGMV * platformCommissionPercent) / 100)
     const totalPayoutToWorkers = totalGMV - platformCommissionTotal
 
-    // ---- RECENT TASKS (last 30) ----
+    const recentTaskFields = '_id title category budget status createdAt postedBy acceptedBy'
     const recentTasks = await Task.find()
+      .select(recentTaskFields)
       .populate('postedBy', 'name email phone')
       .populate('acceptedBy', 'name email phone')
       .sort({ createdAt: -1 })
       .limit(30)
       .lean()
 
-    // ---- RECENT USERS (last 20) ----
+    const recentUserFields = '_id name email phone createdAt'
     const recentUsers = await User.find({ role: 'user' })
-      .select('-password')
+      .select(recentUserFields)
       .sort({ createdAt: -1 })
       .limit(20)
       .lean()
@@ -1646,8 +1659,9 @@ const getWorkers = async (req, res) => {
       return res.json({ workers: [], onlineCount: 0 })
     }
 
+    const workerListFields = '_id name email phone averageRating'
     const workers = await User.find({ _id: { $in: workerIds } })
-      .select('-password')
+      .select(workerListFields)
       .lean()
 
     const stats = await Promise.all(
@@ -1818,7 +1832,9 @@ const getReviews = async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query
     const skip = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit) || 20)
+    const reviewFields = 'rating ratedAt review postedBy acceptedBy'
     const tasks = await Task.find({ rating: { $exists: true, $ne: null } })
+      .select(reviewFields)
       .populate('postedBy', 'name email phone')
       .populate('acceptedBy', 'name email phone')
       .sort({ ratedAt: -1 })
