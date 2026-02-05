@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
@@ -43,6 +43,9 @@ function Earnings() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [platformCommissionPercent, setPlatformCommissionPercent] = useState(0)
+  const [earningsPage, setEarningsPage] = useState(1)
+  const [hasMoreEarnings, setHasMoreEarnings] = useState(false)
+  const [loadingMoreEarnings, setLoadingMoreEarnings] = useState(false)
 
   const [viewMonth, setViewMonth] = useState(() => {
     const n = new Date()
@@ -50,33 +53,51 @@ function Earnings() {
   })
   const [selectedDate, setSelectedDate] = useState(() => new Date())
 
-  useEffect(() => {
-    const fetchEarnings = async () => {
-      if (!user?.id) {
-        setLoading(false)
-        return
-      }
-      try {
+  const fetchEarnings = useCallback(async (page = 1, append = false) => {
+    if (!user?.id) {
+      setLoading(false)
+      return
+    }
+    try {
+      if (page === 1) {
         setLoading(true)
-        setError(null)
-        const token = localStorage.getItem('kaam247_token')
-        const response = await fetch(`${API_BASE_URL}/api/users/me/earnings`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        if (!response.ok) throw new Error('Failed to fetch earnings')
-        const data = await response.json()
-        setEarnings(data.earnings)
-      } catch (err) {
-        setError(err.message || 'Failed to load earnings')
-      } finally {
+      } else {
+        setLoadingMoreEarnings(true)
+      }
+      setError(null)
+      const token = localStorage.getItem('kaam247_token')
+      const response = await fetch(`${API_BASE_URL}/api/users/me/earnings?page=${page}&limit=20`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!response.ok) throw new Error('Failed to fetch earnings')
+      const data = await response.json()
+      const pagination = data.pagination || {}
+      setHasMoreEarnings(Boolean(pagination.hasMore))
+      if (!append) {
+        setEarnings(data.earnings || {})
+      } else {
+        setEarnings(prev => ({
+          ...prev,
+          tasks: [...(prev.tasks || []), ...(data.earnings?.tasks || [])]
+        }))
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load earnings')
+    } finally {
+      if (page === 1) {
         setLoading(false)
+      } else {
+        setLoadingMoreEarnings(false)
       }
     }
-    fetchEarnings()
+  }, [user?.id])
 
-    // Listen for task completion to refresh earnings
+  useEffect(() => {
+    fetchEarnings(1, false)
+
     const handleTaskCompleted = () => {
-      fetchEarnings()
+      setEarningsPage(1)
+      fetchEarnings(1, false)
     }
 
     window.addEventListener('task_completed', handleTaskCompleted)
@@ -86,7 +107,7 @@ function Earnings() {
       window.removeEventListener('task_completed', handleTaskCompleted)
       window.removeEventListener('task_status_changed', handleTaskCompleted)
     }
-  }, [user?.id])
+  }, [user?.id, fetchEarnings])
 
   const { total: earningsForSelected, tasks: activityForSelected } = useMemo(
     () => getEarningsForDate(earnings.tasks, selectedDate),
@@ -356,6 +377,22 @@ function Earnings() {
           </div>
         </div>
       </div>
+      {hasMoreEarnings && (
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              const next = earningsPage + 1
+              fetchEarnings(next, true)
+              setEarningsPage(next)
+            }}
+            disabled={loadingMoreEarnings}
+            className="px-6 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 min-h-[44px]"
+          >
+            {loadingMoreEarnings ? 'Loading...' : 'Load more'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

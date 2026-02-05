@@ -40,6 +40,9 @@ function Tasks() {
   const [showOnlySaved, setShowOnlySaved] = useState(false)
   const [savedTaskIds, setSavedTaskIds] = useState(new Set())
   const [filterPanelOpen, setFilterPanelOpen] = useState(false)
+  const [taskPage, setTaskPage] = useState(1)
+  const [hasMoreTasks, setHasMoreTasks] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const preferencesAppliedRef = useRef(false)
   const sortOptionRef = useRef(sortOption)
   sortOptionRef.current = sortOption
@@ -66,6 +69,7 @@ function Tasks() {
 
   // Pull-to-refresh handler
   const handleRefresh = () => {
+    setTaskPage(1)
     setRefetchTrigger(prev => prev + 1)
   }
 
@@ -131,7 +135,11 @@ function Tasks() {
           return
         }
 
-        setLoading(true)
+        if (taskPage === 1) {
+          setLoading(true)
+        } else {
+          setLoadingMore(true)
+        }
         setError(null)
 
         // REQUIRE LOCATION: Don't fetch tasks if no location
@@ -144,7 +152,8 @@ function Tasks() {
 
         const radiusKm = getRadiusKm()
         const { minBudget, maxBudget } = getBudgetRange()
-        let url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=${radiusKm}`
+        const limit = 20
+        let url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=${radiusKm}&page=${taskPage}&limit=${limit}`
         if (selectedCategory && selectedCategory !== 'All') url += `&category=${encodeURIComponent(selectedCategory)}`
         if (minBudget != null) url += `&minBudget=${minBudget}`
         if (maxBudget != null) url += `&maxBudget=${maxBudget}`
@@ -206,16 +215,31 @@ function Tasks() {
             return a.distanceKm - b.distanceKm
           })
 
-        setTasks(transformedTasks)
+        const pagination = data.pagination || {}
+        setHasMoreTasks(Boolean(pagination.hasMore))
+        if (taskPage === 1) {
+          setTasks(transformedTasks)
+        } else {
+          setTasks(prev => [...prev, ...transformedTasks])
+        }
       } catch (err) {
         setError(err.message || 'Failed to load tasks. Please try again later.')
       } finally {
-        setLoading(false)
+        if (taskPage === 1) {
+          setLoading(false)
+        } else {
+          setLoadingMore(false)
+        }
       }
     }
 
     fetchTasks()
-  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, searchQuery, sortOption, refetchTrigger, workerPreferredCategories, showAllTasksOverride])
+  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, searchQuery, sortOption, refetchTrigger, workerPreferredCategories, showAllTasksOverride, taskPage])
+
+  // Reset to page 1 when location changes so we show first page of new area
+  useEffect(() => {
+    setTaskPage(1)
+  }, [workerLocation?.lat, workerLocation?.lng])
 
   // Listen for new tasks via Socket.IO (only when online)
   useEffect(() => {
@@ -467,7 +491,7 @@ function Tasks() {
             <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Category</span>
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => { setSelectedCategory(e.target.value); setTaskPage(1) }}
               className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base touch-manipulation transition-colors"
             >
               {categories.map((cat) => (
@@ -481,7 +505,7 @@ function Tasks() {
             <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Distance</span>
             <select
               value={selectedDistance}
-              onChange={(e) => setSelectedDistance(e.target.value)}
+              onChange={(e) => { setSelectedDistance(e.target.value); setTaskPage(1) }}
               className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base touch-manipulation transition-colors"
             >
               {distances.map((dist) => (
@@ -495,7 +519,7 @@ function Tasks() {
             <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Budget</span>
             <select
               value={selectedBudget}
-              onChange={(e) => setSelectedBudget(e.target.value)}
+              onChange={(e) => { setSelectedBudget(e.target.value); setTaskPage(1) }}
               className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base touch-manipulation transition-colors"
             >
               {budgets.map((budget) => (
@@ -509,7 +533,7 @@ function Tasks() {
             <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Sort by</span>
             <select
               value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
+              onChange={(e) => { setSortOption(e.target.value); setTaskPage(1) }}
               className="h-11 sm:h-12 w-full px-3 sm:px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-sm sm:text-base touch-manipulation transition-colors"
             >
               <option value="distance">Nearest first</option>
@@ -574,7 +598,7 @@ function Tasks() {
                 <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Category</span>
                 <select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => { setSelectedCategory(e.target.value); setTaskPage(1) }}
                   className="h-11 w-full px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 >
                   {categories.map((cat) => (
@@ -586,7 +610,7 @@ function Tasks() {
                 <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Distance</span>
                 <select
                   value={selectedDistance}
-                  onChange={(e) => setSelectedDistance(e.target.value)}
+                  onChange={(e) => { setSelectedDistance(e.target.value); setTaskPage(1) }}
                   className="h-11 w-full px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 >
                   {distances.map((dist) => (
@@ -598,7 +622,7 @@ function Tasks() {
                 <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Budget</span>
                 <select
                   value={selectedBudget}
-                  onChange={(e) => setSelectedBudget(e.target.value)}
+                  onChange={(e) => { setSelectedBudget(e.target.value); setTaskPage(1) }}
                   className="h-11 w-full px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 >
                   {budgets.map((budget) => (
@@ -610,7 +634,7 @@ function Tasks() {
                 <span className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Sort by</span>
                 <select
                   value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
+                  onChange={(e) => { setSortOption(e.target.value); setTaskPage(1) }}
                   className="h-11 w-full px-4 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 >
                   <option value="distance">Nearest first</option>
@@ -642,22 +666,36 @@ function Tasks() {
           ))}
         </div>
       ) : filteredTasks.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 w-full">
-          {filteredTasks.map((task) => (
-            <SwipeableTaskCard
-              key={task.id}
-              task={task}
-              onTaskAccepted={(taskId) => {
-                setTasks(prev => prev.filter(t => t.id !== taskId))
-              }}
-              onTaskRemoved={(taskId) => {
-                setTasks(prev => prev.filter(t => t.id !== taskId))
-              }}
-              isSaved={savedTaskIds.has(task.id)}
-              onToggleBookmark={toggleBookmark}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 w-full">
+            {filteredTasks.map((task) => (
+              <SwipeableTaskCard
+                key={task.id}
+                task={task}
+                onTaskAccepted={(taskId) => {
+                  setTasks(prev => prev.filter(t => t.id !== taskId))
+                }}
+                onTaskRemoved={(taskId) => {
+                  setTasks(prev => prev.filter(t => t.id !== taskId))
+                }}
+                isSaved={savedTaskIds.has(task.id)}
+                onToggleBookmark={toggleBookmark}
+              />
+            ))}
+          </div>
+          {hasMoreTasks && !showOnlySaved && (
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setTaskPage(prev => prev + 1)}
+                disabled={loadingMore}
+                className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] touch-manipulation transition-all"
+              >
+                {loadingMore ? 'Loading...' : 'Load more tasks'}
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-12 sm:p-16 lg:p-20 text-center border border-gray-200 dark:border-gray-700">
           {error ? (

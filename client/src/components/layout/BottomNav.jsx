@@ -10,7 +10,7 @@ function BottomNav() {
       return location.pathname === '/dashboard'
     }
     if (path === '/tasks') {
-      return location.pathname.startsWith('/tasks') && !location.pathname.match(/\/tasks\/\d+/)
+      return location.pathname === '/tasks'
     }
     if (path === '/earnings') {
       return location.pathname === '/earnings'

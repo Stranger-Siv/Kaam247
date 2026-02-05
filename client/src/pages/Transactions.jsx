@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
@@ -42,6 +42,9 @@ function Transactions() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [transactionsPage, setTransactionsPage] = useState(1)
+  const [hasMoreTransactions, setHasMoreTransactions] = useState(false)
+  const [loadingMoreTransactions, setLoadingMoreTransactions] = useState(false)
 
   const [viewMonth, setViewMonth] = useState(() => {
     const n = new Date()
@@ -49,32 +52,51 @@ function Transactions() {
   })
   const [selectedDate, setSelectedDate] = useState(() => new Date())
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      if (!user?.id) {
-        setLoading(false)
-        return
-      }
-      try {
+  const fetchTransactions = useCallback(async (page = 1, append = false) => {
+    if (!user?.id) {
+      setLoading(false)
+      return
+    }
+    try {
+      if (page === 1) {
         setLoading(true)
-        setError(null)
-        const token = localStorage.getItem('kaam247_token')
-        const response = await fetch(`${API_BASE_URL}/api/users/me/transactions`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        if (!response.ok) throw new Error('Failed to fetch transactions')
-        const data = await response.json()
-        setTransactions(data.transactions)
-      } catch (err) {
-        setError(err.message || 'Failed to load transactions')
-      } finally {
+      } else {
+        setLoadingMoreTransactions(true)
+      }
+      setError(null)
+      const token = localStorage.getItem('kaam247_token')
+      const response = await fetch(`${API_BASE_URL}/api/users/me/transactions?page=${page}&limit=20`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!response.ok) throw new Error('Failed to fetch transactions')
+      const data = await response.json()
+      const pagination = data.pagination || {}
+      setHasMoreTransactions(Boolean(pagination.hasMore))
+      if (!append) {
+        setTransactions(data.transactions || {})
+      } else {
+        setTransactions(prev => ({
+          ...prev,
+          tasks: [...(prev.tasks || []), ...(data.transactions?.tasks || [])]
+        }))
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load transactions')
+    } finally {
+      if (page === 1) {
         setLoading(false)
+      } else {
+        setLoadingMoreTransactions(false)
       }
     }
-    fetchTransactions()
+  }, [user?.id])
+
+  useEffect(() => {
+    fetchTransactions(1, false)
 
     const handleTaskCompleted = () => {
-      fetchTransactions()
+      setTransactionsPage(1)
+      fetchTransactions(1, false)
     }
     window.addEventListener('task_completed', handleTaskCompleted)
     window.addEventListener('task_status_changed', handleTaskCompleted)
@@ -82,7 +104,7 @@ function Transactions() {
       window.removeEventListener('task_completed', handleTaskCompleted)
       window.removeEventListener('task_status_changed', handleTaskCompleted)
     }
-  }, [user?.id])
+  }, [user?.id, fetchTransactions])
 
   const { total: spentForSelected, tasks: activityForSelected } = useMemo(
     () => getSpentForDate(transactions.tasks, selectedDate),
@@ -330,6 +352,22 @@ function Transactions() {
           </div>
         </div>
       </div>
+      {hasMoreTransactions && (
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              const next = transactionsPage + 1
+              fetchTransactions(next, true)
+              setTransactionsPage(next)
+            }}
+            disabled={loadingMoreTransactions}
+            className="px-6 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 min-h-[44px]"
+          >
+            {loadingMoreTransactions ? 'Loading...' : 'Load more'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

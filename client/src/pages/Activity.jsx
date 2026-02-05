@@ -18,20 +18,27 @@ function Activity() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [activityPage, setActivityPage] = useState(1)
+  const [hasMoreActivity, setHasMoreActivity] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   // DATA CONSISTENCY: Fetch activity - always fresh from backend, no duplicates
-  const fetchActivity = async () => {
+  const fetchActivity = async (page = 1, append = false) => {
     if (!user?.id) {
       setLoading(false)
       return
     }
 
     try {
-      setLoading(true)
+      if (page === 1) {
+        setLoading(true)
+      } else {
+        setLoadingMore(true)
+      }
       setError(null)
 
       const token = localStorage.getItem('kaam247_token')
-      const response = await fetch(`${API_BASE_URL}/api/users/me/activity`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/me/activity?page=${page}&limit=20`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -43,34 +50,52 @@ function Activity() {
 
       const data = await response.json()
       const apiActivity = data.activity || { posted: [], accepted: [], completed: [], cancelled: [] }
+      const pagination = data.pagination || {}
 
-      // Use backend data as-is - backend already categorizes and assigns roles correctly
-      setActivity(apiActivity)
+      setHasMoreActivity(Boolean(pagination.hasMorePosted || pagination.hasMoreAccepted))
+      if (!append) {
+        setActivity(apiActivity)
+      } else {
+        setActivity(prev => ({
+          posted: [...(prev.posted || []), ...(apiActivity.posted || [])],
+          accepted: [...(prev.accepted || []), ...(apiActivity.accepted || [])],
+          completed: [...(prev.completed || []), ...(apiActivity.completed || [])],
+          cancelled: [...(prev.cancelled || []), ...(apiActivity.cancelled || [])]
+        }))
+      }
     } catch (err) {
       setError(err.message || 'Failed to load activity')
     } finally {
-      setLoading(false)
+      if (page === 1) {
+        setLoading(false)
+      } else {
+        setLoadingMore(false)
+      }
     }
   }
 
   useEffect(() => {
-    fetchActivity()
+    fetchActivity(1, false)
 
     // DATA CONSISTENCY: Listen for task status changes to refresh activity
     const handleTaskStatusChange = () => {
-      fetchActivity()
+      setActivityPage(1)
+      fetchActivity(1, false)
     }
 
     const handleTaskCompleted = () => {
-      fetchActivity()
+      setActivityPage(1)
+      fetchActivity(1, false)
     }
 
     const handleTaskCancelled = () => {
-      fetchActivity()
+      setActivityPage(1)
+      fetchActivity(1, false)
     }
 
     const handleTaskRated = () => {
-      fetchActivity()
+      setActivityPage(1)
+      fetchActivity(1, false)
     }
 
     window.addEventListener('task_status_changed', handleTaskStatusChange)
@@ -197,7 +222,7 @@ function Activity() {
         <div className="space-y-3 sm:space-y-4 w-full">
           {currentTasks.map((task) => (
             <Link
-              key={task.id}
+              key={`${task.id}-${task.date}`}
               to={`/tasks/${task.id}`}
               className="group block bg-white dark:bg-gray-800 rounded-none sm:rounded-xl shadow-sm dark:shadow-gray-900/50 border-2 border-gray-200 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-md transition-all duration-200 p-4 sm:p-6 active:bg-gray-50 dark:active:bg-gray-700 w-full overflow-hidden"
             >
@@ -242,6 +267,22 @@ function Activity() {
               </div>
             </Link>
           ))}
+          {hasMoreActivity && (
+            <div className="pt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = activityPage + 1
+                  fetchActivity(next, true)
+                  setActivityPage(next)
+                }}
+                disabled={loadingMore}
+                className="px-6 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 min-h-[44px]"
+              >
+                {loadingMore ? 'Loading...' : 'Load more'}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

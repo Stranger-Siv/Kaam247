@@ -128,7 +128,7 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
         const errData = await res.json().catch(() => ({}))
         setMessages((prev) => prev.filter((m) => m._id !== optimistic._id))
         setInputText(trimmed)
-        setError(errData.message || 'Failed to send')
+        setError(res.status === 429 ? 'Sending too fast. Please wait a moment.' : (errData.message || 'Failed to send'))
         return
       }
 
@@ -193,7 +193,12 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
         body: JSON.stringify({ text })
       })
         .then((res) => {
-          if (!res.ok) return res.json().then((d) => { throw new Error(d.message || 'Failed to send') })
+          if (!res.ok) {
+            const is429 = res.status === 429
+            return res.json().catch(() => ({})).then((d) => {
+              throw new Error(is429 ? 'Sending too fast. Please wait a moment.' : (d.message || 'Failed to send'))
+            })
+          }
           return res.json()
         })
         .then((data) => {
@@ -201,10 +206,10 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
             prev.map((m) => (m._id === optimistic._id ? { ...m, _id: data.data?._id || m._id, createdAt: data.data?.createdAt || m.createdAt } : m))
           )
         })
-        .catch(() => {
+        .catch((err) => {
           setMessages((prev) => prev.filter((m) => m._id !== optimistic._id))
           setInputText(text)
-          setError('Failed to send. Please try again.')
+          setError(err.message || 'Failed to send. Please try again.')
         })
         .finally(() => setSending(false))
     }

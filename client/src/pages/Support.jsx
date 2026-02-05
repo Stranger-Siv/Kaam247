@@ -11,28 +11,45 @@ function Support() {
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [ticketsPage, setTicketsPage] = useState(1)
+  const [hasMoreTickets, setHasMoreTickets] = useState(false)
+  const [loadingMoreTickets, setLoadingMoreTickets] = useState(false)
 
-  const fetchTickets = async () => {
+  const fetchTickets = async (page = 1, append = false) => {
     try {
-      setLoading(true)
+      if (page === 1) {
+        setLoading(true)
+      } else {
+        setLoadingMoreTickets(true)
+      }
       setError(null)
       const token = localStorage.getItem('kaam247_token')
-      const res = await fetch(`${API_BASE_URL}/api/users/me/tickets`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/me/tickets?page=${page}&limit=20`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.message || 'Failed to load tickets')
-      setTickets(data.tickets || [])
+      const pagination = data.pagination || {}
+      setHasMoreTickets(Boolean(pagination.hasMore))
+      if (!append) {
+        setTickets(data.tickets || [])
+      } else {
+        setTickets(prev => [...prev, ...(data.tickets || [])])
+      }
     } catch (err) {
       setError(err.message || 'Failed to load tickets')
-      setTickets([])
+      if (!append) setTickets([])
     } finally {
-      setLoading(false)
+      if (page === 1) {
+        setLoading(false)
+      } else {
+        setLoadingMoreTickets(false)
+      }
     }
   }
 
   useEffect(() => {
-    fetchTickets()
+    fetchTickets(1, false)
   }, [])
 
   const supportTickets = tickets.filter((t) => t.type === 'SUPPORT')
@@ -61,7 +78,8 @@ function Support() {
       setSubject('')
       setMessage('')
       setShowForm(false)
-      fetchTickets()
+      setTicketsPage(1)
+      fetchTickets(1, false)
     } catch (err) {
       setError(err.message || 'Failed to create ticket')
     } finally {
@@ -162,26 +180,44 @@ function Support() {
           No support tickets yet. Create one above to get help.
         </div>
       ) : (
-        <ul className="space-y-3">
-          {supportTickets.map((t) => (
-            <li key={t._id}>
-              <Link
-                to={`/support/${t._id}`}
-                className="block p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{t.subject || 'Support'}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDate(t.createdAt)}</p>
+        <>
+          <ul className="space-y-3">
+            {supportTickets.map((t) => (
+              <li key={t._id}>
+                <Link
+                  to={`/support/${t._id}`}
+                  className="block p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{t.subject || 'Support'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDate(t.createdAt)}</p>
+                    </div>
+                    <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${statusBadge(t.status)}`}>
+                      {t.status}
+                    </span>
                   </div>
-                  <span className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${statusBadge(t.status)}`}>
-                    {t.status}
-                  </span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          {hasMoreTickets && (
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = ticketsPage + 1
+                  fetchTickets(next, true)
+                  setTicketsPage(next)
+                }}
+                disabled={loadingMoreTickets}
+                className="px-6 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 min-h-[44px]"
+              >
+                {loadingMoreTickets ? 'Loading…' : 'Load more'}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
