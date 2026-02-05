@@ -1,16 +1,10 @@
 const express = require('express')
 const router = express.Router()
+const { createRateLimiter } = require('../utils/rateLimiter')
 
-// Simple in-memory cache + rate limiting (per-process)
-// NOTE: This is for local/dev + small deployments. For scale, move to Redis.
+// In-memory cache (rate limiting is handled by shared rateLimiter)
 const cache = new Map() // key -> { value, expiresAt }
-const ipLastHit = new Map() // ip -> ts
-
-function getClientIp(req) {
-  const xf = req.headers['x-forwarded-for']
-  if (typeof xf === 'string' && xf.length > 0) return xf.split(',')[0].trim()
-  return req.ip || req.connection?.remoteAddress || 'unknown'
-}
+const geocodeLimit = createRateLimiter({ name: 'geocode-reverse', windowMs: 60000, max: 30, keyBy: 'ip' })
 
 function roundCoord(n, decimals = 5) {
   const f = Math.pow(10, decimals)
@@ -18,7 +12,7 @@ function roundCoord(n, decimals = 5) {
 }
 
 // GET /api/geocode/reverse?lat=..&lng=..
-router.get('/geocode/reverse', async (req, res) => {
+router.get('/geocode/reverse', geocodeLimit, async (req, res) => {
   try {
     const lat = Number(req.query.lat)
     const lng = Number(req.query.lng)
@@ -36,14 +30,6 @@ router.get('/geocode/reverse', async (req, res) => {
     if (cached && cached.expiresAt > now) {
       return res.json(cached.value)
     }
-
-    // Soft rate limit: at most 1 request / second per IP
-    const ip = getClientIp(req)
-    const last = ipLastHit.get(ip) || 0
-    if (now - last < 1000) {
-      return res.status(429).json({ error: 'Too many requests. Please retry.' })
-    }
-    ipLastHit.set(ip, now)
 
     const url = new URL('https://nominatim.openstreetmap.org/reverse')
     url.searchParams.set('format', 'json')

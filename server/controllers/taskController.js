@@ -6,6 +6,7 @@ const { broadcastNewTask, notifyTaskAccepted, notifyTaskRemoved, notifyTaskCompl
 const { calculateDistance } = require('../utils/distance')
 const socketManager = require('../socket/socketManager')
 const { parsePagination, paginationMeta } = require('../utils/pagination')
+const { invalidateStatsAndAdminDashboards } = require('../utils/cache')
 
 // Geo query: radius required when lat/lng provided; cap to avoid expensive scans
 const GEO_RADIUS_DEFAULT_KM = 5
@@ -228,6 +229,7 @@ const createTask = async (req, res) => {
       // Don't fail task creation if broadcast fails
     }
 
+    invalidateStatsAndAdminDashboards()
     return res.status(201).json({
       message: 'Task created successfully',
       task: savedTask
@@ -480,6 +482,7 @@ const acceptTask = async (req, res) => {
       // Don't fail the request if socket emission fails
     }
 
+    invalidateStatsAndAdminDashboards()
     return res.status(200).json({
       message: 'Task accepted successfully',
       task: updatedTask
@@ -933,6 +936,7 @@ const cancelTask = async (req, res) => {
           // Don't fail if socket emit fails
         }
 
+        invalidateStatsAndAdminDashboards()
         return res.status(200).json({
           message: 'Task cancelled successfully',
           task: updatedTask
@@ -1039,6 +1043,7 @@ const cancelTask = async (req, res) => {
         worker.lastActionTimestamps.set('cancelTask', new Date())
         await worker.save()
 
+        invalidateStatsAndAdminDashboards()
         return res.status(200).json({
           message: 'Task cancellation successful. Task is now available for other workers.',
           task: updatedTask,
@@ -1155,6 +1160,7 @@ const startTask = async (req, res) => {
       // Don't fail if socket emit fails
     }
 
+    invalidateStatsAndAdminDashboards()
     return res.status(200).json({
       message: 'Task started successfully',
       task: updatedTask
@@ -1267,6 +1273,7 @@ const markComplete = async (req, res) => {
       // Don't fail if socket emit fails
     }
 
+    invalidateStatsAndAdminDashboards()
     return res.status(200).json({
       message: 'Task marked as complete by worker. Waiting for poster confirmation.',
       task: updatedTask
@@ -1387,6 +1394,7 @@ const confirmComplete = async (req, res) => {
       }
     }
 
+    invalidateStatsAndAdminDashboards()
     return res.status(200).json({
       message: 'Task completed successfully',
       task: updatedTask
@@ -1917,6 +1925,7 @@ const bulkCancelTasks = async (req, res) => {
       }
     }
 
+    invalidateStatsAndAdminDashboards()
     return res.status(200).json({
       message: 'Bulk cancel completed',
       cancelled: cancellable.length,

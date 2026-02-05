@@ -1,9 +1,18 @@
 const express = require('express')
 const router = express.Router()
-const { authenticate } = require('../middleware/auth')
+const { authenticate, optionalAuthenticate } = require('../middleware/auth')
 const { createTask, acceptTask, getAvailableTasks, getTaskById, getTasksByUser, cancelTask, startTask, markComplete, confirmComplete, rateTask, editTask, deleteTask, duplicateTask, bulkCancelTasks, bulkExtendValidity, bulkDeleteTasks, getPosterTaskAnalytics, setRecurringSchedule } = require('../controllers/taskController')
 const { getMessages, sendMessage } = require('../controllers/chatController')
 const { getPublicStats } = require('../controllers/adminController')
+const { withCache } = require('../utils/cache')
+const { createRateLimiter } = require('../utils/rateLimiter')
+
+const TTL_PUBLIC_STATS_MS = 90 * 1000  // 90 sec
+
+// Task create + actions: 15 req/min per user (or per IP if not authenticated)
+const taskActionLimit = createRateLimiter({ name: 'task-action', windowMs: 60000, max: 15, keyBy: 'userOrIp' })
+// Chat: 25 req/min per user (auth required)
+const chatLimit = createRateLimiter({ name: 'chat', windowMs: 60000, max: 25, keyBy: 'user' })
 
 // Test route to verify router is working
 router.get('/test', (req, res) => {
@@ -11,7 +20,7 @@ router.get('/test', (req, res) => {
 })
 
 // GET /api/stats - Get public stats (no auth required)
-router.get('/stats', getPublicStats)
+router.get('/stats', withCache(() => 'stats', TTL_PUBLIC_STATS_MS, getPublicStats))
 
 // GET /api/tasks/user/:userId - Fetch tasks posted by a user (MUST come before /tasks/:taskId)
 router.get('/tasks/user/:userId', getTasksByUser)
@@ -29,22 +38,22 @@ router.get('/tasks/:taskId', getTaskById)
 
 // Chat (task-based; auth required)
 router.get('/tasks/:taskId/chat', authenticate, getMessages)
-router.post('/tasks/:taskId/chat', authenticate, sendMessage)
+router.post('/tasks/:taskId/chat', authenticate, chatLimit, sendMessage)
 
 // GET /api/tasks - Fetch available tasks
 router.get('/tasks', getAvailableTasks)
 
 // POST /api/tasks/:taskId/cancel - Cancel a task
-router.post('/tasks/:taskId/cancel', cancelTask)
+router.post('/tasks/:taskId/cancel', optionalAuthenticate, taskActionLimit, cancelTask)
 
 // POST /api/tasks/:taskId/start - Worker starts task (ACCEPTED → IN_PROGRESS)
-router.post('/tasks/:taskId/start', startTask)
+router.post('/tasks/:taskId/start', optionalAuthenticate, taskActionLimit, startTask)
 
 // POST /api/tasks/:taskId/mark-complete - Worker marks task as complete
-router.post('/tasks/:taskId/mark-complete', markComplete)
+router.post('/tasks/:taskId/mark-complete', optionalAuthenticate, taskActionLimit, markComplete)
 
 // POST /api/tasks/:taskId/confirm-complete - Poster confirms completion
-router.post('/tasks/:taskId/confirm-complete', confirmComplete)
+router.post('/tasks/:taskId/confirm-complete', optionalAuthenticate, taskActionLimit, confirmComplete)
 
 // POST /api/tasks/:taskId/rate - Poster rates worker after completion
 router.post('/tasks/:taskId/rate', rateTask)
@@ -59,13 +68,13 @@ router.patch('/tasks/:taskId/recurring', setRecurringSchedule)
 router.delete('/tasks/:taskId', deleteTask)
 
 // POST /api/tasks/:taskId/accept (MUST come before /tasks to avoid route conflict)
-router.post('/tasks/:taskId/accept', acceptTask)
+router.post('/tasks/:taskId/accept', optionalAuthenticate, taskActionLimit, acceptTask)
 
 // POST /api/tasks/:taskId/duplicate - Poster duplicates task
 router.post('/tasks/:taskId/duplicate', duplicateTask)
 
 // POST /api/tasks - Create new task
-router.post('/tasks', createTask)
+router.post('/tasks', optionalAuthenticate, taskActionLimit, createTask)
 
 module.exports = router
 

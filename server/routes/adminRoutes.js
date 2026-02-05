@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const { authenticate } = require('../middleware/auth')
 const { adminMiddleware } = require('../middleware/admin')
+const { withCache } = require('../utils/cache')
 const {
   getUsers,
   getUserById,
@@ -101,17 +102,19 @@ router.patch('/reports/:id/resolve', resolveReport)
 // ADMIN STATS ROUTES
 // ============================================
 
+const TTL_ADMIN_MS = 60 * 1000  // 60 sec for admin dashboard/stats/settings
+
 // GET /api/admin/stats - Get admin dashboard stats (legacy overview cards)
-router.get('/stats', getStats)
+router.get('/stats', withCache(() => 'admin:stats', TTL_ADMIN_MS, getStats))
 
 // GET /api/admin/dashboard - Full dashboard (tasks by status/location/category, revenue, users, recent activity)
-router.get('/dashboard', getDashboard)
+router.get('/dashboard', withCache(() => 'admin:dashboard', TTL_ADMIN_MS, getDashboard))
 
 // GET /api/admin/dashboard/charts?period=daily|weekly|monthly - Time-series for graphs
-router.get('/dashboard/charts', getDashboardCharts)
+router.get('/dashboard/charts', withCache((req) => 'admin:dashboard:charts:' + (req.query.period || 'weekly'), TTL_ADMIN_MS, getDashboardCharts))
 
 // GET /api/admin/pilot-dashboard?week=1 - Pilot success dashboard (week 1–4)
-router.get('/pilot-dashboard', getPilotDashboard)
+router.get('/pilot-dashboard', withCache((req) => 'admin:pilot-dashboard:' + (req.query.week || '1'), TTL_ADMIN_MS, getPilotDashboard))
 // PUT /api/admin/pilot-dashboard/start-date - Set pilot start date (body: { pilotStartDate: "YYYY-MM-DD" })
 router.put('/pilot-dashboard/start-date', setPilotStartDate)
 
@@ -129,7 +132,7 @@ router.get('/chats/:taskId', getChatByTaskId)
 // ============================================
 // SETTINGS
 // ============================================
-router.get('/settings', getSettings)
+router.get('/settings', withCache(() => 'admin:settings', TTL_ADMIN_MS, getSettings))
 router.put('/settings', updateSettings)
 
 // ============================================

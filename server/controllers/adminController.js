@@ -8,6 +8,7 @@ const UserFeedback = require('../models/UserFeedback')
 const mongoose = require('mongoose')
 const { notifyUserUpdated, notifyTaskUpdated, notifyTaskCancelled, notifyAdminStatsRefresh } = require('../socket/socketHandler')
 const { parsePagination, paginationMeta } = require('../utils/pagination')
+const { invalidateSettingsKeys, invalidatePilotDashboard, invalidateStatsAndAdminDashboards } = require('../utils/cache')
 
 // ============================================
 // ADMIN USER MANAGEMENT
@@ -316,6 +317,7 @@ const blockUser = async (req, res) => {
 
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
+    invalidateStatsAndAdminDashboards()
 
     res.json({
       message: 'User blocked successfully',
@@ -369,6 +371,7 @@ const unblockUser = async (req, res) => {
 
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
+    invalidateStatsAndAdminDashboards()
 
     res.json({
       message: 'User unblocked successfully',
@@ -422,6 +425,7 @@ const banUser = async (req, res) => {
 
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
+    invalidateStatsAndAdminDashboards()
 
     res.json({
       message: 'User banned successfully',
@@ -723,6 +727,7 @@ const cancelTask = async (req, res) => {
 
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
+    invalidateStatsAndAdminDashboards()
 
     res.json({
       message: 'Task cancelled by admin',
@@ -774,6 +779,7 @@ const unassignTask = async (req, res) => {
 
     // Notify admin stats refresh
     notifyAdminStatsRefresh()
+    invalidateStatsAndAdminDashboards()
 
     res.json({
       message: 'Worker unassigned successfully',
@@ -816,6 +822,7 @@ const hideTask = async (req, res) => {
     // Toggle hide task
     task.isHidden = !task.isHidden
     await task.save()
+    invalidateStatsAndAdminDashboards()
 
     res.json({
       message: task.isHidden ? 'Task hidden successfully' : 'Task made visible',
@@ -1526,6 +1533,7 @@ const setPilotStartDate = async (req, res) => {
       },
       { upsert: true, new: true }
     )
+    invalidatePilotDashboard()
     res.json({ message: 'Pilot start date updated', pilotStartDate: value })
   } catch (error) {
     res.status(500).json({
@@ -1764,8 +1772,9 @@ const updateSettings = async (req, res) => {
     if (!key) {
       return res.status(400).json({ error: 'Missing key', message: 'key is required' })
     }
+    const keyStr = String(key).trim()
     const updated = await Config.findOneAndUpdate(
-      { key: String(key).trim() },
+      { key: keyStr },
       {
         $set: {
           value: value !== undefined ? value : null,
@@ -1776,6 +1785,7 @@ const updateSettings = async (req, res) => {
       },
       { upsert: true, new: true }
     )
+    invalidateSettingsKeys(keyStr)
     res.json({ message: 'Settings updated', setting: updated })
   } catch (error) {
     res.status(500).json({

@@ -71,5 +71,33 @@ const authenticate = async (req, res, next) => {
   }
 }
 
-module.exports = { authenticate }
+// Same as authenticate but does not 401: sets req.user if token valid, otherwise continues without req.user.
+// Use before rate limiter for userOrIp so logged-in users get per-user limits.
+const optionalAuthenticate = async (req, res, next) => {
+  try {
+    let token = req.cookies?.token || null
+    if (!token) {
+      const authHeader = req.headers.authorization
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7)
+      }
+    }
+    if (!token) return next()
+
+    const secret = getSecret()
+    if (!secret) return next()
+
+    const decoded = jwt.verify(token, secret)
+    const user = await User.findById(decoded.userId)
+    if (!user || !user.isActive) return next()
+
+    req.user = user
+    req.userId = decoded.userId
+    next()
+  } catch (_) {
+    next()
+  }
+}
+
+module.exports = { authenticate, optionalAuthenticate }
 
