@@ -3,6 +3,7 @@ const Task = require('../models/Task')
 const UserFeedback = require('../models/UserFeedback')
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
+const { parsePagination, paginationMeta } = require('../utils/pagination')
 
 const createUser = async (req, res) => {
   try {
@@ -245,13 +246,88 @@ const updateProfile = async (req, res) => {
   }
 }
 
-// GET /api/users/me/activity - Get user's activity history (optional: dateFrom, dateTo, export=csv)
+const CSV_EXPORT_MAX_ROWS = 2000
+
+function buildCategorizedActivity (postedTasks, acceptedTasks, userId) {
+  return {
+    posted: postedTasks.map(task => ({
+      id: task._id,
+      title: task.title,
+      category: task.category,
+      budget: task.budget,
+      status: task.status,
+      workerCompleted: task.workerCompleted || false,
+      role: 'Poster',
+      date: task.createdAt,
+      acceptedBy: task.acceptedBy?.name || null,
+      acceptedById: task.acceptedBy?._id || null,
+      completedAt: task.completedAt || null
+    })),
+    accepted: acceptedTasks.map(task => ({
+      id: task._id,
+      title: task.title,
+      category: task.category,
+      budget: task.budget,
+      status: task.status,
+      role: 'Worker',
+      date: task.createdAt,
+      postedBy: task.postedBy?.name || null,
+      completedAt: task.completedAt || null,
+      rating: task.rating || null
+    })),
+    completed: [
+      ...postedTasks.filter(t => t.status === 'COMPLETED').map(task => ({
+        id: task._id,
+        title: task.title,
+        category: task.category,
+        budget: task.budget,
+        status: task.status,
+        role: 'Poster',
+        date: task.completedAt || task.createdAt,
+        postedBy: task.postedBy?.name || null,
+        acceptedBy: task.acceptedBy?.name || null,
+        rating: task.rating || null
+      })),
+      ...acceptedTasks.filter(t => t.status === 'COMPLETED').map(task => ({
+        id: task._id,
+        title: task.title,
+        category: task.category,
+        budget: task.budget,
+        status: task.status,
+        role: 'Worker',
+        date: task.completedAt || task.createdAt,
+        postedBy: task.postedBy?.name || null,
+        acceptedBy: task.acceptedBy?.name || null,
+        rating: task.rating || null
+      }))
+    ].sort((a, b) => new Date(b.date) - new Date(a.date)),
+    cancelled: [
+      ...postedTasks.filter(t =>
+        ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(t.status)
+      ),
+      ...acceptedTasks.filter(t =>
+        ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(t.status)
+      )
+    ].map(task => ({
+      id: task._id,
+      title: task.title,
+      category: task.category,
+      budget: task.budget,
+      status: task.status,
+      role: task.postedBy?._id?.toString() === userId ? 'Poster' : 'Worker',
+      date: task.createdAt,
+      postedBy: task.postedBy?.name || null,
+      acceptedBy: task.acceptedBy?.name || null
+    })).sort((a, b) => new Date(b.date) - new Date(a.date))
+  }
+}
+
+// GET /api/users/me/activity - Get user's activity history (optional: dateFrom, dateTo, page, limit, export=csv)
 const getActivity = async (req, res) => {
   try {
-    const userId = req.userId // From auth middleware
+    const userId = req.userId
     const { dateFrom, dateTo, export: exportFormat } = req.query
 
-    // Validate userId
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({
         error: 'Invalid userId',
@@ -269,95 +345,26 @@ const getActivity = async (req, res) => {
     const createdAtQuery = Object.keys(dateFilter).length ? { createdAt: dateFilter } : {}
 
     const activityFields = '_id title category budget status workerCompleted createdAt completedAt rating'
-    const postedTasks = await Task.find({ postedBy: userId, ...createdAtQuery })
-      .select(activityFields)
-      .populate('acceptedBy', 'name')
-      .sort({ createdAt: -1 })
-      .lean()
+    const isCsvExport = exportFormat === 'csv'
+    const { page, limit, skip } = parsePagination(req.query)
 
-    const acceptedTasks = await Task.find({ acceptedBy: userId, ...createdAtQuery })
-      .select(activityFields)
-      .populate('postedBy', 'name')
-      .sort({ createdAt: -1 })
-      .lean()
+    const postedQuery = { postedBy: userId, ...createdAtQuery }
+    const acceptedQuery = { acceptedBy: userId, ...createdAtQuery }
 
-    // Categorize tasks
-    const categorized = {
-      posted: postedTasks.map(task => ({
-        id: task._id,
-        title: task.title,
-        category: task.category,
-        budget: task.budget,
-        status: task.status,
-        workerCompleted: task.workerCompleted || false,
-        role: 'Poster',
-        date: task.createdAt,
-        acceptedBy: task.acceptedBy?.name || null,
-        acceptedById: task.acceptedBy?._id || null,
-        completedAt: task.completedAt || null
-      })),
-      accepted: acceptedTasks.map(task => ({
-        id: task._id,
-        title: task.title,
-        category: task.category,
-        budget: task.budget,
-        status: task.status,
-        role: 'Worker',
-        date: task.createdAt,
-        postedBy: task.postedBy?.name || null,
-        completedAt: task.completedAt || null,
-        rating: task.rating || null
-      })),
-      completed: [
-        // Tasks from postedTasks: user is the Poster
-        ...postedTasks.filter(t => t.status === 'COMPLETED').map(task => ({
-          id: task._id,
-          title: task.title,
-          category: task.category,
-          budget: task.budget,
-          status: task.status,
-          role: 'Poster', // User posted this task
-          date: task.completedAt || task.createdAt,
-          postedBy: task.postedBy?.name || null,
-          acceptedBy: task.acceptedBy?.name || null,
-          rating: task.rating || null
-        })),
-        // Tasks from acceptedTasks: user is the Worker
-        ...acceptedTasks.filter(t => t.status === 'COMPLETED').map(task => ({
-          id: task._id,
-          title: task.title,
-          category: task.category,
-          budget: task.budget,
-          status: task.status,
-          role: 'Worker', // User accepted this task
-          date: task.completedAt || task.createdAt,
-          postedBy: task.postedBy?.name || null,
-          acceptedBy: task.acceptedBy?.name || null,
-          rating: task.rating || null
-        }))
-      ].sort((a, b) => new Date(b.date) - new Date(a.date)),
-      cancelled: [
-        // Include all cancellation variants for both poster and worker
-        ...postedTasks.filter(t =>
-          ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(t.status)
-        ),
-        ...acceptedTasks.filter(t =>
-          ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(t.status)
-        )
-      ].map(task => ({
-        id: task._id,
-        title: task.title,
-        category: task.category,
-        budget: task.budget,
-        status: task.status,
-        role: task.postedBy?._id?.toString() === userId ? 'Poster' : 'Worker',
-        date: task.createdAt,
-        postedBy: task.postedBy?.name || null,
-        acceptedBy: task.acceptedBy?.name || null
-      })).sort((a, b) => new Date(b.date) - new Date(a.date))
-    }
-
-    if (exportFormat === 'csv') {
+    if (isCsvExport) {
+      const postedTasks = await Task.find(postedQuery)
+        .select(activityFields)
+        .populate('acceptedBy', 'name')
+        .sort({ createdAt: -1 })
+        .limit(CSV_EXPORT_MAX_ROWS)
+        .lean()
+      const acceptedTasks = await Task.find(acceptedQuery)
+        .select(activityFields)
+        .populate('postedBy', 'name')
+        .sort({ createdAt: -1 })
+        .limit(CSV_EXPORT_MAX_ROWS)
+        .lean()
+      const categorized = buildCategorizedActivity(postedTasks, acceptedTasks, userId)
       const rows = [
         ['Role', 'Title', 'Category', 'Budget', 'Status', 'Date', 'Posted By', 'Accepted By', 'Rating'].join(',')
       ]
@@ -373,9 +380,40 @@ const getActivity = async (req, res) => {
       return res.status(200).send(rows.join('\n'))
     }
 
+    const [totalPosted, totalAccepted, postedTasks, acceptedTasks] = await Promise.all([
+      Task.countDocuments(postedQuery),
+      Task.countDocuments(acceptedQuery),
+      Task.find(postedQuery)
+        .select(activityFields)
+        .populate('acceptedBy', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Task.find(acceptedQuery)
+        .select(activityFields)
+        .populate('postedBy', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+    ])
+
+    const categorized = buildCategorizedActivity(postedTasks, acceptedTasks, userId)
+    const hasMorePosted = (page - 1) * limit + postedTasks.length < totalPosted
+    const hasMoreAccepted = (page - 1) * limit + acceptedTasks.length < totalAccepted
+
     return res.status(200).json({
       message: 'Activity fetched successfully',
-      activity: categorized
+      activity: categorized,
+      pagination: {
+        page,
+        limit,
+        totalPosted,
+        totalAccepted,
+        hasMorePosted,
+        hasMoreAccepted
+      }
     })
   } catch (error) {
     res.status(500).json({
@@ -385,12 +423,10 @@ const getActivity = async (req, res) => {
   }
 }
 
-// GET /api/users/me/earnings - Get worker's earnings
+// GET /api/users/me/earnings - Get worker's earnings (paginated task list)
 const getEarnings = async (req, res) => {
   try {
-    const userId = req.userId // From auth middleware
-
-    // Validate userId
+    const userId = req.userId
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({
         error: 'Invalid userId',
@@ -398,88 +434,56 @@ const getEarnings = async (req, res) => {
       })
     }
 
-    const earningsFields = '_id title category budget completedAt rating'
-    const completedTasks = await Task.find({
-      acceptedBy: userId,
-      status: 'COMPLETED'
-    })
-      .select(earningsFields)
-      .populate('postedBy', 'name')
-      .sort({ completedAt: -1 })
-      .lean()
-
-    // Calculate total earnings
-    const totalEarnings = completedTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
-
-    // Calculate earnings by time period
+    const { page, limit, skip } = parsePagination(req.query)
     const now = new Date()
-
-    // Today
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const todayTasks = completedTasks.filter(task => {
-      const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-      return completedDate >= startOfToday
-    })
-    const earningsToday = todayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
-
-    // This week (last 7 days)
     const startOfWeek = new Date(now)
     startOfWeek.setDate(now.getDate() - 7)
-    const weekTasks = completedTasks.filter(task => {
-      const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-      return completedDate >= startOfWeek
-    })
-    const earningsThisWeek = weekTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
-
-    // This month
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const thisMonthTasks = completedTasks.filter(task => {
-      const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-      return completedDate >= startOfMonth
-    })
-    const earningsThisMonth = thisMonthTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+    const match = { acceptedBy: userId, status: 'COMPLETED' }
 
-    // Breakdown by category
+    const [totalCount, summary, pageTasks] = await Promise.all([
+      Task.countDocuments(match),
+      Task.aggregate([
+        { $match: match },
+        {
+          $facet: {
+            total: [{ $group: { _id: null, sum: { $sum: '$budget' } } }],
+            today: [{ $match: { completedAt: { $gte: startOfToday } } }, { $group: { _id: null, sum: { $sum: '$budget' } } }],
+            week: [{ $match: { completedAt: { $gte: startOfWeek } } }, { $group: { _id: null, sum: { $sum: '$budget' } } }],
+            month: [{ $match: { completedAt: { $gte: startOfMonth } } }, { $group: { _id: null, sum: { $sum: '$budget' } } }],
+            byCat: [{ $group: { _id: { $ifNull: ['$category', 'Other'] }, total: { $sum: '$budget' } } }],
+            last7: [
+              { $match: { completedAt: { $gte: new Date(now.getTime() - 7 * 24 * 3600000) } } },
+              { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$completedAt' } }, total: { $sum: '$budget' }, count: { $sum: 1 } } },
+              { $sort: { _id: 1 } }
+            ],
+            last30: [
+              { $match: { completedAt: { $gte: new Date(now.getTime() - 30 * 24 * 3600000) } } },
+              { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$completedAt' } }, total: { $sum: '$budget' }, count: { $sum: 1 } } },
+              { $sort: { _id: 1 } }
+            ]
+          }
+        }
+      ]),
+      Task.find(match)
+        .select('_id title category budget completedAt rating')
+        .populate('postedBy', 'name')
+        .sort({ completedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+    ])
+
+    const totalEarnings = summary[0]?.total?.[0]?.sum ?? 0
+    const earningsToday = summary[0]?.today?.[0]?.sum ?? 0
+    const earningsThisWeek = summary[0]?.week?.[0]?.sum ?? 0
+    const earningsThisMonth = summary[0]?.month?.[0]?.sum ?? 0
     const byCategory = {}
-    completedTasks.forEach(task => {
-      const cat = task.category || 'Other'
-      byCategory[cat] = (byCategory[cat] || 0) + (task.budget || 0)
-    })
-
-    // Last 7 days daily breakdown
-    const last7Days = []
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i)
-      d.setHours(0, 0, 0, 0)
-      const end = new Date(d)
-      end.setHours(23, 59, 59, 999)
-      const dayTasks = completedTasks.filter(task => {
-        const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-        return completedDate >= d && completedDate <= end
-      })
-      const dayTotal = dayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
-      last7Days.push({ date: d.toISOString().slice(0, 10), total: dayTotal, count: dayTasks.length })
-    }
-
-    // Last 30 days (for chart)
-    const last30Days = []
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i)
-      d.setHours(0, 0, 0, 0)
-      const end = new Date(d)
-      end.setHours(23, 59, 59, 999)
-      const dayTasks = completedTasks.filter(task => {
-        const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-        return completedDate >= d && completedDate <= end
-      })
-      const dayTotal = dayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
-      last30Days.push({ date: d.toISOString().slice(0, 10), total: dayTotal, count: dayTasks.length })
-    }
-
-    // Format task list
-    const taskList = completedTasks.map(task => ({
+    ;(summary[0]?.byCat || []).forEach(({ _id, total }) => { byCategory[_id] = total })
+    const last7Days = (summary[0]?.last7 || []).map(({ _id, total, count }) => ({ date: _id, total, count }))
+    const last30Days = (summary[0]?.last30 || []).map(({ _id, total, count }) => ({ date: _id, total, count }))
+    const taskList = pageTasks.map(task => ({
       id: task._id,
       title: task.title,
       category: task.category,
@@ -496,12 +500,13 @@ const getEarnings = async (req, res) => {
         today: earningsToday,
         thisWeek: earningsThisWeek,
         thisMonth: earningsThisMonth,
-        totalTasks: completedTasks.length,
+        totalTasks: totalCount,
         tasks: taskList,
         byCategory,
         last7Days,
         last30Days
-      }
+      },
+      pagination: paginationMeta(page, limit, totalCount, taskList.length)
     })
   } catch (error) {
     res.status(500).json({
@@ -523,78 +528,56 @@ const getTransactions = async (req, res) => {
       })
     }
 
-    const txFields = '_id title category budget completedAt'
-    const completedTasks = await Task.find({
-      postedBy: userId,
-      status: 'COMPLETED'
-    })
-      .select(txFields)
-      .populate('acceptedBy', 'name')
-      .sort({ completedAt: -1 })
-      .lean()
-
-    const totalSpent = completedTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+    const { page, limit, skip } = parsePagination(req.query)
     const now = new Date()
-
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const todayTasks = completedTasks.filter(task => {
-      const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-      return completedDate >= startOfToday
-    })
-    const spentToday = todayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
-
     const startOfWeek = new Date(now)
     startOfWeek.setDate(now.getDate() - 7)
-    const weekTasks = completedTasks.filter(task => {
-      const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-      return completedDate >= startOfWeek
-    })
-    const spentThisWeek = weekTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
-
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const thisMonthTasks = completedTasks.filter(task => {
-      const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-      return completedDate >= startOfMonth
-    })
-    const spentThisMonth = thisMonthTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
+    const match = { postedBy: userId, status: 'COMPLETED' }
 
+    const [totalCount, summary, pageTasks] = await Promise.all([
+      Task.countDocuments(match),
+      Task.aggregate([
+        { $match: match },
+        {
+          $facet: {
+            total: [{ $group: { _id: null, sum: { $sum: '$budget' } } }],
+            today: [{ $match: { completedAt: { $gte: startOfToday } } }, { $group: { _id: null, sum: { $sum: '$budget' } } }],
+            week: [{ $match: { completedAt: { $gte: startOfWeek } } }, { $group: { _id: null, sum: { $sum: '$budget' } } }],
+            month: [{ $match: { completedAt: { $gte: startOfMonth } } }, { $group: { _id: null, sum: { $sum: '$budget' } } }],
+            byCat: [{ $group: { _id: { $ifNull: ['$category', 'Other'] }, total: { $sum: '$budget' } } }],
+            last7: [
+              { $match: { completedAt: { $gte: new Date(now.getTime() - 7 * 24 * 3600000) } } },
+              { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$completedAt' } }, total: { $sum: '$budget' }, count: { $sum: 1 } } },
+              { $sort: { _id: 1 } }
+            ],
+            last30: [
+              { $match: { completedAt: { $gte: new Date(now.getTime() - 30 * 24 * 3600000) } } },
+              { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$completedAt' } }, total: { $sum: '$budget' }, count: { $sum: 1 } } },
+              { $sort: { _id: 1 } }
+            ]
+          }
+        }
+      ]),
+      Task.find(match)
+        .select('_id title category budget completedAt')
+        .populate('acceptedBy', 'name')
+        .sort({ completedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+    ])
+
+    const totalSpent = summary[0]?.total?.[0]?.sum ?? 0
+    const spentToday = summary[0]?.today?.[0]?.sum ?? 0
+    const spentThisWeek = summary[0]?.week?.[0]?.sum ?? 0
+    const spentThisMonth = summary[0]?.month?.[0]?.sum ?? 0
     const byCategory = {}
-    completedTasks.forEach(task => {
-      const cat = task.category || 'Other'
-      byCategory[cat] = (byCategory[cat] || 0) + (task.budget || 0)
-    })
-
-    const last7Days = []
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i)
-      d.setHours(0, 0, 0, 0)
-      const end = new Date(d)
-      end.setHours(23, 59, 59, 999)
-      const dayTasks = completedTasks.filter(task => {
-        const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-        return completedDate >= d && completedDate <= end
-      })
-      const dayTotal = dayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
-      last7Days.push({ date: d.toISOString().slice(0, 10), total: dayTotal, count: dayTasks.length })
-    }
-
-    const last30Days = []
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i)
-      d.setHours(0, 0, 0, 0)
-      const end = new Date(d)
-      end.setHours(23, 59, 59, 999)
-      const dayTasks = completedTasks.filter(task => {
-        const completedDate = task.completedAt ? new Date(task.completedAt) : new Date(task.createdAt)
-        return completedDate >= d && completedDate <= end
-      })
-      const dayTotal = dayTasks.reduce((sum, task) => sum + (task.budget || 0), 0)
-      last30Days.push({ date: d.toISOString().slice(0, 10), total: dayTotal, count: dayTasks.length })
-    }
-
-    const taskList = completedTasks.map(task => ({
+    ;(summary[0]?.byCat || []).forEach(({ _id, total }) => { byCategory[_id] = total })
+    const last7Days = (summary[0]?.last7 || []).map(({ _id, total, count }) => ({ date: _id, total, count }))
+    const last30Days = (summary[0]?.last30 || []).map(({ _id, total, count }) => ({ date: _id, total, count }))
+    const taskList = pageTasks.map(task => ({
       id: task._id,
       title: task.title,
       category: task.category,
@@ -611,12 +594,13 @@ const getTransactions = async (req, res) => {
         today: spentToday,
         thisWeek: spentThisWeek,
         thisMonth: spentThisMonth,
-        totalTasks: completedTasks.length,
+        totalTasks: totalCount,
         tasks: taskList,
         byCategory,
         last7Days,
         last30Days
-      }
+      },
+      pagination: paginationMeta(page, limit, totalCount, taskList.length)
     })
   } catch (error) {
     res.status(500).json({

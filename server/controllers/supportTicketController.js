@@ -2,6 +2,7 @@ const SupportTicket = require('../models/SupportTicket')
 const User = require('../models/User')
 const mongoose = require('mongoose')
 const { emitTicketMessage } = require('../socket/socketHandler')
+const { parsePagination, paginationMeta } = require('../utils/pagination')
 
 // POST /api/users/me/tickets - Create a support ticket (SUPPORT with subject+message, or MOBILE_UPDATE)
 const createTicket = async (req, res) => {
@@ -74,16 +75,24 @@ const createTicket = async (req, res) => {
   }
 }
 
-// GET /api/users/me/tickets - List current user's tickets
+// GET /api/users/me/tickets - List current user's tickets (paginated)
 const getMyTickets = async (req, res) => {
   try {
     const userId = req.userId
-    const tickets = await SupportTicket.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .lean()
+    const { page, limit, skip } = parsePagination(req.query)
+    const query = { user: userId }
+    const [tickets, total] = await Promise.all([
+      SupportTicket.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      SupportTicket.countDocuments(query)
+    ])
 
     return res.status(200).json({
-      tickets
+      tickets,
+      pagination: paginationMeta(page, limit, total, tickets.length)
     })
   } catch (error) {
     res.status(500).json({
@@ -169,7 +178,7 @@ const sendUserTicketMessage = async (req, res) => {
   }
 }
 
-// GET /api/admin/tickets - List all tickets (admin)
+// GET /api/admin/tickets - List all tickets (admin, paginated)
 const getTickets = async (req, res) => {
   try {
     const { status, type } = req.query
@@ -177,14 +186,23 @@ const getTickets = async (req, res) => {
     if (status && ['PENDING', 'OPEN', 'ACCEPTED', 'RESOLVED', 'REJECTED'].includes(status)) query.status = status
     if (type && ['MOBILE_UPDATE', 'SUPPORT'].includes(type)) query.type = type
 
-    const tickets = await SupportTicket.find(query)
-      .populate('user', 'name email phone')
-      .populate('acceptedBy', 'name email')
-      .populate('resolvedBy', 'name email')
-      .sort({ createdAt: -1 })
-      .lean()
+    const { page, limit, skip } = parsePagination(req.query)
+    const [tickets, total] = await Promise.all([
+      SupportTicket.find(query)
+        .populate('user', 'name email phone')
+        .populate('acceptedBy', 'name email')
+        .populate('resolvedBy', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      SupportTicket.countDocuments(query)
+    ])
 
-    return res.status(200).json({ tickets })
+    return res.status(200).json({
+      tickets,
+      pagination: paginationMeta(page, limit, total, tickets.length)
+    })
   } catch (error) {
     res.status(500).json({
       error: 'Server error',

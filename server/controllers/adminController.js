@@ -7,6 +7,7 @@ const AdminLog = require('../models/AdminLog')
 const UserFeedback = require('../models/UserFeedback')
 const mongoose = require('mongoose')
 const { notifyUserUpdated, notifyTaskUpdated, notifyTaskCancelled, notifyAdminStatsRefresh } = require('../socket/socketHandler')
+const { parsePagination, paginationMeta } = require('../utils/pagination')
 
 // ============================================
 // ADMIN USER MANAGEMENT
@@ -15,18 +16,8 @@ const { notifyUserUpdated, notifyTaskUpdated, notifyTaskCancelled, notifyAdminSt
 // GET /api/admin/users - List all users with filters and pagination
 const getUsers = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 20,
-      search = '',
-      role,
-      status,
-      highCancellation = false
-    } = req.query
-
-    const pageNum = parseInt(page)
-    const limitNum = parseInt(limit)
-    const skip = (pageNum - 1) * limitNum
+    const { search = '', role, status, highCancellation = false } = req.query
+    const { page, limit, skip } = parsePagination(req.query)
 
     // Build query
     const query = {}
@@ -60,7 +51,7 @@ const getUsers = async (req, res) => {
       .select(userListFields)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limitNum)
+      .limit(limit)
       .lean()
 
     const usersWithStats = await Promise.all(
@@ -91,17 +82,11 @@ const getUsers = async (req, res) => {
       })
     )
 
-    // Total count for pagination
     const total = await User.countDocuments(query)
 
     res.json({
       users: usersWithStats,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum)
-      }
+      pagination: paginationMeta(page, limit, total, usersWithStats.length)
     })
   } catch (error) {
     res.status(500).json({
@@ -589,20 +574,8 @@ const updateCancelLimit = async (req, res) => {
 // GET /api/admin/tasks - List all tasks with filters
 const getTasks = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 20,
-      status,
-      category,
-      city,
-      minBudget,
-      maxBudget,
-      reportedOnly = false
-    } = req.query
-
-    const pageNum = parseInt(page)
-    const limitNum = parseInt(limit)
-    const skip = (pageNum - 1) * limitNum
+    const { status, category, city, minBudget, maxBudget, reportedOnly = false } = req.query
+    const { page, limit, skip } = parsePagination(req.query)
 
     // Build query
     const query = {}
@@ -640,20 +613,14 @@ const getTasks = async (req, res) => {
       .populate('acceptedBy', 'name email phone')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limitNum)
+      .limit(limit)
       .lean()
 
-    // Total count for pagination
     const total = await Task.countDocuments(query)
 
     res.json({
       tasks,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum)
-      }
+      pagination: paginationMeta(page, limit, total, tasks.length)
     })
   } catch (error) {
     res.status(500).json({
@@ -873,46 +840,30 @@ const hideTask = async (req, res) => {
 // GET /api/admin/reports - List all reports
 const getReports = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 20,
-      status = 'open',
-      reason
-    } = req.query
-
-    const pageNum = parseInt(page)
-    const limitNum = parseInt(limit)
-    const skip = (pageNum - 1) * limitNum
+    const { status = 'open', reason } = req.query
+    const { page, limit, skip } = parsePagination(req.query)
 
     const query = {}
-    if (status) {
-      query.status = status
-    }
-    if (reason) {
-      query.reason = reason
-    }
+    if (status) query.status = status
+    if (reason) query.reason = reason
 
-    const reports = await Report.find(query)
-      .select('reporter reportedUser reportedTask reason status createdAt resolvedAt adminNotes resolvedBy')
-      .populate('reporter', 'name email')
-      .populate('reportedUser', 'name email status')
-      .populate('reportedTask', 'title status')
-      .populate('resolvedBy', 'name email')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limitNum)
-      .lean()
-
-    const total = await Report.countDocuments(query)
+    const [reports, total] = await Promise.all([
+      Report.find(query)
+        .select('reporter reportedUser reportedTask reason status createdAt resolvedAt adminNotes resolvedBy')
+        .populate('reporter', 'name email')
+        .populate('reportedUser', 'name email status')
+        .populate('reportedTask', 'title status')
+        .populate('resolvedBy', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Report.countDocuments(query)
+    ])
 
     res.json({
       reports,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum)
-      }
+      pagination: paginationMeta(page, limit, total, reports.length)
     })
   } catch (error) {
     res.status(500).json({
@@ -1719,25 +1670,36 @@ const getWorkers = async (req, res) => {
 // CHAT MONITORING
 // ============================================
 
-// GET /api/admin/chats - List all chat rooms (by task)
+// GET /api/admin/chats - List all chat rooms (by task, paginated)
 const getChats = async (req, res) => {
   try {
     const { taskId, userId } = req.query
     const query = {}
     if (taskId) query.taskId = taskId
-    const chats = await Chat.find(query)
-      .populate('taskId', 'title status postedBy acceptedBy')
-      .populate('participants', 'name email phone')
-      .sort({ createdAt: -1 })
-      .limit(100)
-      .lean()
+    const { page, limit, skip } = parsePagination(req.query)
+    const [chats, total] = await Promise.all([
+      Chat.find(query)
+        .populate('taskId', 'title status postedBy acceptedBy')
+        .populate('participants', 'name email phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Chat.countDocuments(query)
+    ])
 
     if (userId) {
       const uid = userId.toString()
       const filtered = chats.filter((c) => c.participants?.some((p) => p?._id?.toString() === uid))
-      return res.json({ chats: filtered })
+      return res.json({
+        chats: filtered,
+        pagination: paginationMeta(page, limit, total, filtered.length)
+      })
     }
-    res.json({ chats })
+    res.json({
+      chats,
+      pagination: paginationMeta(page, limit, total, chats.length)
+    })
   } catch (error) {
     res.status(500).json({
       error: 'Server error',
@@ -1830,21 +1792,23 @@ const updateSettings = async (req, res) => {
 // GET /api/admin/reviews - List all ratings/reviews (from completed tasks)
 const getReviews = async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query
-    const skip = (Math.max(1, parseInt(page)) - 1) * Math.min(50, parseInt(limit) || 20)
+    const { page, limit, skip } = parsePagination(req.query)
     const reviewFields = 'rating ratedAt review postedBy acceptedBy'
-    const tasks = await Task.find({ rating: { $exists: true, $ne: null } })
-      .select(reviewFields)
-      .populate('postedBy', 'name email phone')
-      .populate('acceptedBy', 'name email phone')
-      .sort({ ratedAt: -1 })
-      .skip(skip)
-      .limit(Math.min(50, parseInt(limit) || 20))
-      .lean()
-    const total = await Task.countDocuments({ rating: { $exists: true, $ne: null } })
+    const query = { rating: { $exists: true, $ne: null } }
+    const [tasks, total] = await Promise.all([
+      Task.find(query)
+        .select(reviewFields)
+        .populate('postedBy', 'name email phone')
+        .populate('acceptedBy', 'name email phone')
+        .sort({ ratedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Task.countDocuments(query)
+    ])
     res.json({
       reviews: tasks,
-      pagination: { page: Math.max(1, parseInt(page)), limit: Math.min(50, parseInt(limit) || 20), total, pages: Math.ceil(total / (Math.min(50, parseInt(limit) || 20))) }
+      pagination: paginationMeta(page, limit, total, tasks.length)
     })
   } catch (error) {
     res.status(500).json({
@@ -1861,21 +1825,23 @@ const getReviews = async (req, res) => {
 // GET /api/admin/logs - Admin action logs + optional filter
 const getLogs = async (req, res) => {
   try {
-    const { page = 1, limit = 50, resource, adminId } = req.query
-    const skip = (Math.max(1, parseInt(page)) - 1) * Math.min(100, parseInt(limit) || 50)
+    const { resource, adminId } = req.query
+    const { page, limit, skip } = parsePagination(req.query)
     const query = {}
     if (resource) query.resource = resource
     if (adminId) query.adminId = adminId
-    const logs = await AdminLog.find(query)
-      .populate('adminId', 'name email')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(Math.min(100, parseInt(limit) || 50))
-      .lean()
-    const total = await AdminLog.countDocuments(query)
+    const [logs, total] = await Promise.all([
+      AdminLog.find(query)
+        .populate('adminId', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      AdminLog.countDocuments(query)
+    ])
     res.json({
       logs,
-      pagination: { page: Math.max(1, parseInt(page)), limit: Math.min(100, parseInt(limit) || 50), total, pages: Math.ceil(total / (Math.min(100, parseInt(limit) || 50))) }
+      pagination: paginationMeta(page, limit, total, logs.length)
     })
   } catch (error) {
     res.status(500).json({

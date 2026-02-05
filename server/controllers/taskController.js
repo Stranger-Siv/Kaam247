@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const { broadcastNewTask, notifyTaskAccepted, notifyTaskRemoved, notifyTaskCompleted, notifyTaskStatusChanged, notifyTaskUpdated } = require('../socket/socketHandler')
 const { calculateDistance } = require('../utils/distance')
 const socketManager = require('../socket/socketManager')
+const { parsePagination, paginationMeta } = require('../utils/pagination')
 
 const createTask = async (req, res) => {
   try {
@@ -533,8 +534,10 @@ const getAvailableTasks = async (req, res) => {
       ])
     }
 
+    const { page, limit, skip } = parsePagination(req.query)
     const listFields = '_id title description category budget status location createdAt'
-    let tasks = await Task.find(query).select(listFields).lean()
+    const maxRead = 500
+    let tasks = await Task.find(query).select(listFields).limit(maxRead).lean()
 
     // Calculate distances and filter if worker location is provided
     if (workerLat !== null && workerLng !== null && !isNaN(workerLat) && !isNaN(workerLng)) {
@@ -606,10 +609,13 @@ const getAvailableTasks = async (req, res) => {
       else tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     }
 
+    const total = tasks.length
+    const pageTasks = tasks.slice(skip, skip + limit)
+
     return res.status(200).json({
       message: 'Tasks fetched successfully',
-      count: tasks.length,
-      tasks: tasks
+      tasks: pageTasks,
+      pagination: paginationMeta(page, limit, total, pageTasks.length)
     })
   } catch (error) {
     res.status(500).json({
@@ -778,16 +784,20 @@ const getTasksByUser = async (req, res) => {
     else if (sort === 'status') sortOption = { status: 1, createdAt: -1 }
     else if (sort === 'date') sortOption = { createdAt: -1 }
 
+    const { page, limit, skip } = parsePagination(req.query)
+    const total = await Task.countDocuments(filter)
     const listFields = '_id title description category budget status location createdAt acceptedAt completedAt'
     const tasks = await Task.find(filter)
       .select(listFields)
       .sort(sortOption)
+      .skip(skip)
+      .limit(limit)
       .lean()
 
     return res.status(200).json({
       message: 'Tasks fetched successfully',
-      count: tasks.length,
-      tasks: tasks
+      tasks,
+      pagination: paginationMeta(page, limit, total, tasks.length)
     })
   } catch (error) {
     res.status(500).json({
@@ -2069,8 +2079,11 @@ const getPosterTaskAnalytics = async (req, res) => {
       })
     }
 
+    const analyticsCap = 1000
     const tasks = await Task.find({ postedBy: userId })
       .select('status viewCount acceptedAt createdAt')
+      .sort({ createdAt: -1 })
+      .limit(analyticsCap)
       .lean()
     const openOrSearching = tasks.filter(t => ['OPEN', 'SEARCHING'].includes(t.status))
     const accepted = tasks.filter(t => t.status === 'ACCEPTED' || t.status === 'IN_PROGRESS')
