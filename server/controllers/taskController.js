@@ -7,6 +7,7 @@ const { calculateDistance } = require('../utils/distance')
 const socketManager = require('../socket/socketManager')
 const { parsePagination, paginationMeta } = require('../utils/pagination')
 const { invalidateStatsAndAdminDashboards } = require('../utils/cache')
+const { runAfterResponse } = require('../utils/background')
 
 // Geo query: radius required when lat/lng provided; cap to avoid expensive scans
 const GEO_RADIUS_DEFAULT_KM = 5
@@ -198,38 +199,31 @@ const createTask = async (req, res) => {
     userExists.lastActionTimestamps.set('createTask', new Date())
     await userExists.save()
 
-    // Broadcast new task to eligible online workers
-    try {
-      const taskData = {
-        taskId: savedTask._id.toString(),
-        title: savedTask.title,
-        category: savedTask.category,
-        budget: savedTask.budget,
-        isOnCampus: savedTask.isOnCampus === true,
-        location: {
-          area: savedTask.location.area,
-          city: savedTask.location.city,
-          coordinates: savedTask.location.coordinates
-        },
-        status: savedTask.status,
-        createdAt: savedTask.createdAt ? savedTask.createdAt.toISOString() : new Date().toISOString()
-      }
-
-      // Set lastAlertedAt when task is created (for 3-hour cooldown)
-      savedTask.lastAlertedAt = new Date()
-      await savedTask.save()
-
-      // Set lastAlertedAt when task is created (for 3-hour cooldown)
-      savedTask.lastAlertedAt = new Date()
-      await savedTask.save()
-
-      // Pass postedBy to exclude task creator from receiving the notification
-      broadcastNewTask(taskData, savedTask.postedBy.toString())
-    } catch (broadcastError) {
-      // Don't fail task creation if broadcast fails
+    const taskData = {
+      taskId: savedTask._id.toString(),
+      title: savedTask.title,
+      category: savedTask.category,
+      budget: savedTask.budget,
+      isOnCampus: savedTask.isOnCampus === true,
+      location: {
+        area: savedTask.location.area,
+        city: savedTask.location.city,
+        coordinates: savedTask.location.coordinates
+      },
+      status: savedTask.status,
+      createdAt: savedTask.createdAt ? savedTask.createdAt.toISOString() : new Date().toISOString()
     }
+    const postedById = savedTask.postedBy.toString()
 
-    invalidateStatsAndAdminDashboards()
+    runAfterResponse('createTask:alert-and-broadcast', () => {
+      invalidateStatsAndAdminDashboards()
+      Task.updateOne(
+        { _id: savedTask._id },
+        { $set: { lastAlertedAt: new Date() } }
+      ).catch(() => { })
+      return broadcastNewTask(taskData, postedById)
+    })
+
     return res.status(201).json({
       message: 'Task created successfully',
       task: savedTask
@@ -466,23 +460,17 @@ const acceptTask = async (req, res) => {
       // Don't fail accept if chat creation fails (e.g. duplicate)
     }
 
-    // Emit real-time events (non-blocking)
-    try {
-      // Notify poster about task acceptance
-      const posterId = updatedTask.postedBy.toString()
-      notifyTaskAccepted(posterId, updatedTask._id, workerId)
+    const posterId = updatedTask.postedBy.toString()
+    runAfterResponse('acceptTask:notify', () => {
+      invalidateStatsAndAdminDashboards()
+      try {
+        notifyTaskAccepted(posterId, updatedTask._id, workerId)
+        notifyTaskRemoved(workerId, updatedTask._id)
+        notifyTaskStatusChanged(posterId, taskId, 'ACCEPTED')
+        notifyTaskStatusChanged(workerId, taskId, 'ACCEPTED')
+      } catch (e) { /* already logged by runAfterResponse if thrown */ }
+    })
 
-      // Notify all other online workers to remove the task
-      notifyTaskRemoved(workerId, updatedTask._id)
-
-      // Emit taskUpdated event for state sync
-      notifyTaskStatusChanged(posterId, taskId, 'ACCEPTED')
-      notifyTaskStatusChanged(workerId, taskId, 'ACCEPTED')
-    } catch (socketError) {
-      // Don't fail the request if socket emission fails
-    }
-
-    invalidateStatsAndAdminDashboards()
     return res.status(200).json({
       message: 'Task accepted successfully',
       task: updatedTask
@@ -913,30 +901,20 @@ const cancelTask = async (req, res) => {
           { new: true }
         )
 
-        // Emit socket event to notify worker if task was accepted
-        if (task.status === 'ACCEPTED' && task.acceptedBy) {
+        const acceptedByStr = task.acceptedBy?._id?.toString()
+        const postedByStr = task.postedBy._id.toString()
+        runAfterResponse('cancelTask:poster:notify', () => {
+          invalidateStatsAndAdminDashboards()
           try {
-            const { notifyTaskCancelled } = require('../socket/socketHandler')
-            notifyTaskCancelled(task.acceptedBy._id.toString(), taskId, 'poster')
-
-            // Emit taskUpdated event for state sync
-            notifyTaskStatusChanged(task.acceptedBy._id.toString(), taskId, 'CANCELLED_BY_POSTER')
-          } catch (socketError) {
-            // Don't fail if socket emit fails
-          }
-        }
-
-        // Emit socket event to remove task from available tasks list
-        try {
-          notifyTaskRemoved(null, taskId) // Remove from all workers
-
-          // Emit taskUpdated event for state sync
-          notifyTaskStatusChanged(task.postedBy._id.toString(), taskId, 'CANCELLED_BY_POSTER')
-        } catch (socketError) {
-          // Don't fail if socket emit fails
-        }
-
-        invalidateStatsAndAdminDashboards()
+            if (task.status === 'ACCEPTED' && acceptedByStr) {
+              const { notifyTaskCancelled } = require('../socket/socketHandler')
+              notifyTaskCancelled(acceptedByStr, taskId, 'poster')
+              notifyTaskStatusChanged(acceptedByStr, taskId, 'CANCELLED_BY_POSTER')
+            }
+            notifyTaskRemoved(null, taskId)
+            notifyTaskStatusChanged(postedByStr, taskId, 'CANCELLED_BY_POSTER')
+          } catch (e) { }
+        })
         return res.status(200).json({
           message: 'Task cancelled successfully',
           task: updatedTask
@@ -1020,17 +998,16 @@ const cancelTask = async (req, res) => {
           { new: true }
         )
 
-        // Emit socket event to notify poster
-        try {
-          const { notifyTaskCancelled } = require('../socket/socketHandler')
-          notifyTaskCancelled(task.postedBy._id.toString(), taskId, 'worker')
-
-          // Emit taskUpdated event for state sync
-          notifyTaskStatusChanged(task.postedBy._id.toString(), taskId, 'CANCELLED_BY_WORKER')
-          notifyTaskStatusChanged(userId, taskId, 'CANCELLED_BY_WORKER')
-        } catch (socketError) {
-          // Don't fail if socket emit fails
-        }
+        const posterIdStr = task.postedBy._id.toString()
+        runAfterResponse('cancelTask:worker:notify', () => {
+          invalidateStatsAndAdminDashboards()
+          try {
+            const { notifyTaskCancelled } = require('../socket/socketHandler')
+            notifyTaskCancelled(posterIdStr, taskId, 'worker')
+            notifyTaskStatusChanged(posterIdStr, taskId, 'CANCELLED_BY_WORKER')
+            notifyTaskStatusChanged(userId, taskId, 'CANCELLED_BY_WORKER')
+          } catch (e) { }
+        })
 
         // Increment daily cancellation count
         worker.dailyCancelCount += 1
@@ -1140,27 +1117,20 @@ const startTask = async (req, res) => {
       { new: true, runValidators: true }
     )
 
-    // Notify both poster and worker about status change
-    if (updatedTask.postedBy) {
-      notifyTaskStatusChanged(updatedTask.postedBy.toString(), taskId, 'IN_PROGRESS')
-    }
-    if (updatedTask.acceptedBy) {
-      notifyTaskStatusChanged(workerId.toString(), taskId, 'IN_PROGRESS')
-    }
+    runAfterResponse('startTask:notify', () => {
+      invalidateStatsAndAdminDashboards()
+      try {
+        if (updatedTask.postedBy) notifyTaskStatusChanged(updatedTask.postedBy.toString(), taskId, 'IN_PROGRESS')
+        if (updatedTask.acceptedBy) notifyTaskStatusChanged(workerId.toString(), taskId, 'IN_PROGRESS')
+        notifyTaskUpdated(taskId, {
+          status: 'IN_PROGRESS',
+          startedAt: updatedTask.startedAt,
+          postedBy: updatedTask.postedBy,
+          acceptedBy: updatedTask.acceptedBy
+        })
+      } catch (e) { }
+    })
 
-    // Emit taskUpdated event for state sync
-    try {
-      notifyTaskUpdated(taskId, {
-        status: 'IN_PROGRESS',
-        startedAt: updatedTask.startedAt,
-        postedBy: updatedTask.postedBy,
-        acceptedBy: updatedTask.acceptedBy
-      })
-    } catch (socketError) {
-      // Don't fail if socket emit fails
-    }
-
-    invalidateStatsAndAdminDashboards()
     return res.status(200).json({
       message: 'Task started successfully',
       task: updatedTask
@@ -1256,24 +1226,19 @@ const markComplete = async (req, res) => {
       { new: true, runValidators: true }
     )
 
-    // Notify poster that worker marked task as complete
-    if (updatedTask.postedBy) {
-      notifyTaskStatusChanged(updatedTask.postedBy.toString(), taskId, 'IN_PROGRESS')
-    }
+    runAfterResponse('markComplete:notify', () => {
+      invalidateStatsAndAdminDashboards()
+      try {
+        if (updatedTask.postedBy) notifyTaskStatusChanged(updatedTask.postedBy.toString(), taskId, 'IN_PROGRESS')
+        notifyTaskUpdated(taskId, {
+          status: 'IN_PROGRESS',
+          workerCompleted: true,
+          postedBy: updatedTask.postedBy,
+          acceptedBy: updatedTask.acceptedBy
+        })
+      } catch (e) { }
+    })
 
-    // Emit taskUpdated event for state sync
-    try {
-      notifyTaskUpdated(taskId, {
-        status: 'IN_PROGRESS',
-        workerCompleted: true,
-        postedBy: updatedTask.postedBy,
-        acceptedBy: updatedTask.acceptedBy
-      })
-    } catch (socketError) {
-      // Don't fail if socket emit fails
-    }
-
-    invalidateStatsAndAdminDashboards()
     return res.status(200).json({
       message: 'Task marked as complete by worker. Waiting for poster confirmation.',
       task: updatedTask
@@ -1370,31 +1335,26 @@ const confirmComplete = async (req, res) => {
       { new: true, runValidators: true }
     )
 
-    // Notify both poster and worker about completion
-    if (updatedTask.postedBy && updatedTask.acceptedBy) {
-      notifyTaskCompleted(
-        updatedTask.postedBy.toString(),
-        updatedTask.acceptedBy.toString(),
-        taskId
-      )
-
-      // Emit taskUpdated event for state sync
-      notifyTaskStatusChanged(updatedTask.postedBy.toString(), taskId, 'COMPLETED')
-      notifyTaskStatusChanged(updatedTask.acceptedBy.toString(), taskId, 'COMPLETED')
-
+    const posterIdStr = updatedTask.postedBy?.toString()
+    const workerIdStr = updatedTask.acceptedBy?.toString()
+    const completedAt = updatedTask.completedAt
+    runAfterResponse('confirmComplete:notify', () => {
+      invalidateStatsAndAdminDashboards()
       try {
-        notifyTaskUpdated(taskId, {
-          status: 'COMPLETED',
-          completedAt: updatedTask.completedAt,
-          postedBy: updatedTask.postedBy,
-          acceptedBy: updatedTask.acceptedBy
-        })
-      } catch (socketError) {
-        // Don't fail if socket emit fails
-      }
-    }
+        if (posterIdStr && workerIdStr) {
+          notifyTaskCompleted(posterIdStr, workerIdStr, taskId)
+          notifyTaskStatusChanged(posterIdStr, taskId, 'COMPLETED')
+          notifyTaskStatusChanged(workerIdStr, taskId, 'COMPLETED')
+          notifyTaskUpdated(taskId, {
+            status: 'COMPLETED',
+            completedAt,
+            postedBy: updatedTask.postedBy,
+            acceptedBy: updatedTask.acceptedBy
+          })
+        }
+      } catch (e) { }
+    })
 
-    invalidateStatsAndAdminDashboards()
     return res.status(200).json({
       message: 'Task completed successfully',
       task: updatedTask
@@ -1620,22 +1580,21 @@ const editTask = async (req, res) => {
           await updatedTask.save()
         }
       }
-      if (shouldAlert) {
+      const alertPayload = shouldAlert ? {
+        taskId: updatedTask._id.toString(),
+        title: updatedTask.title,
+        category: updatedTask.category,
+        budget: updatedTask.budget,
+        location: updatedTask.location,
+        createdAt: updatedTask.createdAt
+      } : null
+      runAfterResponse('editTask:notify', () => {
         try {
-          broadcastNewTask({
-            taskId: updatedTask._id.toString(),
-            title: updatedTask.title,
-            category: updatedTask.category,
-            budget: updatedTask.budget,
-            location: updatedTask.location,
-            createdAt: updatedTask.createdAt
-          }, posterId)
-        } catch (socketError) { }
-      }
-      try {
-        notifyTaskUpdated(taskId, { status: updatedTask.status, budget: updatedTask.budget, expiresAt: updatedTask.expiresAt, postedBy: updatedTask.postedBy, acceptedBy: updatedTask.acceptedBy })
-        notifyTaskStatusChanged(posterId, taskId, updatedTask.status)
-      } catch (socketError) { }
+          if (alertPayload) broadcastNewTask(alertPayload, posterId)
+          notifyTaskUpdated(taskId, { status: updatedTask.status, budget: updatedTask.budget, expiresAt: updatedTask.expiresAt, postedBy: updatedTask.postedBy, acceptedBy: updatedTask.acceptedBy })
+          notifyTaskStatusChanged(posterId, taskId, updatedTask.status)
+        } catch (e) { }
+      })
       return res.status(200).json({
         message: 'Task updated successfully',
         task: updatedTask,
@@ -1723,33 +1682,27 @@ const editTask = async (req, res) => {
       }
     }
 
-    // Re-alert workers if conditions are met
-    if (shouldAlert) {
+    const alertPayload = shouldAlert ? {
+      taskId: updatedTask._id.toString(),
+      title: updatedTask.title,
+      category: updatedTask.category,
+      budget: updatedTask.budget,
+      location: updatedTask.location,
+      createdAt: updatedTask.createdAt
+    } : null
+    runAfterResponse('editTask:notify', () => {
       try {
-        broadcastNewTask({
-          taskId: updatedTask._id.toString(),
+        if (alertPayload) broadcastNewTask(alertPayload, posterId)
+        notifyTaskUpdated(taskId, {
+          status: updatedTask.status,
           title: updatedTask.title,
-          category: updatedTask.category,
           budget: updatedTask.budget,
-          location: updatedTask.location,
-          createdAt: updatedTask.createdAt
-        }, posterId)
-      } catch (socketError) { }
-    }
-
-    // Emit taskUpdated event for state sync
-    try {
-      notifyTaskUpdated(taskId, {
-        status: updatedTask.status,
-        title: updatedTask.title,
-        budget: updatedTask.budget,
-        postedBy: updatedTask.postedBy,
-        acceptedBy: updatedTask.acceptedBy
-      })
-      notifyTaskStatusChanged(posterId, taskId, updatedTask.status)
-    } catch (socketError) {
-      // Don't fail if socket emit fails
-    }
+          postedBy: updatedTask.postedBy,
+          acceptedBy: updatedTask.acceptedBy
+        })
+        notifyTaskStatusChanged(posterId, taskId, updatedTask.status)
+      } catch (e) { }
+    })
 
     return res.status(200).json({
       message: 'Task updated successfully',
@@ -1817,13 +1770,12 @@ const deleteTask = async (req, res) => {
     // Delete task
     await Task.findByIdAndDelete(taskId)
 
-    // Emit socket events to notify workers
-    try {
-      notifyTaskRemoved(null, taskId) // Remove from all workers
-      notifyTaskStatusChanged(posterId, taskId, 'DELETED')
-    } catch (socketError) {
-      // Don't fail if socket emit fails
-    }
+    runAfterResponse('deleteTask:notify', () => {
+      try {
+        notifyTaskRemoved(null, taskId)
+        notifyTaskStatusChanged(posterId, taskId, 'DELETED')
+      } catch (e) { }
+    })
 
     return res.status(200).json({
       message: 'Task deleted successfully'
@@ -1877,16 +1829,18 @@ const duplicateTask = async (req, res) => {
       expiresAt
     })
 
-    try {
-      broadcastNewTask({
-        taskId: newTask._id.toString(),
-        title: newTask.title,
-        category: newTask.category,
-        budget: newTask.budget,
-        location: newTask.location,
-        createdAt: newTask.createdAt
-      }, posterId)
-    } catch (socketError) { }
+    runAfterResponse('duplicateTask:broadcast', () => {
+      try {
+        broadcastNewTask({
+          taskId: newTask._id.toString(),
+          title: newTask.title,
+          category: newTask.category,
+          budget: newTask.budget,
+          location: newTask.location,
+          createdAt: newTask.createdAt
+        }, posterId)
+      } catch (e) { }
+    })
 
     return res.status(201).json({
       message: 'Task duplicated successfully',
@@ -1915,17 +1869,21 @@ const bulkCancelTasks = async (req, res) => {
     const tasks = await Task.find({ _id: { $in: validIds }, postedBy: posterId })
     const cancellable = tasks.filter(t => ['OPEN', 'SEARCHING', 'ACCEPTED', 'IN_PROGRESS'].includes(t.status))
 
+    const toNotify = cancellable.filter(t => t.status === 'ACCEPTED' && t.acceptedBy).map(t => ({ workerId: t.acceptedBy.toString(), taskId: t._id.toString() }))
     for (const task of cancellable) {
       await Task.findByIdAndUpdate(task._id, { $set: { status: 'CANCELLED_BY_POSTER' } })
-      if (task.status === 'ACCEPTED' && task.acceptedBy) {
-        try {
-          notifyTaskCancelled(task.acceptedBy.toString(), task._id.toString(), 'poster')
-          notifyTaskStatusChanged(task.acceptedBy.toString(), task._id.toString(), 'CANCELLED_BY_POSTER')
-        } catch (e) { }
-      }
     }
 
-    invalidateStatsAndAdminDashboards()
+    runAfterResponse('bulkCancelTasks:notify', () => {
+      invalidateStatsAndAdminDashboards()
+      try {
+        toNotify.forEach(({ workerId, taskId }) => {
+          notifyTaskCancelled(workerId, taskId, 'poster')
+          notifyTaskStatusChanged(workerId, taskId, 'CANCELLED_BY_POSTER')
+        })
+      } catch (e) { }
+    })
+
     return res.status(200).json({
       message: 'Bulk cancel completed',
       cancelled: cancellable.length,
@@ -1986,9 +1944,11 @@ const bulkDeleteTasks = async (req, res) => {
       status: { $in: ['OPEN', 'SEARCHING'] }
     })
 
-    try {
-      validIds.forEach(tid => notifyTaskRemoved(null, tid))
-    } catch (e) { }
+    runAfterResponse('bulkDeleteTasks:notify', () => {
+      try {
+        validIds.forEach(tid => notifyTaskRemoved(null, tid))
+      } catch (e) { }
+    })
 
     return res.status(200).json({
       message: 'Bulk delete completed',

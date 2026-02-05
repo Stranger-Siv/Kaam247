@@ -9,6 +9,7 @@ const mongoose = require('mongoose')
 const { notifyUserUpdated, notifyTaskUpdated, notifyTaskCancelled, notifyAdminStatsRefresh } = require('../socket/socketHandler')
 const { parsePagination, paginationMeta } = require('../utils/pagination')
 const { invalidateSettingsKeys, invalidatePilotDashboard, invalidateStatsAndAdminDashboards } = require('../utils/cache')
+const { runAfterResponse } = require('../utils/background')
 
 // ============================================
 // ADMIN USER MANAGEMENT
@@ -327,12 +328,13 @@ const blockUser = async (req, res) => {
 
     await user.save()
 
-    // Notify user via socket
-    notifyUserUpdated(userId, { status: 'blocked' })
-
-    // Notify admin stats refresh
-    notifyAdminStatsRefresh()
-    invalidateStatsAndAdminDashboards()
+    runAfterResponse('blockUser:notify', () => {
+      try {
+        notifyUserUpdated(userId, { status: 'blocked' })
+        notifyAdminStatsRefresh()
+        invalidateStatsAndAdminDashboards()
+      } catch (e) { }
+    })
 
     res.json({
       message: 'User blocked successfully',
@@ -381,12 +383,13 @@ const unblockUser = async (req, res) => {
 
     await user.save()
 
-    // Notify user via socket
-    notifyUserUpdated(userId, { status: 'active' })
-
-    // Notify admin stats refresh
-    notifyAdminStatsRefresh()
-    invalidateStatsAndAdminDashboards()
+    runAfterResponse('unblockUser:notify', () => {
+      try {
+        notifyUserUpdated(userId, { status: 'active' })
+        notifyAdminStatsRefresh()
+        invalidateStatsAndAdminDashboards()
+      } catch (e) { }
+    })
 
     res.json({
       message: 'User unblocked successfully',
@@ -435,12 +438,13 @@ const banUser = async (req, res) => {
 
     await user.save()
 
-    // Notify user via socket
-    notifyUserUpdated(userId, { status: 'banned' })
-
-    // Notify admin stats refresh
-    notifyAdminStatsRefresh()
-    invalidateStatsAndAdminDashboards()
+    runAfterResponse('banUser:notify', () => {
+      try {
+        notifyUserUpdated(userId, { status: 'banned' })
+        notifyAdminStatsRefresh()
+        invalidateStatsAndAdminDashboards()
+      } catch (e) { }
+    })
 
     res.json({
       message: 'User banned successfully',
@@ -493,8 +497,9 @@ const resetCancellations = async (req, res) => {
     // Reload user to ensure we have the latest data
     const updatedUser = await User.findById(userId).select('-password')
 
-    // Notify admin stats refresh
-    notifyAdminStatsRefresh()
+    runAfterResponse('resetCancellations:notify', () => {
+      try { notifyAdminStatsRefresh() } catch (e) { }
+    })
 
     res.json({
       message: 'Cancellation count reset successfully',
@@ -563,11 +568,12 @@ const updateCancelLimit = async (req, res) => {
     // Reload user to ensure we have the latest data
     const updatedUser = await User.findById(userId).select('-password')
 
-    // Notify user via socket
-    notifyUserUpdated(userId, { totalCancelLimit: limitNum })
-
-    // Notify admin stats refresh
-    notifyAdminStatsRefresh()
+    runAfterResponse('updateCancelLimit:notify', () => {
+      try {
+        notifyUserUpdated(userId, { totalCancelLimit: limitNum })
+        notifyAdminStatsRefresh()
+      } catch (e) { }
+    })
 
     res.json({
       message: 'Cancellation limit updated successfully',
@@ -731,18 +737,18 @@ const cancelTask = async (req, res) => {
     task.status = 'CANCELLED_BY_ADMIN'
     await task.save()
 
-    // Notify poster and worker via Socket.IO
-    if (task.postedBy) {
-      notifyTaskCancelled(task.postedBy.toString(), task._id.toString(), 'admin')
-    }
-    if (task.acceptedBy) {
-      notifyTaskCancelled(task.acceptedBy.toString(), task._id.toString(), 'admin')
-    }
-    notifyTaskUpdated(task._id.toString(), { status: 'CANCELLED_BY_ADMIN', postedBy: task.postedBy, acceptedBy: task.acceptedBy })
-
-    // Notify admin stats refresh
-    notifyAdminStatsRefresh()
-    invalidateStatsAndAdminDashboards()
+    const taskIdStr = task._id.toString()
+    const postedById = task.postedBy?.toString()
+    const acceptedById = task.acceptedBy?.toString()
+    runAfterResponse('adminCancelTask:notify', () => {
+      try {
+        if (postedById) notifyTaskCancelled(postedById, taskIdStr, 'admin')
+        if (acceptedById) notifyTaskCancelled(acceptedById, taskIdStr, 'admin')
+        notifyTaskUpdated(taskIdStr, { status: 'CANCELLED_BY_ADMIN', postedBy: task.postedBy, acceptedBy: task.acceptedBy })
+        notifyAdminStatsRefresh()
+        invalidateStatsAndAdminDashboards()
+      } catch (e) { }
+    })
 
     res.json({
       message: 'Task cancelled by admin',
@@ -787,14 +793,15 @@ const unassignTask = async (req, res) => {
     task.status = 'SEARCHING'
     await task.save()
 
-    // Notify worker and poster via Socket.IO
-    if (previousWorkerId) {
-      notifyTaskUpdated(task._id.toString(), { status: 'SEARCHING', acceptedBy: null, postedBy: task.postedBy })
-    }
-
-    // Notify admin stats refresh
-    notifyAdminStatsRefresh()
-    invalidateStatsAndAdminDashboards()
+    const taskIdStr = task._id.toString()
+    const postedByRef = task.postedBy
+    runAfterResponse('unassignTask:notify', () => {
+      try {
+        if (previousWorkerId) notifyTaskUpdated(taskIdStr, { status: 'SEARCHING', acceptedBy: null, postedBy: postedByRef })
+        notifyAdminStatsRefresh()
+        invalidateStatsAndAdminDashboards()
+      } catch (e) { }
+    })
 
     res.json({
       message: 'Worker unassigned successfully',
@@ -834,10 +841,12 @@ const hideTask = async (req, res) => {
       })
     }
 
-    // Toggle hide task
     task.isHidden = !task.isHidden
     await task.save()
-    invalidateStatsAndAdminDashboards()
+
+    runAfterResponse('hideTask:invalidate', () => {
+      try { invalidateStatsAndAdminDashboards() } catch (e) { }
+    })
 
     res.json({
       message: task.isHidden ? 'Task hidden successfully' : 'Task made visible',

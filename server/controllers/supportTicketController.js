@@ -2,6 +2,7 @@ const SupportTicket = require('../models/SupportTicket')
 const User = require('../models/User')
 const mongoose = require('mongoose')
 const { emitTicketMessage } = require('../socket/socketHandler')
+const { runAfterResponse } = require('../utils/background')
 const { parsePagination, paginationMeta } = require('../utils/pagination')
 
 // POST /api/users/me/tickets - Create a support ticket (SUPPORT with subject+message, or MOBILE_UPDATE)
@@ -168,7 +169,9 @@ const sendUserTicketMessage = async (req, res) => {
       text: message.text,
       createdAt: message.createdAt
     }
-    emitTicketMessage(ticketId, payload)
+    runAfterResponse('ticketMessage:emit', () => {
+      try { emitTicketMessage(ticketId, payload) } catch (e) { }
+    })
     return res.status(201).json({ message: 'Message sent', data: payload })
   } catch (error) {
     res.status(500).json({
@@ -315,7 +318,9 @@ const sendAdminTicketMessage = async (req, res) => {
       text: message.text,
       createdAt: message.createdAt
     }
-    emitTicketMessage(ticketId, payload)
+    runAfterResponse('adminTicketMessage:emit', () => {
+      try { emitTicketMessage(ticketId, payload) } catch (e) { }
+    })
     return res.status(201).json({ message: 'Message sent', data: payload })
   } catch (error) {
     res.status(500).json({
