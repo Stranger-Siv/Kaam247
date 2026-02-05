@@ -13,6 +13,7 @@ function AdminChats() {
   const [selectedTaskId, setSelectedTaskId] = useState(null)
   const [chatDetail, setChatDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 })
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -23,8 +24,12 @@ function AdminChats() {
   }, [filterOpen])
 
   useEffect(() => {
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }, [taskIdFilter, userIdFilter])
+
+  useEffect(() => {
     fetchChats()
-  }, [])
+  }, [taskIdFilter, userIdFilter, pagination.page])
 
   const fetchChats = async () => {
     try {
@@ -32,15 +37,22 @@ function AdminChats() {
       setError(null)
       const token = localStorage.getItem('kaam247_token')
       const params = new URLSearchParams()
+      params.set('page', String(pagination.page))
+      params.set('limit', String(pagination.limit))
       if (taskIdFilter.trim()) params.append('taskId', taskIdFilter.trim())
       if (userIdFilter.trim()) params.append('userId', userIdFilter.trim())
-      const url = `${API_BASE_URL}/api/admin/chats${params.toString() ? `?${params}` : ''}`
+      const url = `${API_BASE_URL}/api/admin/chats?${params}`
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (!response.ok) throw new Error('Failed to fetch chats')
       const data = await response.json()
       setChats(data.chats || [])
+      setPagination(prev => ({
+        ...prev,
+        total: data.pagination?.total ?? 0,
+        pages: data.pagination?.pages ?? 0
+      }))
     } catch (err) {
       setError(err.message || 'Failed to load chats')
     } finally {
@@ -116,8 +128,8 @@ function AdminChats() {
           type="button"
           onClick={(e) => { e.stopPropagation(); setFilterOpen((o) => !o) }}
           className={`flex items-center justify-between md:justify-start gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full md:w-auto ${taskIdFilter.trim() || userIdFilter.trim()
-              ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
-              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           aria-label="Filters"
           aria-expanded={filterOpen}
@@ -218,6 +230,33 @@ function AdminChats() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!error && chats.length > 0 && pagination.pages > 1 && (
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} chats
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+              disabled={pagination.page === 1}
+              className="px-5 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              disabled={pagination.page >= pagination.pages}
+              className="px-5 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 

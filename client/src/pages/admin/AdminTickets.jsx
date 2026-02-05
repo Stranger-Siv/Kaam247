@@ -12,6 +12,7 @@ function AdminTickets() {
   const filterRef = useRef(null)
   const [resolvingId, setResolvingId] = useState(null)
   const [resolveForm, setResolveForm] = useState({ newPhone: '', adminNotes: '', action: 'RESOLVED' })
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 })
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -27,14 +28,20 @@ function AdminTickets() {
       setError(null)
       const token = localStorage.getItem('kaam247_token')
       const params = new URLSearchParams()
+      params.set('page', String(pagination.page))
+      params.set('limit', String(pagination.limit))
       if (statusFilter) params.set('status', statusFilter)
       if (typeFilter) params.set('type', typeFilter)
-      const query = params.toString()
-      const url = `${API_BASE_URL}/api/admin/tickets${query ? '?' + query : ''}`
+      const url = `${API_BASE_URL}/api/admin/tickets?${params}`
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.message || 'Failed to fetch tickets')
       setTickets(data.tickets || [])
+      setPagination(prev => ({
+        ...prev,
+        total: data.pagination?.total ?? 0,
+        pages: data.pagination?.pages ?? 0
+      }))
     } catch (err) {
       setError(err.message || 'Failed to load tickets')
       setTickets([])
@@ -44,8 +51,12 @@ function AdminTickets() {
   }
 
   useEffect(() => {
-    fetchTickets()
+    setPagination(prev => ({ ...prev, page: 1 }))
   }, [statusFilter, typeFilter])
+
+  useEffect(() => {
+    fetchTickets()
+  }, [statusFilter, typeFilter, pagination.page])
 
   const handleResolve = async (ticketId, actionOverride) => {
     const action = actionOverride || resolveForm.action
@@ -99,8 +110,8 @@ function AdminTickets() {
           type="button"
           onClick={(e) => { e.stopPropagation(); setFilterOpen((o) => !o) }}
           className={`flex items-center justify-between md:justify-start gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors w-full md:w-auto ${statusFilter || typeFilter
-              ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
-              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'
+            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           aria-label="Filters"
           aria-expanded={filterOpen}
@@ -272,6 +283,33 @@ function AdminTickets() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!error && tickets.length > 0 && pagination.pages > 1 && (
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} tickets
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+              disabled={pagination.page === 1}
+              className="px-5 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              disabled={pagination.page >= pagination.pages}
+              className="px-5 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
     </div>

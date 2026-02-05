@@ -55,33 +55,48 @@ const getUsers = async (req, res) => {
       .limit(limit)
       .lean()
 
-    const usersWithStats = await Promise.all(
-      users.map(async (user) => {
-        const tasksPosted = await Task.countDocuments({ postedBy: user._id })
-        const tasksAccepted = await Task.countDocuments({ acceptedBy: user._id })
-        const tasksCompleted = await Task.countDocuments({
-          acceptedBy: user._id,
-          status: 'COMPLETED'
-        })
-        const tasksCancelled = await Task.countDocuments({
-          $or: [
-            { postedBy: user._id, status: 'CANCELLED' },
-            { acceptedBy: user._id, status: 'CANCELLED' }
-          ]
-        })
-
-        return {
-          ...user,
-          stats: {
-            tasksPosted,
-            tasksAccepted,
-            tasksCompleted,
-            tasksCancelled,
-            averageRating: user.averageRating || 0
+    const userIds = users.map((u) => u._id)
+    let userStatsMap = {}
+    if (userIds.length > 0) {
+      const [statsFacet] = await Task.aggregate([
+        {
+          $facet: {
+            posted: [{ $match: { postedBy: { $in: userIds } } }, { $group: { _id: '$postedBy', count: { $sum: 1 } } }],
+            accepted: [{ $match: { acceptedBy: { $in: userIds } } }, { $group: { _id: '$acceptedBy', count: { $sum: 1 } } }],
+            completed: [{ $match: { acceptedBy: { $in: userIds }, status: 'COMPLETED' } }, { $group: { _id: '$acceptedBy', count: { $sum: 1 } } }],
+            cancelledPoster: [{ $match: { postedBy: { $in: userIds }, status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] } } }, { $group: { _id: '$postedBy', count: { $sum: 1 } } }],
+            cancelledWorker: [{ $match: { acceptedBy: { $in: userIds }, status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] } } }, { $group: { _id: '$acceptedBy', count: { $sum: 1 } } }]
           }
         }
+      ])
+      const toMap = (arr) => (arr || []).reduce((m, { _id, count }) => { m[_id.toString()] = count; return m }, {})
+      const posted = toMap(statsFacet?.posted)
+      const accepted = toMap(statsFacet?.accepted)
+      const completed = toMap(statsFacet?.completed)
+      const cancelledPoster = toMap(statsFacet?.cancelledPoster)
+      const cancelledWorker = toMap(statsFacet?.cancelledWorker)
+      userIds.forEach((id) => {
+        const sid = id.toString()
+        userStatsMap[sid] = {
+          tasksPosted: posted[sid] ?? 0,
+          tasksAccepted: accepted[sid] ?? 0,
+          tasksCompleted: completed[sid] ?? 0,
+          tasksCancelled: (cancelledPoster[sid] ?? 0) + (cancelledWorker[sid] ?? 0),
+          averageRating: 0
+        }
       })
-    )
+    }
+
+    const usersWithStats = users.map((user) => {
+      const s = userStatsMap[user._id.toString()] || { tasksPosted: 0, tasksAccepted: 0, tasksCompleted: 0, tasksCancelled: 0, averageRating: 0 }
+      return {
+        ...user,
+        stats: {
+          ...s,
+          averageRating: user.averageRating || s.averageRating || 0
+        }
+      }
+    })
 
     const total = await User.countDocuments(query)
 
@@ -1019,6 +1034,7 @@ const getPublicStats = async (req, res) => {
 }
 
 // GET /api/admin/dashboard - Full dashboard data (tasks by status, location, category, revenue, users, recent activity)
+// Optimized: one $facet aggregation for Task metrics, one for User counts, then recent lists + config
 const getDashboard = async (req, res) => {
   try {
     const today = new Date()
@@ -1033,92 +1049,93 @@ const getDashboard = async (req, res) => {
     const socketManager = require('../socket/socketManager')
     const onlineWorkersCount = socketManager.getOnlineWorkerCount()
 
-    // ---- TASKS BY STATUS ----
-    const statusCounts = await Task.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } }
+    // Single Task $facet: status counts, category/location, revenue buckets, counts (indexed $match first)
+    const [taskFacet] = await Task.aggregate([
+      {
+        $facet: {
+          statusCounts: [{ $group: { _id: '$status', count: { $sum: 1 } } }],
+          category: [
+            { $group: { _id: '$category', count: { $sum: 1 }, revenue: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, '$budget', 0] } } } },
+            { $sort: { count: -1 } },
+            { $limit: 20 }
+          ],
+          location: [
+            { $match: { 'location.city': { $exists: true, $ne: null, $ne: '' } } },
+            { $group: { _id: '$location.city', count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 25 }
+          ],
+          gmv: [{ $match: { status: 'COMPLETED' } }, { $group: { _id: null, total: { $sum: '$budget' } } }],
+          earningsToday: [{ $match: { status: 'COMPLETED', completedAt: { $gte: today, $lt: tomorrow } } }, { $group: { _id: null, total: { $sum: '$budget' } } }],
+          earningsWeek: [{ $match: { status: 'COMPLETED', completedAt: { $gte: weekStart } } }, { $group: { _id: null, total: { $sum: '$budget' } } }],
+          earningsMonth: [{ $match: { status: 'COMPLETED', completedAt: { $gte: monthStart } } }, { $group: { _id: null, total: { $sum: '$budget' } } }],
+          total: [{ $count: 'count' }],
+          tasksToday: [{ $match: { createdAt: { $gte: today, $lt: tomorrow } } }, { $count: 'count' }],
+          tasksWeek: [{ $match: { createdAt: { $gte: weekStart } } }, { $count: 'count' }],
+          completedToday: [{ $match: { status: 'COMPLETED', completedAt: { $gte: today, $lt: tomorrow } } }, { $count: 'count' }],
+          cancelledToday: [{ $match: { status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] }, createdAt: { $gte: today, $lt: tomorrow } } }, { $count: 'count' }],
+          posters: [{ $group: { _id: '$postedBy' } }, { $count: 'count' }],
+          workers: [{ $match: { acceptedBy: { $ne: null } } }, { $group: { _id: '$acceptedBy' } }, { $count: 'count' }]
+        }
+      }
     ])
+
+    const statusCounts = taskFacet?.statusCounts || []
     const tasksByStatus = {}
     const allStatuses = ['OPEN', 'SEARCHING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN']
     allStatuses.forEach(s => { tasksByStatus[s] = 0 })
     statusCounts.forEach(({ _id, count }) => { tasksByStatus[_id] = count })
 
-    const totalTasks = await Task.countDocuments()
-    const tasksToday = await Task.countDocuments({ createdAt: { $gte: today, $lt: tomorrow } })
-    const tasksThisWeek = await Task.countDocuments({ createdAt: { $gte: weekStart } })
+    const totalTasks = taskFacet?.total?.[0]?.count ?? 0
+    const tasksToday = taskFacet?.tasksToday?.[0]?.count ?? 0
+    const tasksThisWeek = taskFacet?.tasksWeek?.[0]?.count ?? 0
     const pendingTasks = (tasksByStatus.OPEN || 0) + (tasksByStatus.SEARCHING || 0)
     const ongoingTasks = (tasksByStatus.ACCEPTED || 0) + (tasksByStatus.IN_PROGRESS || 0)
     const completedTasks = tasksByStatus.COMPLETED || 0
     const cancelledTasks = (tasksByStatus.CANCELLED || 0) + (tasksByStatus.CANCELLED_BY_POSTER || 0) + (tasksByStatus.CANCELLED_BY_WORKER || 0) + (tasksByStatus.CANCELLED_BY_ADMIN || 0)
-    const completedToday = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: today, $lt: tomorrow } })
-    const cancelledToday = await Task.countDocuments({
-      status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] },
-      createdAt: { $gte: today, $lt: tomorrow }
-    })
+    const completedToday = taskFacet?.completedToday?.[0]?.count ?? 0
+    const cancelledToday = taskFacet?.cancelledToday?.[0]?.count ?? 0
 
-    // ---- TASKS BY CATEGORY (count + revenue for completed) ----
-    const tasksByCategory = await Task.aggregate([
-      { $group: { _id: '$category', count: { $sum: 1 }, revenue: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, '$budget', 0] } } } },
-      { $sort: { count: -1 } },
-      { $limit: 20 }
-    ]).then(arr => arr.map(({ _id, count, revenue }) => ({ category: _id || 'Unknown', count, revenue: revenue || 0 })))
+    const tasksByCategory = (taskFacet?.category || []).map(({ _id, count, revenue }) => ({ category: _id || 'Unknown', count, revenue: revenue || 0 }))
+    const tasksByLocation = (taskFacet?.location || []).map(({ _id, count }) => ({ city: _id, count }))
 
-    // ---- TASKS BY LOCATION (city) ----
-    const tasksByLocation = await Task.aggregate([
-      { $match: { 'location.city': { $exists: true, $ne: null, $ne: '' } } },
-      { $group: { _id: '$location.city', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 25 }
-    ]).then(arr => arr.map(({ _id, count }) => ({ city: _id, count })))
+    const totalGMV = taskFacet?.gmv?.[0]?.total || 0
+    const earningsToday = taskFacet?.earningsToday?.[0]?.total || 0
+    const earningsThisWeek = taskFacet?.earningsWeek?.[0]?.total || 0
+    const earningsThisMonth = taskFacet?.earningsMonth?.[0]?.total || 0
+    const totalPosters = taskFacet?.posters?.[0]?.count ?? 0
+    const totalWorkers = taskFacet?.workers?.[0]?.count ?? 0
 
-    // ---- REVENUE / GMV (sum of completed task budgets) ----
-    const completedPipeline = [
-      { $match: { status: 'COMPLETED' } },
-      { $group: { _id: null, total: { $sum: '$budget' } } }
-    ]
-    const [totalGMVResult] = await Task.aggregate([...completedPipeline])
-    const totalGMV = totalGMVResult?.total || 0
-
-    const completedTodayAgg = await Task.aggregate([
-      { $match: { status: 'COMPLETED', completedAt: { $gte: today, $lt: tomorrow } } },
-      { $group: { _id: null, total: { $sum: '$budget' } } }
+    // Single User $facet for user counts (indexed: role, status, createdAt)
+    const [userFacet] = await User.aggregate([
+      {
+        $facet: {
+          totalUsers: [{ $match: { role: 'user' } }, { $count: 'count' }],
+          totalAdmins: [{ $match: { role: 'admin' } }, { $count: 'count' }],
+          usersActive: [{ $match: { status: 'active' } }, { $count: 'count' }],
+          usersBlocked: [{ $match: { status: 'blocked' } }, { $count: 'count' }],
+          usersBanned: [{ $match: { status: 'banned' } }, { $count: 'count' }],
+          newToday: [{ $match: { createdAt: { $gte: today, $lt: tomorrow } } }, { $count: 'count' }],
+          newWeek: [{ $match: { createdAt: { $gte: weekStart } } }, { $count: 'count' }]
+        }
+      }
     ])
-    const earningsToday = completedTodayAgg[0]?.total || 0
+    const totalUsers = userFacet?.totalUsers?.[0]?.count ?? 0
+    const totalAdmins = userFacet?.totalAdmins?.[0]?.count ?? 0
+    const usersActive = userFacet?.usersActive?.[0]?.count ?? 0
+    const usersBlocked = userFacet?.usersBlocked?.[0]?.count ?? 0
+    const usersBanned = userFacet?.usersBanned?.[0]?.count ?? 0
+    const newUsersToday = userFacet?.newToday?.[0]?.count ?? 0
+    const newUsersThisWeek = userFacet?.newWeek?.[0]?.count ?? 0
 
-    const completedThisWeekAgg = await Task.aggregate([
-      { $match: { status: 'COMPLETED', completedAt: { $gte: weekStart } } },
-      { $group: { _id: null, total: { $sum: '$budget' } } }
+    const [disputesCount, reportsTotal] = await Promise.all([
+      Report.countDocuments({ status: 'open' }),
+      Report.countDocuments()
     ])
-    const earningsThisWeek = completedThisWeekAgg[0]?.total || 0
 
-    const completedThisMonthAgg = await Task.aggregate([
-      { $match: { status: 'COMPLETED', completedAt: { $gte: monthStart } } },
-      { $group: { _id: null, total: { $sum: '$budget' } } }
-    ])
-    const earningsThisMonth = completedThisMonthAgg[0]?.total || 0
-
-    // ---- USERS ----
-    const totalUsers = await User.countDocuments({ role: 'user' })
-    const totalAdmins = await User.countDocuments({ role: 'admin' })
-    const usersActive = await User.countDocuments({ status: 'active' })
-    const usersBlocked = await User.countDocuments({ status: 'blocked' })
-    const usersBanned = await User.countDocuments({ status: 'banned' })
-    const newUsersToday = await User.countDocuments({ createdAt: { $gte: today, $lt: tomorrow } })
-    const newUsersThisWeek = await User.countDocuments({ createdAt: { $gte: weekStart } })
-
-    // ---- POSTERS / WORKERS (distinct users who posted / accepted at least one task) ----
-    const [postersAgg] = await Task.aggregate([{ $group: { _id: '$postedBy' } }, { $count: 'count' }])
-    const [workersAgg] = await Task.aggregate([{ $match: { acceptedBy: { $ne: null } } }, { $group: { _id: '$acceptedBy' } }, { $count: 'count' }])
-    const totalPosters = postersAgg?.count ?? 0
-    const totalWorkers = workersAgg?.count ?? 0
-
-    // ---- DISPUTES / REPORTS ----
-    const disputesCount = await Report.countDocuments({ status: 'open' })
-    const reportsTotal = await Report.countDocuments()
-
-    // ---- PLATFORM COMMISSION (from config or 0) ----
     let platformCommissionPercent = 0
     try {
-      const configDoc = await Config.findOne({ key: 'platformCommissionPercent' })
+      const configDoc = await Config.findOne({ key: 'platformCommissionPercent' }).select('value').lean()
       if (configDoc && typeof configDoc.value === 'number') platformCommissionPercent = configDoc.value
     } catch (_) { }
     const platformCommissionTotal = Math.round((totalGMV * platformCommissionPercent) / 100)
@@ -1315,194 +1332,169 @@ const getPilotDashboard = async (req, res) => {
     end.setHours(23, 59, 59, 999)
     const startEff = effStart(start)
 
-    // ---- WAU: users active in period (created account, posted, or accepted in window), on or after pilot start ----
-    const postedInPeriod = await Task.distinct('postedBy', { createdAt: { $gte: startEff, $lte: end } })
-    const acceptedInPeriod = await Task.distinct('acceptedBy', { acceptedAt: { $gte: startEff, $lte: end } })
-    const createdInPeriod = await User.find(
-      { role: 'user', createdAt: { $gte: startEff, $lte: end } },
-      { _id: 1 }
-    ).lean()
-    const allActiveIds = [...new Set([
-      ...postedInPeriod.map((id) => id.toString()),
-      ...acceptedInPeriod.filter(Boolean).map((id) => id.toString()),
-      ...createdInPeriod.map((u) => u._id.toString())
-    ])]
-    const wau = allActiveIds.length
-
-    // ---- Tasks posted this week ----
-    const tasksPostedThisWeek = await Task.countDocuments({ createdAt: { $gte: startEff, $lte: end } })
-
-    // ---- Task completion rate (for tasks created in period: COMPLETED / (COMPLETED + cancelled)) ----
-    const completedInPeriod = await Task.countDocuments({
-      createdAt: { $gte: startEff, $lte: end },
-      status: 'COMPLETED'
-    })
-    const cancelledInPeriod = await Task.countDocuments({
-      createdAt: { $gte: startEff, $lte: end },
-      status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] }
-    })
-    const closedCount = completedInPeriod + cancelledInPeriod
-    const taskCompletionRate = closedCount > 0 ? Math.round((completedInPeriod / closedCount) * 100) : 0
-
-    // ---- Avg time to accept (hours) - tasks accepted in period ----
-    const acceptedTasks = await Task.find(
-      { acceptedAt: { $gte: startEff, $lte: end } },
-      { createdAt: 1, acceptedAt: 1 }
-    ).lean()
-    let avgTimeToAcceptHours = 0
-    if (acceptedTasks.length > 0) {
-      const totalMs = acceptedTasks.reduce((sum, t) => sum + (new Date(t.acceptedAt) - new Date(t.createdAt)), 0)
-      avgTimeToAcceptHours = Math.round((totalMs / (acceptedTasks.length * 3600000)) * 10) / 10
-    }
-
-    // ---- Repeat user rate: users with 2+ tasks (posted or accepted) in period / WAU ----
-    const taskCountByUser = {}
-    const addTask = (userId) => {
-      if (!userId) return
-      const id = userId.toString()
-      taskCountByUser[id] = (taskCountByUser[id] || 0) + 1
-    }
-    const tasksInPeriod = await Task.find(
+    // ---- WAU + tasks posted + completion + avg accept time + repeat users: one $facet (no $push of full docs) ----
+    const [pilotFacet] = await Task.aggregate([
       {
-        $or: [
-          { createdAt: { $gte: startEff, $lte: end } },
-          { acceptedAt: { $gte: startEff, $lte: end } }
-        ]
-      },
-      { postedBy: 1, acceptedBy: 1, createdAt: 1, acceptedAt: 1 }
-    ).lean()
-    tasksInPeriod.forEach((t) => {
-      if (t.createdAt >= startEff && t.createdAt <= end) addTask(t.postedBy)
-      if (t.acceptedAt && t.acceptedAt >= startEff && t.acceptedAt <= end) addTask(t.acceptedBy)
-    })
-    const repeatUsers = Object.values(taskCountByUser).filter((c) => c >= 2).length
-    const repeatUserRate = wau > 0 ? Math.round((repeatUsers / wau) * 100) : 0
-
-    // ---- New registered users in period (for this week) ----
-    const newUsersInPeriod = await User.countDocuments({ role: 'user', createdAt: { $gte: startEff, $lte: end } })
-    const newUsersPerDay = Math.round((newUsersInPeriod / 7) * 10) / 10
-
-    // ---- Weekly growth: last 4 weeks (users, tasks posted, tasks completed), on or after pilot start ----
-    const weeklyGrowth = []
-    for (let w = 1; w <= 4; w++) {
-      const ws = new Date(now)
-      ws.setDate(ws.getDate() - 7 * w)
-      ws.setHours(0, 0, 0, 0)
-      const we = new Date(ws)
-      we.setDate(we.getDate() + 7)
-      we.setMilliseconds(-1)
-      const wsEff = effStart(ws)
-      if (wsEff > we) {
-        weeklyGrowth.push({ weekLabel: `Week ${w}`, weekIndex: w, users: 0, tasksPosted: 0, tasksCompleted: 0 })
-      } else {
-        const usersW = await User.countDocuments({ role: 'user', createdAt: { $gte: wsEff, $lte: we } })
-        const postedW = await Task.countDocuments({ createdAt: { $gte: wsEff, $lte: we } })
-        const completedW = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: wsEff, $lte: we } })
-        weeklyGrowth.push({
-          weekLabel: `Week ${w}`,
-          weekIndex: w,
-          users: usersW,
-          tasksPosted: postedW,
-          tasksCompleted: completedW
-        })
-      }
-    }
-    weeklyGrowth.reverse()
-
-    // ---- Top 5 categories by volume (in selected period) ----
-    const categoriesAgg = await Task.aggregate([
-      { $match: { createdAt: { $gte: startEff, $lte: end } } },
-      { $group: { _id: '$category', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 5 }
+        $facet: {
+          postedIds: [{ $match: { createdAt: { $gte: startEff, $lte: end } } }, { $group: { _id: '$postedBy' } }, { $project: { _id: 1 } }],
+          acceptedIds: [{ $match: { acceptedAt: { $gte: startEff, $lte: end }, acceptedBy: { $ne: null } } }, { $group: { _id: '$acceptedBy' } }, { $project: { _id: 1 } }],
+          tasksPosted: [{ $match: { createdAt: { $gte: startEff, $lte: end } } }, { $count: 'count' }],
+          completed: [{ $match: { createdAt: { $gte: startEff, $lte: end }, status: 'COMPLETED' } }, { $count: 'count' }],
+          cancelled: [{ $match: { createdAt: { $gte: startEff, $lte: end }, status: { $in: ['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'] } } }, { $count: 'count' }],
+          acceptTimes: [{ $match: { acceptedAt: { $gte: startEff, $lte: end } } }, { $project: { ms: { $subtract: ['$acceptedAt', '$createdAt'] } } }, { $group: { _id: null, avgMs: { $avg: '$ms' }, count: { $sum: 1 } } }],
+          repeatUsers: [
+            { $match: { $or: [{ createdAt: { $gte: startEff, $lte: end } }, { acceptedAt: { $gte: startEff, $lte: end } }] } },
+            {
+              $project: {
+                ids: {
+                  $concatArrays: [
+                    { $cond: [{ $and: [{ $gte: ['$createdAt', startEff] }, { $lte: ['$createdAt', end] }] }, [{ $toString: '$postedBy' }], []] },
+                    { $cond: [{ $and: [{ $ne: ['$acceptedBy', null] }, { $gte: ['$acceptedAt', startEff] }, { $lte: ['$acceptedAt', end] }] }, [{ $toString: '$acceptedBy' }], []] }
+                  ]
+                }
+              }
+            },
+            { $unwind: '$ids' },
+            { $match: { ids: { $ne: '' } } },
+            { $group: { _id: '$ids', c: { $sum: 1 } } },
+            { $match: { c: { $gte: 2 } } },
+            { $count: 'count' }
+          ]
+        },
+        acceptedInPeriodCount: [{ $match: { acceptedAt: { $gte: startEff, $lte: end } } }, { $count: 'count' }],
+        topDoersSum: [{ $match: { acceptedAt: { $gte: startEff, $lte: end }, acceptedBy: { $ne: null } } }, { $group: { _id: '$acceptedBy', c: { $sum: 1 } } }, { $sort: { c: -1 } }, { $limit: 3 }, { $group: { _id: null, total: { $sum: '$c' } } }],
+        categories: [{ $match: { createdAt: { $gte: startEff, $lte: end } } }, { $group: { _id: '$category', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 5 }]
+      }}
     ])
-    const categories = categoriesAgg.map(({ _id, count }) => ({ name: _id || 'Other', count }))
 
-    // ---- User type: posters vs doers (in period) ----
-    const postersSet = new Set(postedInPeriod.map((id) => id.toString()))
-    const doersSet = new Set(acceptedInPeriod.filter(Boolean).map((id) => id.toString()))
-    const posters = postersSet.size
-    const doers = doersSet.size
+const postedInPeriod = (pilotFacet?.postedIds || []).map((x) => x._id?.toString()).filter(Boolean)
+const acceptedInPeriod = (pilotFacet?.acceptedIds || []).map((x) => x._id?.toString()).filter(Boolean)
+const createdInPeriod = await User.find({ role: 'user', createdAt: { $gte: startEff, $lte: end } }, { _id: 1 }).lean()
+const allActiveIds = [...new Set([...postedInPeriod, ...acceptedInPeriod, ...createdInPeriod.map((u) => u._id.toString())])]
+const wau = allActiveIds.length
 
-    // ---- Alerts ----
-    const alerts = []
-    if (taskCompletionRate < 60 && closedCount > 0) {
-      alerts.push({ type: 'completion_low', message: `Task completion rate is ${taskCompletionRate}% (target >70%)`, severity: 'high' })
-    }
-    const tasksLast24h = await Task.countDocuments({ createdAt: { $gte: new Date(Date.now() - 24 * 3600000) } })
-    if (tasksLast24h === 0) {
-      alerts.push({ type: 'no_tasks_24h', message: 'No tasks posted in the last 24 hours', severity: 'high' })
-    }
-    if (doers > 0 && tasksInPeriod.length > 0) {
-      const doerCounts = {}
-      tasksInPeriod.forEach((t) => {
-        if (t.acceptedBy && t.acceptedAt >= startEff && t.acceptedAt <= end) {
-          const id = t.acceptedBy.toString()
-          doerCounts[id] = (doerCounts[id] || 0) + 1
-        }
-      })
-      const topDoers = Object.entries(doerCounts).sort((a, b) => b[1] - a[1]).slice(0, 3)
-      const topDoersTasks = topDoers.reduce((s, [, c]) => s + c, 0)
-      if (topDoers.length <= 3 && tasksInPeriod.length > 0 && topDoersTasks >= tasksInPeriod.length * 0.8) {
-        alerts.push({ type: 'same_doers', message: 'Most tasks completed by same few doers (diversify worker base)', severity: 'medium' })
-      }
-    }
-    if (wau < 100 && weekNum === 1) {
-      alerts.push({ type: 'wau_low', message: `WAU is ${wau} (target 100+)`, severity: 'medium' })
-    }
-    if (tasksPostedThisWeek < 21 && weekNum === 1) {
-      const perDay = (tasksPostedThisWeek / 7).toFixed(1)
-      if (parseFloat(perDay) < 3) {
-        alerts.push({ type: 'tasks_per_day', message: `Tasks posted ~${perDay}/day (target 3–5/day)`, severity: 'medium' })
-      }
-    }
+const tasksPostedThisWeek = pilotFacet?.tasksPosted?.[0]?.count ?? 0
+const completedInPeriod = pilotFacet?.completed?.[0]?.count ?? 0
+const cancelledInPeriod = pilotFacet?.cancelled?.[0]?.count ?? 0
+const closedCount = completedInPeriod + cancelledInPeriod
+const taskCompletionRate = closedCount > 0 ? Math.round((completedInPeriod / closedCount) * 100) : 0
 
-    // ---- Health score 0–100: completion 40%, growth 30%, satisfaction 30% ----
-    const completionScore = Math.min(100, Math.round((taskCompletionRate / 70) * 40))
-    const growthScore = (() => {
-      const lastWeek = weeklyGrowth[weeklyGrowth.length - 1]
-      const prevWeek = weeklyGrowth[weeklyGrowth.length - 2]
-      if (!lastWeek || !prevWeek) return 30
-      const growth = lastWeek.tasksPosted + lastWeek.tasksCompleted - (prevWeek.tasksPosted + prevWeek.tasksCompleted)
-      return Math.min(30, Math.max(0, 15 + Math.round(growth * 2)))
-    })()
-    const ratedInPeriod = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end }, rating: { $exists: true, $gte: 1 } })
-    const completedTotal = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end } })
-    const satisfactionScore = completedTotal > 0 ? Math.min(30, Math.round((ratedInPeriod / completedTotal) * 30)) : 10
-    const healthScore = Math.min(100, Math.round(completionScore + growthScore + satisfactionScore))
+const acceptGroup = pilotFacet?.acceptTimes?.[0]
+let avgTimeToAcceptHours = 0
+if (acceptGroup && acceptGroup.count > 0 && acceptGroup.avgMs != null) {
+  avgTimeToAcceptHours = Math.round((acceptGroup.avgMs / 3600000) * 10) / 10
+}
 
-    res.json({
-      week: weekNum,
-      periodStart: start,
-      periodEnd: end,
-      pilotStartDate: pilotStartDate ? pilotStartDate.toISOString().slice(0, 10) : null,
-      metrics: {
-        wau,
-        wauTarget: 100,
-        tasksPostedThisWeek,
-        tasksPerDayTarget: { min: 3, max: 5 },
-        taskCompletionRate,
-        completionTarget: 70,
-        avgTimeToAcceptHours,
-        avgTimeToAcceptTarget: 2,
-        repeatUserRate,
-        repeatUserTarget: 40,
-        newUsersThisWeek: newUsersInPeriod,
-        newUsersPerDay
-      },
-      weeklyGrowth,
-      categories,
-      userType: { posters, doers },
-      alerts,
-      healthScore,
-      lastUpdated: new Date()
-    })
-  } catch (error) {
-    res.status(500).json({
-      error: 'Server error',
-      message: error.message || 'Failed to fetch pilot dashboard'
-    })
+const repeatUsers = pilotFacet?.repeatUsers?.[0]?.count ?? 0
+const repeatUserRate = wau > 0 ? Math.round((repeatUsers / wau) * 100) : 0
+
+const newUsersInPeriod = await User.countDocuments({ role: 'user', createdAt: { $gte: startEff, $lte: end } })
+const newUsersPerDay = Math.round((newUsersInPeriod / 7) * 10) / 10
+
+// ---- Weekly growth: single aggregation with $facet for 4 weeks ----
+const weekBounds = []
+for (let w = 1; w <= 4; w++) {
+  const ws = new Date(now)
+  ws.setDate(ws.getDate() - 7 * w)
+  ws.setHours(0, 0, 0, 0)
+  const we = new Date(ws)
+  we.setDate(we.getDate() + 7)
+  we.setMilliseconds(-1)
+  weekBounds.push({ weekIndex: w, wsEff: effStart(ws), we })
+}
+const [week1, week2, week3, week4] = await Promise.all(weekBounds.map(({ wsEff, we }) => {
+  if (wsEff > we) return Promise.resolve({ users: 0, tasksPosted: 0, tasksCompleted: 0 })
+  return Promise.all([
+    User.countDocuments({ role: 'user', createdAt: { $gte: wsEff, $lte: we } }),
+    Task.countDocuments({ createdAt: { $gte: wsEff, $lte: we } }),
+    Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: wsEff, $lte: we } })
+  ]).then(([users, posted, completed]) => ({ users, tasksPosted: posted, tasksCompleted: completed }))
+}))
+const weeklyGrowth = [
+  { weekLabel: 'Week 1', weekIndex: 1, ...week1 },
+  { weekLabel: 'Week 2', weekIndex: 2, ...week2 },
+  { weekLabel: 'Week 3', weekIndex: 3, ...week3 },
+  { weekLabel: 'Week 4', weekIndex: 4, ...week4 }
+]
+
+const categories = (pilotFacet?.categories || []).map(({ _id, count }) => ({ name: _id || 'Other', count }))
+
+// ---- User type: posters vs doers (in period) ----
+const postersSet = new Set(postedInPeriod.map((id) => id.toString()))
+const doersSet = new Set(acceptedInPeriod.filter(Boolean).map((id) => id.toString()))
+const posters = postersSet.size
+const doers = doersSet.size
+
+// ---- Alerts ----
+const alerts = []
+if (taskCompletionRate < 60 && closedCount > 0) {
+  alerts.push({ type: 'completion_low', message: `Task completion rate is ${taskCompletionRate}% (target >70%)`, severity: 'high' })
+}
+const tasksLast24h = await Task.countDocuments({ createdAt: { $gte: new Date(Date.now() - 24 * 3600000) } })
+if (tasksLast24h === 0) {
+  alerts.push({ type: 'no_tasks_24h', message: 'No tasks posted in the last 24 hours', severity: 'high' })
+}
+const acceptedInPeriodCount = pilotFacet?.acceptedInPeriodCount?.[0]?.count ?? 0
+const topDoersTasks = pilotFacet?.topDoersSum?.[0]?.total ?? 0
+if (doers > 0 && acceptedInPeriodCount > 0 && topDoersTasks >= acceptedInPeriodCount * 0.8) {
+  alerts.push({ type: 'same_doers', message: 'Most tasks completed by same few doers (diversify worker base)', severity: 'medium' })
+}
+if (wau < 100 && weekNum === 1) {
+  alerts.push({ type: 'wau_low', message: `WAU is ${wau} (target 100+)`, severity: 'medium' })
+}
+if (tasksPostedThisWeek < 21 && weekNum === 1) {
+  const perDay = (tasksPostedThisWeek / 7).toFixed(1)
+  if (parseFloat(perDay) < 3) {
+    alerts.push({ type: 'tasks_per_day', message: `Tasks posted ~${perDay}/day (target 3–5/day)`, severity: 'medium' })
   }
+}
+
+// ---- Health score 0–100: completion 40%, growth 30%, satisfaction 30% ----
+const completionScore = Math.min(100, Math.round((taskCompletionRate / 70) * 40))
+const growthScore = (() => {
+  const lastWeek = weeklyGrowth[weeklyGrowth.length - 1]
+  const prevWeek = weeklyGrowth[weeklyGrowth.length - 2]
+  if (!lastWeek || !prevWeek) return 30
+  const growth = lastWeek.tasksPosted + lastWeek.tasksCompleted - (prevWeek.tasksPosted + prevWeek.tasksCompleted)
+  return Math.min(30, Math.max(0, 15 + Math.round(growth * 2)))
+})()
+const ratedInPeriod = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end }, rating: { $exists: true, $gte: 1 } })
+const completedTotal = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end } })
+const satisfactionScore = completedTotal > 0 ? Math.min(30, Math.round((ratedInPeriod / completedTotal) * 30)) : 10
+const healthScore = Math.min(100, Math.round(completionScore + growthScore + satisfactionScore))
+
+res.json({
+  week: weekNum,
+  periodStart: start,
+  periodEnd: end,
+  pilotStartDate: pilotStartDate ? pilotStartDate.toISOString().slice(0, 10) : null,
+  metrics: {
+    wau,
+    wauTarget: 100,
+    tasksPostedThisWeek,
+    tasksPerDayTarget: { min: 3, max: 5 },
+    taskCompletionRate,
+    completionTarget: 70,
+    avgTimeToAcceptHours,
+    avgTimeToAcceptTarget: 2,
+    repeatUserRate,
+    repeatUserTarget: 40,
+    newUsersThisWeek: newUsersInPeriod,
+    newUsersPerDay
+  },
+  weeklyGrowth,
+  categories,
+  userType: { posters, doers },
+  alerts,
+  healthScore,
+  lastUpdated: new Date()
+})
+  } catch (error) {
+  res.status(500).json({
+    error: 'Server error',
+    message: error.message || 'Failed to fetch pilot dashboard'
+  })
+}
 }
 
 // PUT /api/admin/pilot-dashboard/start-date - Set pilot start date (body: { pilotStartDate: "YYYY-MM-DD" }). Only data on or after this date is included.
@@ -1607,56 +1599,60 @@ const getStats = async (req, res) => {
 // ============================================
 
 // GET /api/admin/workers - List workers (users who accepted ≥1 task) with stats + online status
+// Single aggregation instead of N+1 per-worker queries
 const getWorkers = async (req, res) => {
   try {
     const socketManager = require('../socket/socketManager')
     const onlineWorkerIds = new Set(socketManager.getOnlineWorkers())
     const workersWithLocations = socketManager.getAllWorkersWithLocations()
 
-    const workerIds = await Task.distinct('acceptedBy', { acceptedBy: { $ne: null } })
-    if (workerIds.length === 0) {
-      return res.json({ workers: [], onlineCount: 0 })
-    }
-
-    const workerListFields = '_id name email phone averageRating'
-    const workers = await User.find({ _id: { $in: workerIds } })
-      .select(workerListFields)
-      .lean()
-
-    const stats = await Promise.all(
-      workerIds.map(async (userId) => {
-        const accepted = await Task.countDocuments({ acceptedBy: userId })
-        const completedTasks = await Task.find({ acceptedBy: userId, status: 'COMPLETED' }).select('budget rating')
-        const completed = completedTasks.length
-        const totalEarnings = completedTasks.reduce((s, t) => s + (t.budget || 0), 0)
-        const rated = completedTasks.filter((t) => t.rating != null)
-        const avgRating = rated.length ? rated.reduce((s, t) => s + (t.rating || 0), 0) / rated.length : null
-        return {
-          userId: userId.toString(),
-          tasksAccepted: accepted,
-          tasksCompleted: completed,
-          completionRate: accepted ? Math.round((completed / accepted) * 100) : 0,
-          totalEarnings,
-          averageRating: avgRating != null ? Math.round(avgRating * 10) / 10 : null,
-          totalRatings: rated.length
+    const workerStats = await Task.aggregate([
+      { $match: { acceptedBy: { $ne: null } } },
+      {
+        $group: {
+          _id: '$acceptedBy',
+          tasksAccepted: { $sum: 1 },
+          tasksCompleted: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, 1, 0] } },
+          totalEarnings: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, '$budget', 0] } },
+          sumRating: { $sum: { $cond: [{ $and: [{ $eq: ['$status', 'COMPLETED'] }, { $ne: ['$rating', null] }] }, '$rating', 0] } },
+          countRated: { $sum: { $cond: [{ $and: [{ $eq: ['$status', 'COMPLETED'] }, { $ne: ['$rating', null] }] }, 1, 0] } }
         }
-      })
-    )
-    const statsMap = {}
-    stats.forEach((s) => { statsMap[s.userId] = s })
+      },
+      { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user', pipeline: [{ $project: { name: 1, email: 1, phone: 1, averageRating: 1 } }] } },
+      { $unwind: '$user' },
+      {
+        $project: {
+          _id: 1,
+          name: '$user.name',
+          email: '$user.email',
+          phone: '$user.phone',
+          averageRating: '$user.averageRating',
+          tasksAccepted: 1,
+          tasksCompleted: 1,
+          totalEarnings: 1,
+          completionRate: { $cond: [{ $eq: ['$tasksAccepted', 0] }, 0, { $round: [{ $multiply: [{ $divide: ['$tasksCompleted', '$tasksAccepted'] }, 100] }, 0] }] },
+          avgRating: { $cond: [{ $eq: ['$countRated', 0] }, null, { $round: [{ $divide: ['$sumRating', '$countRated'] }, 1] }] },
+          totalRatings: '$countRated'
+        }
+      }
+    ]).then(arr => arr.map((w) => ({
+      _id: w._id,
+      name: w.name,
+      email: w.email,
+      phone: w.phone,
+      averageRating: w.avgRating ?? w.averageRating ?? null,
+      tasksAccepted: w.tasksAccepted,
+      tasksCompleted: w.tasksCompleted,
+      completionRate: w.completionRate,
+      totalEarnings: w.totalEarnings,
+      totalRatings: w.totalRatings || 0
+    })))
 
-    const workersWithStats = workers.map((w) => {
+    const workersWithStats = workerStats.map((w) => {
       const id = w._id.toString()
-      const s = statsMap[id] || {}
       const loc = workersWithLocations.find((x) => x.userId === id)
       return {
         ...w,
-        tasksAccepted: s.tasksAccepted || 0,
-        tasksCompleted: s.tasksCompleted || 0,
-        completionRate: s.completionRate || 0,
-        totalEarnings: s.totalEarnings || 0,
-        averageRating: s.averageRating,
-        totalRatings: s.totalRatings || 0,
         isOnline: onlineWorkerIds.has(id),
         location: loc?.location || null
       }
@@ -1865,39 +1861,46 @@ const getLogs = async (req, res) => {
 // ANALYTICS
 // ============================================
 
-// GET /api/admin/analytics - Top posters, top workers, best areas, funnel
+// GET /api/admin/analytics - Top posters, top workers, best areas, funnel (cached 60s)
+// Single $facet for all Task-derived analytics; early $match on indexed fields; tight $lookup projection
 const getAnalytics = async (req, res) => {
   try {
-    const topPosters = await Task.aggregate([
-      { $match: { status: 'COMPLETED' } },
-      { $group: { _id: '$postedBy', totalSpent: { $sum: '$budget' }, count: { $sum: 1 } } },
-      { $sort: { totalSpent: -1 } },
-      { $limit: 20 },
-      { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
-      { $unwind: '$user' },
-      { $project: { userId: '$_id', name: '$user.name', email: '$user.email', totalSpent: 1, count: 1, _id: 0 } }
+    const [analyticsFacet] = await Task.aggregate([
+      {
+        $facet: {
+          topPosters: [
+            { $match: { status: 'COMPLETED' } },
+            { $group: { _id: '$postedBy', totalSpent: { $sum: '$budget' }, count: { $sum: 1 } } },
+            { $sort: { totalSpent: -1 } },
+            { $limit: 20 },
+            { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user', pipeline: [{ $project: { name: 1, email: 1 } }] } },
+            { $unwind: '$user' },
+            { $project: { userId: '$_id', name: '$user.name', email: '$user.email', totalSpent: 1, count: 1, _id: 0 } }
+          ],
+          topWorkers: [
+            { $match: { status: 'COMPLETED', acceptedBy: { $ne: null } } },
+            { $group: { _id: '$acceptedBy', totalEarnings: { $sum: '$budget' }, count: { $sum: 1 } } },
+            { $sort: { totalEarnings: -1 } },
+            { $limit: 20 },
+            { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user', pipeline: [{ $project: { name: 1, email: 1 } }] } },
+            { $unwind: '$user' },
+            { $project: { userId: '$_id', name: '$user.name', email: '$user.email', totalEarnings: 1, count: 1, _id: 0 } }
+          ],
+          bestAreas: [
+            { $match: { 'location.city': { $exists: true, $ne: null, $ne: '' } } },
+            { $group: { _id: '$location.city', taskCount: { $sum: 1 }, revenue: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, '$budget', 0] } } } },
+            { $sort: { taskCount: -1 } },
+            { $limit: 15 }
+          ],
+          funnel: [{ $group: { _id: '$status', count: { $sum: 1 } } }]
+        }
+      }
     ])
 
-    const topWorkers = await Task.aggregate([
-      { $match: { status: 'COMPLETED', acceptedBy: { $ne: null } } },
-      { $group: { _id: '$acceptedBy', totalEarnings: { $sum: '$budget' }, count: { $sum: 1 } } },
-      { $sort: { totalEarnings: -1 } },
-      { $limit: 20 },
-      { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
-      { $unwind: '$user' },
-      { $project: { userId: '$_id', name: '$user.name', email: '$user.email', totalEarnings: 1, count: 1, _id: 0 } }
-    ])
-
-    const bestAreas = await Task.aggregate([
-      { $match: { 'location.city': { $exists: true, $ne: null, $ne: '' } } },
-      { $group: { _id: '$location.city', taskCount: { $sum: 1 }, revenue: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, '$budget', 0] } } } },
-      { $sort: { taskCount: -1 } },
-      { $limit: 15 }
-    ]).then((arr) => arr.map(({ _id, taskCount, revenue }) => ({ city: _id, taskCount, revenue })))
-
-    const funnel = await Task.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } }
-    ])
+    const topPosters = analyticsFacet?.topPosters || []
+    const topWorkers = analyticsFacet?.topWorkers || []
+    const bestAreas = (analyticsFacet?.bestAreas || []).map(({ _id, taskCount, revenue }) => ({ city: _id, taskCount, revenue }))
+    const funnel = analyticsFacet?.funnel || []
     const posted = funnel.filter((f) => ['OPEN', 'SEARCHING', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(f._id)).reduce((s, f) => s + f.count, 0)
     const accepted = (funnel.find((f) => f._id === 'ACCEPTED')?.count || 0) + (funnel.find((f) => f._id === 'IN_PROGRESS')?.count || 0) + (funnel.find((f) => f._id === 'COMPLETED')?.count || 0)
     const completed = funnel.find((f) => f._id === 'COMPLETED')?.count || 0

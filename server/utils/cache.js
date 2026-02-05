@@ -124,6 +124,7 @@ function invalidateAdminDashboards() {
   delPrefix('admin:stats')
   delPrefix('admin:dashboard')
   delPrefix('admin:pilot-dashboard')
+  del('admin:analytics')
 }
 
 function invalidatePilotDashboard() {

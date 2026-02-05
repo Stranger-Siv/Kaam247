@@ -26,15 +26,17 @@ function parsePagination(query = {}) {
  * @param {number} limit
  * @param {number} total
  * @param {number} itemsLength - length of the returned items array
- * @returns {{ page, limit, total, hasMore }}
+ * @returns {{ page, limit, total, hasMore, pages }}
  */
 function paginationMeta(page, limit, total, itemsLength) {
   const hasMore = (page - 1) * limit + itemsLength < total
+  const pages = limit > 0 ? Math.max(1, Math.ceil(total / limit)) : 1
   return {
     page,
     limit,
     total,
-    hasMore
+    hasMore,
+    pages
   }
 }
 

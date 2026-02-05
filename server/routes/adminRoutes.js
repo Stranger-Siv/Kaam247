@@ -153,7 +153,7 @@ router.get('/logs', getLogs)
 // ============================================
 // ANALYTICS
 // ============================================
-router.get('/analytics', getAnalytics)
+router.get('/analytics', withCache(() => 'admin:analytics', TTL_ADMIN_MS, getAnalytics))
 
 // ============================================
 // SUPPORT TICKETS (phone change + support chat)
