@@ -1373,142 +1373,142 @@ const getPilotDashboard = async (req, res) => {
             { $group: { _id: '$ids', c: { $sum: 1 } } },
             { $match: { c: { $gte: 2 } } },
             { $count: 'count' }
-          ]
-        },
-        acceptedInPeriodCount: [{ $match: { acceptedAt: { $gte: startEff, $lte: end } } }, { $count: 'count' }],
-        topDoersSum: [{ $match: { acceptedAt: { $gte: startEff, $lte: end }, acceptedBy: { $ne: null } } }, { $group: { _id: '$acceptedBy', c: { $sum: 1 } } }, { $sort: { c: -1 } }, { $limit: 3 }, { $group: { _id: null, total: { $sum: '$c' } } }],
-        categories: [{ $match: { createdAt: { $gte: startEff, $lte: end } } }, { $group: { _id: '$category', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 5 }]
-      }}
+          ],
+          acceptedInPeriodCount: [{ $match: { acceptedAt: { $gte: startEff, $lte: end } } }, { $count: 'count' }],
+          topDoersSum: [{ $match: { acceptedAt: { $gte: startEff, $lte: end }, acceptedBy: { $ne: null } } }, { $group: { _id: '$acceptedBy', c: { $sum: 1 } } }, { $sort: { c: -1 } }, { $limit: 3 }, { $group: { _id: null, total: { $sum: '$c' } } }],
+          categories: [{ $match: { createdAt: { $gte: startEff, $lte: end } } }, { $group: { _id: '$category', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 5 }]
+        }
+      }
     ])
 
-const postedInPeriod = (pilotFacet?.postedIds || []).map((x) => x._id?.toString()).filter(Boolean)
-const acceptedInPeriod = (pilotFacet?.acceptedIds || []).map((x) => x._id?.toString()).filter(Boolean)
-const createdInPeriod = await User.find({ role: 'user', createdAt: { $gte: startEff, $lte: end } }, { _id: 1 }).lean()
-const allActiveIds = [...new Set([...postedInPeriod, ...acceptedInPeriod, ...createdInPeriod.map((u) => u._id.toString())])]
-const wau = allActiveIds.length
+    const postedInPeriod = (pilotFacet?.postedIds || []).map((x) => x._id?.toString()).filter(Boolean)
+    const acceptedInPeriod = (pilotFacet?.acceptedIds || []).map((x) => x._id?.toString()).filter(Boolean)
+    const createdInPeriod = await User.find({ role: 'user', createdAt: { $gte: startEff, $lte: end } }, { _id: 1 }).lean()
+    const allActiveIds = [...new Set([...postedInPeriod, ...acceptedInPeriod, ...createdInPeriod.map((u) => u._id.toString())])]
+    const wau = allActiveIds.length
 
-const tasksPostedThisWeek = pilotFacet?.tasksPosted?.[0]?.count ?? 0
-const completedInPeriod = pilotFacet?.completed?.[0]?.count ?? 0
-const cancelledInPeriod = pilotFacet?.cancelled?.[0]?.count ?? 0
-const closedCount = completedInPeriod + cancelledInPeriod
-const taskCompletionRate = closedCount > 0 ? Math.round((completedInPeriod / closedCount) * 100) : 0
+    const tasksPostedThisWeek = pilotFacet?.tasksPosted?.[0]?.count ?? 0
+    const completedInPeriod = pilotFacet?.completed?.[0]?.count ?? 0
+    const cancelledInPeriod = pilotFacet?.cancelled?.[0]?.count ?? 0
+    const closedCount = completedInPeriod + cancelledInPeriod
+    const taskCompletionRate = closedCount > 0 ? Math.round((completedInPeriod / closedCount) * 100) : 0
 
-const acceptGroup = pilotFacet?.acceptTimes?.[0]
-let avgTimeToAcceptHours = 0
-if (acceptGroup && acceptGroup.count > 0 && acceptGroup.avgMs != null) {
-  avgTimeToAcceptHours = Math.round((acceptGroup.avgMs / 3600000) * 10) / 10
-}
+    const acceptGroup = pilotFacet?.acceptTimes?.[0]
+    let avgTimeToAcceptHours = 0
+    if (acceptGroup && acceptGroup.count > 0 && acceptGroup.avgMs != null) {
+      avgTimeToAcceptHours = Math.round((acceptGroup.avgMs / 3600000) * 10) / 10
+    }
 
-const repeatUsers = pilotFacet?.repeatUsers?.[0]?.count ?? 0
-const repeatUserRate = wau > 0 ? Math.round((repeatUsers / wau) * 100) : 0
+    const repeatUsers = pilotFacet?.repeatUsers?.[0]?.count ?? 0
+    const repeatUserRate = wau > 0 ? Math.round((repeatUsers / wau) * 100) : 0
 
-const newUsersInPeriod = await User.countDocuments({ role: 'user', createdAt: { $gte: startEff, $lte: end } })
-const newUsersPerDay = Math.round((newUsersInPeriod / 7) * 10) / 10
+    const newUsersInPeriod = await User.countDocuments({ role: 'user', createdAt: { $gte: startEff, $lte: end } })
+    const newUsersPerDay = Math.round((newUsersInPeriod / 7) * 10) / 10
 
-// ---- Weekly growth: single aggregation with $facet for 4 weeks ----
-const weekBounds = []
-for (let w = 1; w <= 4; w++) {
-  const ws = new Date(now)
-  ws.setDate(ws.getDate() - 7 * w)
-  ws.setHours(0, 0, 0, 0)
-  const we = new Date(ws)
-  we.setDate(we.getDate() + 7)
-  we.setMilliseconds(-1)
-  weekBounds.push({ weekIndex: w, wsEff: effStart(ws), we })
-}
-const [week1, week2, week3, week4] = await Promise.all(weekBounds.map(({ wsEff, we }) => {
-  if (wsEff > we) return Promise.resolve({ users: 0, tasksPosted: 0, tasksCompleted: 0 })
-  return Promise.all([
-    User.countDocuments({ role: 'user', createdAt: { $gte: wsEff, $lte: we } }),
-    Task.countDocuments({ createdAt: { $gte: wsEff, $lte: we } }),
-    Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: wsEff, $lte: we } })
-  ]).then(([users, posted, completed]) => ({ users, tasksPosted: posted, tasksCompleted: completed }))
-}))
-const weeklyGrowth = [
-  { weekLabel: 'Week 1', weekIndex: 1, ...week1 },
-  { weekLabel: 'Week 2', weekIndex: 2, ...week2 },
-  { weekLabel: 'Week 3', weekIndex: 3, ...week3 },
-  { weekLabel: 'Week 4', weekIndex: 4, ...week4 }
-]
+    // ---- Weekly growth: single aggregation with $facet for 4 weeks ----
+    const weekBounds = []
+    for (let w = 1; w <= 4; w++) {
+      const ws = new Date(now)
+      ws.setDate(ws.getDate() - 7 * w)
+      ws.setHours(0, 0, 0, 0)
+      const we = new Date(ws)
+      we.setDate(we.getDate() + 7)
+      we.setMilliseconds(-1)
+      weekBounds.push({ weekIndex: w, wsEff: effStart(ws), we })
+    }
+    const [week1, week2, week3, week4] = await Promise.all(weekBounds.map(({ wsEff, we }) => {
+      if (wsEff > we) return Promise.resolve({ users: 0, tasksPosted: 0, tasksCompleted: 0 })
+      return Promise.all([
+        User.countDocuments({ role: 'user', createdAt: { $gte: wsEff, $lte: we } }),
+        Task.countDocuments({ createdAt: { $gte: wsEff, $lte: we } }),
+        Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: wsEff, $lte: we } })
+      ]).then(([users, posted, completed]) => ({ users, tasksPosted: posted, tasksCompleted: completed }))
+    }))
+    const weeklyGrowth = [
+      { weekLabel: 'Week 1', weekIndex: 1, ...week1 },
+      { weekLabel: 'Week 2', weekIndex: 2, ...week2 },
+      { weekLabel: 'Week 3', weekIndex: 3, ...week3 },
+      { weekLabel: 'Week 4', weekIndex: 4, ...week4 }
+    ]
 
-const categories = (pilotFacet?.categories || []).map(({ _id, count }) => ({ name: _id || 'Other', count }))
+    const categories = (pilotFacet?.categories || []).map(({ _id, count }) => ({ name: _id || 'Other', count }))
 
-// ---- User type: posters vs doers (in period) ----
-const postersSet = new Set(postedInPeriod.map((id) => id.toString()))
-const doersSet = new Set(acceptedInPeriod.filter(Boolean).map((id) => id.toString()))
-const posters = postersSet.size
-const doers = doersSet.size
+    // ---- User type: posters vs doers (in period) ----
+    const postersSet = new Set(postedInPeriod.map((id) => id.toString()))
+    const doersSet = new Set(acceptedInPeriod.filter(Boolean).map((id) => id.toString()))
+    const posters = postersSet.size
+    const doers = doersSet.size
 
-// ---- Alerts ----
-const alerts = []
-if (taskCompletionRate < 60 && closedCount > 0) {
-  alerts.push({ type: 'completion_low', message: `Task completion rate is ${taskCompletionRate}% (target >70%)`, severity: 'high' })
-}
-const tasksLast24h = await Task.countDocuments({ createdAt: { $gte: new Date(Date.now() - 24 * 3600000) } })
-if (tasksLast24h === 0) {
-  alerts.push({ type: 'no_tasks_24h', message: 'No tasks posted in the last 24 hours', severity: 'high' })
-}
-const acceptedInPeriodCount = pilotFacet?.acceptedInPeriodCount?.[0]?.count ?? 0
-const topDoersTasks = pilotFacet?.topDoersSum?.[0]?.total ?? 0
-if (doers > 0 && acceptedInPeriodCount > 0 && topDoersTasks >= acceptedInPeriodCount * 0.8) {
-  alerts.push({ type: 'same_doers', message: 'Most tasks completed by same few doers (diversify worker base)', severity: 'medium' })
-}
-if (wau < 100 && weekNum === 1) {
-  alerts.push({ type: 'wau_low', message: `WAU is ${wau} (target 100+)`, severity: 'medium' })
-}
-if (tasksPostedThisWeek < 21 && weekNum === 1) {
-  const perDay = (tasksPostedThisWeek / 7).toFixed(1)
-  if (parseFloat(perDay) < 3) {
-    alerts.push({ type: 'tasks_per_day', message: `Tasks posted ~${perDay}/day (target 3–5/day)`, severity: 'medium' })
-  }
-}
+    // ---- Alerts ----
+    const alerts = []
+    if (taskCompletionRate < 60 && closedCount > 0) {
+      alerts.push({ type: 'completion_low', message: `Task completion rate is ${taskCompletionRate}% (target >70%)`, severity: 'high' })
+    }
+    const tasksLast24h = await Task.countDocuments({ createdAt: { $gte: new Date(Date.now() - 24 * 3600000) } })
+    if (tasksLast24h === 0) {
+      alerts.push({ type: 'no_tasks_24h', message: 'No tasks posted in the last 24 hours', severity: 'high' })
+    }
+    const acceptedInPeriodCount = pilotFacet?.acceptedInPeriodCount?.[0]?.count ?? 0
+    const topDoersTasks = pilotFacet?.topDoersSum?.[0]?.total ?? 0
+    if (doers > 0 && acceptedInPeriodCount > 0 && topDoersTasks >= acceptedInPeriodCount * 0.8) {
+      alerts.push({ type: 'same_doers', message: 'Most tasks completed by same few doers (diversify worker base)', severity: 'medium' })
+    }
+    if (wau < 100 && weekNum === 1) {
+      alerts.push({ type: 'wau_low', message: `WAU is ${wau} (target 100+)`, severity: 'medium' })
+    }
+    if (tasksPostedThisWeek < 21 && weekNum === 1) {
+      const perDay = (tasksPostedThisWeek / 7).toFixed(1)
+      if (parseFloat(perDay) < 3) {
+        alerts.push({ type: 'tasks_per_day', message: `Tasks posted ~${perDay}/day (target 3–5/day)`, severity: 'medium' })
+      }
+    }
 
-// ---- Health score 0–100: completion 40%, growth 30%, satisfaction 30% ----
-const completionScore = Math.min(100, Math.round((taskCompletionRate / 70) * 40))
-const growthScore = (() => {
-  const lastWeek = weeklyGrowth[weeklyGrowth.length - 1]
-  const prevWeek = weeklyGrowth[weeklyGrowth.length - 2]
-  if (!lastWeek || !prevWeek) return 30
-  const growth = lastWeek.tasksPosted + lastWeek.tasksCompleted - (prevWeek.tasksPosted + prevWeek.tasksCompleted)
-  return Math.min(30, Math.max(0, 15 + Math.round(growth * 2)))
-})()
-const ratedInPeriod = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end }, rating: { $exists: true, $gte: 1 } })
-const completedTotal = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end } })
-const satisfactionScore = completedTotal > 0 ? Math.min(30, Math.round((ratedInPeriod / completedTotal) * 30)) : 10
-const healthScore = Math.min(100, Math.round(completionScore + growthScore + satisfactionScore))
+    // ---- Health score 0–100: completion 40%, growth 30%, satisfaction 30% ----
+    const completionScore = Math.min(100, Math.round((taskCompletionRate / 70) * 40))
+    const growthScore = (() => {
+      const lastWeek = weeklyGrowth[weeklyGrowth.length - 1]
+      const prevWeek = weeklyGrowth[weeklyGrowth.length - 2]
+      if (!lastWeek || !prevWeek) return 30
+      const growth = lastWeek.tasksPosted + lastWeek.tasksCompleted - (prevWeek.tasksPosted + prevWeek.tasksCompleted)
+      return Math.min(30, Math.max(0, 15 + Math.round(growth * 2)))
+    })()
+    const ratedInPeriod = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end }, rating: { $exists: true, $gte: 1 } })
+    const completedTotal = await Task.countDocuments({ status: 'COMPLETED', completedAt: { $gte: start, $lte: end } })
+    const satisfactionScore = completedTotal > 0 ? Math.min(30, Math.round((ratedInPeriod / completedTotal) * 30)) : 10
+    const healthScore = Math.min(100, Math.round(completionScore + growthScore + satisfactionScore))
 
-res.json({
-  week: weekNum,
-  periodStart: start,
-  periodEnd: end,
-  pilotStartDate: pilotStartDate ? pilotStartDate.toISOString().slice(0, 10) : null,
-  metrics: {
-    wau,
-    wauTarget: 100,
-    tasksPostedThisWeek,
-    tasksPerDayTarget: { min: 3, max: 5 },
-    taskCompletionRate,
-    completionTarget: 70,
-    avgTimeToAcceptHours,
-    avgTimeToAcceptTarget: 2,
-    repeatUserRate,
-    repeatUserTarget: 40,
-    newUsersThisWeek: newUsersInPeriod,
-    newUsersPerDay
-  },
-  weeklyGrowth,
-  categories,
-  userType: { posters, doers },
-  alerts,
-  healthScore,
-  lastUpdated: new Date()
-})
+    res.json({
+      week: weekNum,
+      periodStart: start,
+      periodEnd: end,
+      pilotStartDate: pilotStartDate ? pilotStartDate.toISOString().slice(0, 10) : null,
+      metrics: {
+        wau,
+        wauTarget: 100,
+        tasksPostedThisWeek,
+        tasksPerDayTarget: { min: 3, max: 5 },
+        taskCompletionRate,
+        completionTarget: 70,
+        avgTimeToAcceptHours,
+        avgTimeToAcceptTarget: 2,
+        repeatUserRate,
+        repeatUserTarget: 40,
+        newUsersThisWeek: newUsersInPeriod,
+        newUsersPerDay
+      },
+      weeklyGrowth,
+      categories,
+      userType: { posters, doers },
+      alerts,
+      healthScore,
+      lastUpdated: new Date()
+    })
   } catch (error) {
-  res.status(500).json({
-    error: 'Server error',
-    message: error.message || 'Failed to fetch pilot dashboard'
-  })
-}
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'Failed to fetch pilot dashboard'
+    })
+  }
 }
 
 // PUT /api/admin/pilot-dashboard/start-date - Set pilot start date (body: { pilotStartDate: "YYYY-MM-DD" }). Only data on or after this date is included.
