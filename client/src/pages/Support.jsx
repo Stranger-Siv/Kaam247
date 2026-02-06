@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
-import LoginCTA from '../components/LoginCTA'
+import GuestView from '../components/GuestView'
 
 function Support() {
   const { user } = useAuth()
@@ -111,11 +111,12 @@ function Support() {
 
   if (!user?.id) {
     return (
-      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Support</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">Create a ticket and chat with us to resolve any issue.</p>
-        <LoginCTA message="Login to create a support ticket" returnUrl="/support" />
-      </div>
+      <GuestView
+        title="Support"
+        description="Create a ticket and chat with us to resolve any issue."
+        message="Login to create a support ticket"
+        returnUrl="/support"
+      />
     )
   }
 

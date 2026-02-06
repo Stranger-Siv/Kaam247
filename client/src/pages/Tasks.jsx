@@ -447,7 +447,7 @@ function Tasks() {
 
       {/* Guest: show login CTA so they can accept tasks */}
       {!user?.id && (
-        <div className="mb-4">
+        <div className="mb-6">
           <LoginCTA message="Login to view tasks near you and accept work" returnUrl="/tasks" />
         </div>
       )}

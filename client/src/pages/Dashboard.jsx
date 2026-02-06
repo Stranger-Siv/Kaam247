@@ -13,7 +13,7 @@ import { API_BASE_URL } from '../config/env'
 import { performStateRecovery } from '../utils/stateRecovery'
 import { reverseGeocode } from '../utils/geocoding'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
-import LoginCTA from '../components/LoginCTA'
+import GuestView from '../components/GuestView'
 
 /** Format avg time-to-accept (ms) for poster analytics: "5m", "1.2h", "—" */
 function formatAvgTimeToAccept(ms) {
@@ -1142,11 +1142,12 @@ function Dashboard() {
 
     if (!user?.id) {
         return (
-            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">See tasks near you, earn money, and track your activity.</p>
-                <LoginCTA message="Login to see your dashboard and get started" returnUrl="/dashboard" />
-            </div>
+            <GuestView
+                title="Dashboard"
+                description="See tasks near you, earn money, and track your activity."
+                message="Login to see your dashboard and get started"
+                returnUrl="/dashboard"
+            />
         )
     }
 

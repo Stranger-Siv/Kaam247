@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../config/env'
 import { usePWAInstall } from '../context/PWAInstallContext'
 import ThemeToggle from '../components/ThemeToggle'
-import LoginCTA from '../components/LoginCTA'
+import GuestView from '../components/GuestView'
 
 function Profile() {
     const { userMode } = useUserMode()
@@ -245,11 +245,12 @@ function Profile() {
 
     if (!user?.id) {
         return (
-            <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
-                <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Profile</h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">Manage your account and view your activity.</p>
-                <LoginCTA message="Login to see your profile" returnUrl="/profile" />
-            </div>
+            <GuestView
+                title="Profile"
+                description="Manage your account and view your activity."
+                message="Login to see your profile"
+                returnUrl="/profile"
+            />
         )
     }
 

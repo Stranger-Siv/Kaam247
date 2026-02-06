@@ -37,11 +37,22 @@ export function UserModeProvider({ children }) {
   }
 
   const toggleMode = async (onActiveTaskFound, forceOfflineCallback, isOnlineStatus) => {
+    const token = localStorage.getItem('kaam247_token')
+    const newMode = userMode === 'worker' ? 'poster' : 'worker'
+
+    // Guests can switch mode without any API check
+    if (!token) {
+      setUserMode(newMode)
+      localStorage.setItem('kaam247_userMode', newMode)
+      if (newMode === 'poster' && forceOfflineCallback) {
+        forceOfflineCallback(false)
+      }
+      return true
+    }
+
     setCheckingActiveTask(true)
     try {
       const activeTaskData = await checkActiveTask()
-      
-      const newMode = userMode === 'worker' ? 'poster' : 'worker'
 
       // IMPORTANT UX RULE:
       // - If user has an active task as a WORKER, they must be able to switch into worker mode to complete it.
@@ -73,12 +84,12 @@ export function UserModeProvider({ children }) {
       // Allow switch into poster mode (offline + no active worker task)
       setUserMode(newMode)
       localStorage.setItem('kaam247_userMode', newMode)
-      
+
       // If switching to POST TASK mode, force offline
       if (newMode === 'poster' && forceOfflineCallback) {
         forceOfflineCallback(false)
       }
-      
+
       return true // Indicate switch was successful
     } catch (error) {
       return false

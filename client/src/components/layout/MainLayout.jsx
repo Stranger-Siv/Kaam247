@@ -144,7 +144,7 @@ function MainLayout() {
 
                         <div className="md:hidden flex items-center gap-2">
                             {!isGuest && userMode === 'worker' && <AvailabilityToggle />}
-                            {!isGuest && <ModeToggle />}
+                            <ModeToggle />
                             {isGuest && <Link to="/login" className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 rounded-md">Login</Link>}
                         </div>
                     </div>

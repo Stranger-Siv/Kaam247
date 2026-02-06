@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useUserMode } from '../context/UserModeContext'
 import { useOnboarding } from '../context/OnboardingContext'
-import LoginCTA from '../components/LoginCTA'
+import GuestView from '../components/GuestView'
 
 function Settings() {
   const navigate = useNavigate()
@@ -32,11 +32,12 @@ function Settings() {
 
   if (!user?.id) {
     return (
-      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Settings</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">Manage your account and preferences.</p>
-        <LoginCTA message="Login to access settings" returnUrl="/settings" />
-      </div>
+      <GuestView
+        title="Settings"
+        description="Manage your account and preferences."
+        message="Login to access settings"
+        returnUrl="/settings"
+      />
     )
   }
 
