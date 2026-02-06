@@ -15,7 +15,7 @@ import { PWAInstallProvider } from './context/PWAInstallContext'
 import ColdStartChecker from './components/ColdStartChecker'
 import ErrorBoundary from './components/ErrorBoundary'
 import PublicLayout from './components/layout/PublicLayout'
-import MainLayout from './components/layout/MainLayout'
+import AppLayout from './components/layout/AppLayout'
 import ProtectedRoute from './components/ProtectedRoute'
 import ModeProtectedRoute from './components/ModeProtectedRoute'
 import AdminRoute from './components/AdminRoute'
@@ -90,7 +90,7 @@ const AppContent = () => (
                       <ErrorBoundary>
                         <Suspense fallback={<PageLoader />}>
                           <Routes>
-                            {/* Public Routes - logged-in users hitting / go to dashboard */}
+                            {/* Public routes: no login required. Home, how it works, FAQs, terms, privacy. No real task data. */}
                             <Route
                               path="/"
                               element={
@@ -142,15 +142,10 @@ const AppContent = () => (
                               }
                             />
 
-                            {/* Authenticated Routes */}
-                            <Route
-                              element={
-                                <ProtectedRoute>
-                                  <MainLayout />
-                                </ProtectedRoute>
-                              }
-                            >
+                            {/* App routes: guests can view everything; login CTA shown inside each page. */}
+                            <Route element={<AppLayout />}>
                               <Route path="/dashboard" element={<Dashboard />} />
+                              {/* Worker intent: /tasks and /tasks/:id show "Login to view tasks near you" when unauthenticated */}
                               <Route
                                 path="/tasks"
                                 element={
@@ -160,6 +155,7 @@ const AppContent = () => (
                                 }
                               />
                               <Route path="/tasks/:id" element={<TaskDetail />} />
+                              {/* Poster intent: /post-task (any step) shows "Login to post a task and track its progress" when unauthenticated */}
                               <Route
                                 path="/post-task"
                                 element={

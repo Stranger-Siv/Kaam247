@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
+import LoginCTA from '../components/LoginCTA'
 
 function Support() {
+  const { user } = useAuth()
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -16,6 +19,10 @@ function Support() {
   const [loadingMoreTickets, setLoadingMoreTickets] = useState(false)
 
   const fetchTickets = async (page = 1, append = false) => {
+    if (!user?.id) {
+      setLoading(false)
+      return
+    }
     try {
       if (page === 1) {
         setLoading(true)
@@ -50,7 +57,7 @@ function Support() {
 
   useEffect(() => {
     fetchTickets(1, false)
-  }, [])
+  }, [user?.id])
 
   const supportTickets = tickets.filter((t) => t.type === 'SUPPORT')
 
@@ -100,6 +107,16 @@ function Support() {
       REJECTED: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
     }
     return map[status] || 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+  }
+
+  if (!user?.id) {
+    return (
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Support</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">Create a ticket and chat with us to resolve any issue.</p>
+        <LoginCTA message="Login to create a support ticket" returnUrl="/support" />
+      </div>
+    )
   }
 
   return (

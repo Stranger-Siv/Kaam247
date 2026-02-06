@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { RETURN_URL_PARAM } from '../utils/authIntents'
 import { API_BASE_URL } from '../config/env'
 import { useCategories } from '../hooks/useCategories'
 import { usePWAInstall } from '../context/PWAInstallContext'
 import { STUDENT_TASK_TEMPLATES } from '../config/studentTemplates'
 import LocationPickerMap from '../components/LocationPickerMap'
+import LoginCTA from '../components/LoginCTA'
 import { persistUserLocation } from '../utils/locationPersistence'
 import { reverseGeocode as reverseGeocodeViaApi } from '../utils/geocoding'
 
@@ -307,10 +309,10 @@ function PostTask() {
       setIsSubmitting(true)
       setError(null)
 
-      // Use authenticated user's ID
       if (!user || !user.id) {
-        setError('You must be logged in to post tasks')
         setIsSubmitting(false)
+        const returnUrl = '/post-task' + (location.search || '')
+        navigate(`/login?${RETURN_URL_PARAM}=${encodeURIComponent(returnUrl)}&message=poster`)
         return
       }
 
@@ -814,6 +816,11 @@ function PostTask() {
               </div>
             </div>
 
+            {!user?.id && (
+              <div className="mt-6 mb-4">
+                <LoginCTA message="Login to post this task and track its progress" returnUrl={'/post-task' + (location.search || '')} />
+              </div>
+            )}
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:justify-end">
               <button
                 type="button"

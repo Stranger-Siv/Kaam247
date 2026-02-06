@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useUserMode } from '../context/UserModeContext'
 import StatusBadge from '../components/StatusBadge'
+import LoginCTA from '../components/LoginCTA'
 import { API_BASE_URL } from '../config/env'
 
 function Activity() {
@@ -177,6 +178,16 @@ function Activity() {
         <div className="text-center py-12 text-red-600 dark:text-red-400">
           <p>{error}</p>
         </div>
+      </div>
+    )
+  }
+
+  if (!user?.id) {
+    return (
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Activity</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">View all your tasks and activities.</p>
+        <LoginCTA message="Login to see your activity history" returnUrl="/activity" />
       </div>
     )
   }

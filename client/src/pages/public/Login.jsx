@@ -1,14 +1,32 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../context/AuthContext'
 import { GOOGLE_CLIENT_ID } from '../../config/env'
+import { RETURN_URL_PARAM, LOGIN_INTENT_MESSAGES, isSafeReturnUrl } from '../../utils/authIntents'
 
 function Login() {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const { login, loginWithGoogle, isAuthenticated, loading } = useAuth()
 
-    // Redirect if already authenticated (check both state and localStorage as fallback)
+    // Redirect-after-login: read intended destination from URL (set by ProtectedRoute)
+    const returnUrl = searchParams.get(RETURN_URL_PARAM) || ''
+    const messageKey = searchParams.get('message') || ''
+    const intentMessage = (messageKey && LOGIN_INTENT_MESSAGES[messageKey]) ? LOGIN_INTENT_MESSAGES[messageKey] : null
+
+    const getRedirectPath = () => {
+        if (isSafeReturnUrl(returnUrl)) return returnUrl
+        const userInfo = localStorage.getItem('kaam247_user')
+        try {
+            const parsed = userInfo ? JSON.parse(userInfo) : null
+            return parsed?.role === 'admin' ? '/admin' : '/dashboard'
+        } catch {
+            return '/dashboard'
+        }
+    }
+
+    // Redirect if already authenticated (preserve returnUrl so user lands where they intended)
     useEffect(() => {
         if (loading) return
 
@@ -16,22 +34,9 @@ function Login() {
         const userInfo = localStorage.getItem('kaam247_user')
 
         if (isAuthenticated || token) {
-            if (userInfo) {
-                try {
-                    const parsedUser = JSON.parse(userInfo)
-                    if (parsedUser.role === 'admin') {
-                        navigate('/admin', { replace: true })
-                    } else {
-                        navigate('/dashboard', { replace: true })
-                    }
-                } catch {
-                    navigate('/dashboard', { replace: true })
-                }
-            } else if (token) {
-                navigate('/dashboard', { replace: true })
-            }
+            navigate(getRedirectPath(), { replace: true })
         }
-    }, [isAuthenticated, loading, navigate])
+    }, [isAuthenticated, loading, navigate, returnUrl])
 
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -74,21 +79,7 @@ function Login() {
         const result = await login(identifier, password)
 
         if (result.success) {
-            const userInfo = localStorage.getItem('kaam247_user')
-            if (userInfo) {
-                try {
-                    const parsedUser = JSON.parse(userInfo)
-                    if (parsedUser.role === 'admin') {
-                        navigate('/admin')
-                    } else {
-                        navigate('/dashboard')
-                    }
-                } catch {
-                    navigate('/dashboard')
-                }
-            } else {
-                navigate('/dashboard')
-            }
+            navigate(getRedirectPath())
         } else {
             setError(result.error || 'Invalid email/phone or password')
         }
@@ -167,6 +158,11 @@ function Login() {
                                     Login
                                 </h1>
                             </div>
+                            {intentMessage && (
+                                <p className="mt-3 text-sm font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2 inline-block">
+                                    {intentMessage}
+                                </p>
+                            )}
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-5 min-w-0">
@@ -244,15 +240,9 @@ function Login() {
                                                 const result = await loginWithGoogle(credentialResponse.credential)
                                                 if (result?.success) {
                                                     if (result.profileSetupRequired) {
-                                                        navigate('/setup-profile', { replace: true })
+                                                        navigate('/setup-profile', { replace: true, state: { returnUrl: isSafeReturnUrl(returnUrl) ? returnUrl : undefined } })
                                                     } else {
-                                                        const userInfo = localStorage.getItem('kaam247_user')
-                                                        try {
-                                                            const parsed = userInfo ? JSON.parse(userInfo) : null
-                                                            navigate(parsed?.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
-                                                        } catch {
-                                                            navigate('/dashboard', { replace: true })
-                                                        }
+                                                        navigate(getRedirectPath(), { replace: true })
                                                     }
                                                 }
                                             }}

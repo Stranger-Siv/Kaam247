@@ -4,6 +4,7 @@ const Chat = require('../models/Chat')
 const mongoose = require('mongoose')
 const { broadcastNewTask, notifyTaskAccepted, notifyTaskRemoved, notifyTaskCompleted, notifyTaskStatusChanged, notifyTaskUpdated } = require('../socket/socketHandler')
 const { calculateDistance } = require('../utils/distance')
+const { pingWorkersForNewTask } = require('../utils/pushNotifications')
 const socketManager = require('../socket/socketManager')
 const { parsePagination, paginationMeta } = require('../utils/pagination')
 const { invalidateStatsAndAdminDashboards } = require('../utils/cache')
@@ -221,7 +222,15 @@ const createTask = async (req, res) => {
         { _id: savedTask._id },
         { $set: { lastAlertedAt: new Date() } }
       ).catch(() => { })
-      return broadcastNewTask(taskData, postedById)
+      broadcastNewTask(taskData, postedById)
+      // Worker Ping: if no workers are online, ping workers with push tokens (distance + money) so they come online
+      pingWorkersForNewTask({
+        taskId: savedTask._id.toString(),
+        title: savedTask.title,
+        budget: savedTask.budget,
+        coordinates: savedTask.location?.coordinates,
+        postedById
+      })
     })
 
     return res.status(201).json({

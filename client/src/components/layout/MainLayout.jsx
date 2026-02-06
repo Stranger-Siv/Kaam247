@@ -20,6 +20,7 @@ function MainLayout() {
     const { logout, user } = useAuth()
     const { userMode } = useUserMode()
     const { hasCompletedOnboarding, onboardingLoaded } = useOnboarding()
+    const isGuest = !user?.id
     const { requestShow: requestPWAInstall } = usePWAInstall()
     const pwaPromptShownRef = useRef(false)
 
@@ -68,7 +69,7 @@ function MainLayout() {
                             >
                                 Dashboard
                             </Link>
-                            {userMode === 'worker' && (
+                            {(isGuest || userMode === 'worker') && (
                                 <Link
                                     to="/tasks"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/tasks'
@@ -79,7 +80,7 @@ function MainLayout() {
                                     Tasks
                                 </Link>
                             )}
-                            {userMode === 'poster' && (
+                            {(isGuest || userMode === 'poster') && (
                                 <Link
                                     to="/post-task"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/post-task'
@@ -99,7 +100,7 @@ function MainLayout() {
                             >
                                 Activity
                             </Link>
-                            {userMode === 'worker' && (
+                            {!isGuest && userMode === 'worker' && (
                                 <Link
                                     to="/earnings"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/earnings'
@@ -110,7 +111,7 @@ function MainLayout() {
                                     Earnings
                                 </Link>
                             )}
-                            {userMode === 'poster' && (
+                            {!isGuest && userMode === 'poster' && (
                                 <Link
                                     to="/transactions"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/transactions'
@@ -131,22 +132,20 @@ function MainLayout() {
                                 Profile
                             </Link>
                             <div className="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-1"></div>
-                            {userMode === 'worker' && <AvailabilityToggle />}
+                            {!isGuest && userMode === 'worker' && <AvailabilityToggle />}
                             <ThemeToggle />
-                            <ModeToggle />
-                            <button
-                                onClick={handleLogout}
-                                className="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors min-h-[36px] flex items-center"
-                            >
-                                Logout
-                            </button>
+                            {!isGuest && <ModeToggle />}
+                            {isGuest ? (
+                                <Link to="/login" className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors min-h-[36px] flex items-center">Login</Link>
+                            ) : (
+                                <button onClick={handleLogout} className="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors min-h-[36px] flex items-center">Logout</button>
+                            )}
                         </nav>
 
-                        {/* Mobile Header Right Side - Availability + Mode toggle (small screens) */}
                         <div className="md:hidden flex items-center gap-2">
-                            {userMode === 'worker' && <AvailabilityToggle />}
-                            {/* Use compact header variant (same as desktop button, works well on small screens) */}
-                            <ModeToggle />
+                            {!isGuest && userMode === 'worker' && <AvailabilityToggle />}
+                            {!isGuest && <ModeToggle />}
+                            {isGuest && <Link to="/login" className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 rounded-md">Login</Link>}
                         </div>
                     </div>
                 </div>

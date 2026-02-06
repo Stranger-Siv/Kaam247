@@ -16,6 +16,7 @@ import IncreaseBudgetModal from '../components/IncreaseBudgetModal'
 import ExtendValidityModal from '../components/ExtendValidityModal'
 import RecurringModal from '../components/RecurringModal'
 import TaskChat from '../components/TaskChat'
+import LoginCTA from '../components/LoginCTA'
 
 function TaskDetail() {
   const navigate = useNavigate()
@@ -1977,6 +1978,12 @@ function TaskDetail() {
         </svg>
         <span className="font-semibold text-base">Back</span>
       </button>
+
+      {!user?.id && (
+        <div className="mb-6">
+          <LoginCTA message="Login to see full details and accept this task" returnUrl={location.pathname + (location.search || '')} />
+        </div>
+      )}
 
       {/* Task Card */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 overflow-hidden">

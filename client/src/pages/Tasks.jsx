@@ -12,6 +12,7 @@ import TaskCardSkeleton from '../components/TaskCardSkeleton'
 import { useSwipeGesture } from '../hooks/useSwipeGesture'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import SwipeableTaskCard from '../components/SwipeableTaskCard'
+import LoginCTA from '../components/LoginCTA'
 
 // College pilot: default 2 km campus radius
 const DISTANCE_OPTIONS = [
@@ -417,8 +418,8 @@ function Tasks() {
     } catch (err) { }
   }
 
-  // Worker OFF DUTY: hide task feed completely
-  if (userMode === 'worker' && !isOnline) {
+  // Worker OFF DUTY: hide task feed (only when logged in as worker)
+  if (user?.id && userMode === 'worker' && !isOnline) {
     return (
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden">
         <div className="mb-6 sm:mb-8 lg:mb-10 w-full">
@@ -443,6 +444,13 @@ function Tasks() {
       className="max-w-7xl mx-auto w-full px-4 sm:px-6 overflow-x-hidden"
       style={{ touchAction: 'pan-y' }}
     >
+
+      {/* Guest: show login CTA so they can accept tasks */}
+      {!user?.id && (
+        <div className="mb-4">
+          <LoginCTA message="Login to view tasks near you and accept work" returnUrl="/tasks" />
+        </div>
+      )}
 
       {/* Banner when redirected after task already accepted by another worker */}
       {bannerMessage && (

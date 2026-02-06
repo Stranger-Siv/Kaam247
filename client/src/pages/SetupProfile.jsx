@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
+import { isSafeReturnUrl } from '../utils/authIntents'
 
 function SetupProfile() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnUrl = location.state?.returnUrl
   const { user, updateUserInContext } = useAuth()
   const [formData, setFormData] = useState({
     name: (user?.name || '').trim(),
@@ -61,7 +64,9 @@ function SetupProfile() {
       }
 
       updateUserInContext(data.user)
-      if (data.user?.role === 'admin') {
+      if (isSafeReturnUrl(returnUrl)) {
+        navigate(returnUrl, { replace: true })
+      } else if (data.user?.role === 'admin') {
         navigate('/admin', { replace: true })
       } else {
         navigate('/dashboard', { replace: true })

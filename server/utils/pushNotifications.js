@@ -90,8 +90,72 @@ async function sendPushToUser(userId, title, body, data = {}) {
   return anySent
 }
 
+/** Max workers to ping per new task (avoid rate limits and spam) */
+const WORKER_PING_MAX = 80
+
+/**
+ * Worker Ping System: when a new task is posted and no workers are online,
+ * send push notifications to workers (with FCM tokens) so they come online.
+ * Shows distance and money in the notification.
+ * Call this after response (e.g. runAfterResponse); does not block.
+ * @param {object} opts - { taskId, title, budget, coordinates: [lng, lat], postedById }
+ */
+function pingWorkersForNewTask(opts) {
+  const { taskId, title, budget, coordinates, postedById } = opts || {}
+  if (!taskId || postedById == null) return
+
+  const socketManager = require('../socket/socketManager')
+  const User = require('../models/User')
+  const { calculateDistance } = require('./distance')
+
+  const taskLng = coordinates && coordinates[0] != null ? Number(coordinates[0]) : null
+  const taskLat = coordinates && coordinates[1] != null ? Number(coordinates[1]) : null
+  const hasLocation = taskLat != null && !isNaN(taskLat) && taskLng != null && !isNaN(taskLng)
+
+  setImmediate(async () => {
+    try {
+      const onlineCount = socketManager.getOnlineWorkerCount()
+      if (onlineCount > 0) {
+        return
+      }
+
+      const workers = await User.find({
+        role: 'user',
+        status: 'active',
+        _id: { $ne: postedById },
+        $or: [
+          { fcmToken: { $exists: true, $nin: [null, ''] } },
+          { 'fcmTokens.0': { $exists: true } }
+        ]
+      })
+        .select('_id fcmToken fcmTokens location')
+        .limit(WORKER_PING_MAX)
+        .lean()
+
+      const titleText = 'New task available'
+      const taskIdStr = String(taskId)
+      const budgetText = typeof budget === 'number' ? `₹${budget}` : (budget != null ? `₹${Number(budget)}` : '')
+
+      for (const worker of workers) {
+        let body = budgetText ? `${budgetText}` : 'Tap to view'
+        if (hasLocation && worker.location && worker.location.coordinates && worker.location.coordinates.length >= 2) {
+          const [wlng, wlat] = worker.location.coordinates
+          const dist = calculateDistance(taskLat, taskLng, wlat, wlng)
+          body = budgetText ? `${budgetText} • ~${dist} km away` : `~${dist} km away`
+        } else if (budgetText) {
+          body = `${budgetText} • Tap to view`
+        }
+        await sendPushToUser(worker._id, titleText, body, { taskId: taskIdStr, url: `/tasks/${taskIdStr}` })
+      }
+    } catch (err) {
+      console.error('Worker ping error:', err.message)
+    }
+  })
+}
+
 module.exports = {
   getAdmin,
   sendPushToToken,
-  sendPushToUser
+  sendPushToUser,
+  pingWorkersForNewTask
 }

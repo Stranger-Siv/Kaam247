@@ -1,6 +1,12 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getLoginRedirectParams, RETURN_URL_PARAM } from '../utils/authIntents'
 
+/**
+ * Intent-based route guard: protected app routes (dashboard, tasks, post-task, profile, etc.).
+ * Unauthenticated users are sent to /login with returnUrl and optional message (worker/poster)
+ * so they can resume the intended action after login. No task data is shown before login.
+ */
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading, user } = useAuth()
   const location = useLocation()
@@ -18,8 +24,11 @@ function ProtectedRoute({ children }) {
   const userInfo = localStorage.getItem('kaam247_user')
   const hasAuth = isAuthenticated || (token && userInfo)
 
+  // Intent-based redirect: send to login with destination and optional intent message
   if (!hasAuth) {
-    return <Navigate to="/" replace />
+    const { returnUrl, message } = getLoginRedirectParams(location)
+    const loginPath = `/login?${RETURN_URL_PARAM}=${encodeURIComponent(returnUrl)}${message ? `&message=${encodeURIComponent(message)}` : ''}`
+    return <Navigate to={loginPath} replace />
   }
 
   const effectiveUser = user || (() => {

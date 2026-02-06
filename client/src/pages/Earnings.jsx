@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
+import LoginCTA from '../components/LoginCTA'
 
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -190,6 +191,16 @@ function Earnings() {
         <div className="text-center py-12 text-red-600 dark:text-red-400">
           <p>{error}</p>
         </div>
+      </div>
+    )
+  }
+
+  if (!user?.id) {
+    return (
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-8">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Earnings</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">View your earnings and completed tasks.</p>
+        <LoginCTA message="Login to see your earnings" returnUrl="/earnings" />
       </div>
     )
   }

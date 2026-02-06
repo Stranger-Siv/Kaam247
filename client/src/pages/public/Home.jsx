@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
 import { API_BASE_URL } from '../../config/env'
 
 const initialStats = {
@@ -11,7 +10,6 @@ const initialStats = {
 }
 
 function Home() {
-  const { isAuthenticated } = useAuth()
   const [stats, setStats] = useState(initialStats)
   const [statsLoading, setStatsLoading] = useState(true)
 
@@ -71,16 +69,17 @@ function Home() {
               Post a task or earn money by helping people nearby. No agencies. No delays.
             </p>
 
+            {/* Buttons visible to all; clicking triggers route then intent-based login if needed */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
               <Link
-                to={isAuthenticated ? '/post-task' : '/login'}
+                to="/post-task"
                 className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 bg-blue-600 dark:bg-blue-500 text-white text-base sm:text-lg font-semibold rounded-xl shadow-md hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-lg transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center"
               >
                 Post a Task
               </Link>
 
               <Link
-                to={isAuthenticated ? '/tasks' : '/login'}
+                to="/tasks"
                 className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-base sm:text-lg font-semibold rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center"
               >
                 Find Work Nearby
@@ -233,13 +232,13 @@ function Home() {
               </div>
               <div className="flex gap-3">
                 <Link
-                  to={isAuthenticated ? '/post-task' : '/login'}
+                  to="/post-task"
                   className="px-5 py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                 >
                   Post a Task
                 </Link>
                 <Link
-                  to={isAuthenticated ? '/tasks' : '/login'}
+                  to="/tasks"
                   className="px-5 py-3 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-sm sm:text-base font-semibold rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98]"
                 >
                   Browse Tasks
@@ -373,8 +372,8 @@ function Home() {
                   statsLoading
                     ? '—'
                     : stats.averageRating > 0
-                    ? stats.averageRating.toFixed(1)
-                    : '—',
+                      ? stats.averageRating.toFixed(1)
+                      : '—',
                 delay: '240ms',
               },
             ].map((item) => (
@@ -383,9 +382,8 @@ function Home() {
                 className="bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm px-4 py-5 flex flex-col items-center justify-center text-center"
               >
                 <span
-                  className={`text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${
-                    !statsLoading ? 'animate-stat-pop' : ''
-                  }`}
+                  className={`text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400 tabular-nums tracking-tight ${!statsLoading ? 'animate-stat-pop' : ''
+                    }`}
                   style={!statsLoading ? { animationDelay: item.delay } : undefined}
                 >
                   {item.value}
