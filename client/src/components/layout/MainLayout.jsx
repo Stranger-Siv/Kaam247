@@ -154,7 +154,12 @@ function MainLayout() {
                             <ThemeToggle />
                             <ModeToggle />
                             {isGuest ? (
-                                <Link to="/login" className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors min-h-[36px] flex items-center">Login</Link>
+                                <Link
+                                    to="/login"
+                                    className="inline-flex items-center justify-center px-4 py-2.5 min-h-[36px] rounded-xl bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors active:scale-[0.98]"
+                                >
+                                    Login
+                                </Link>
                             ) : (
                                 <button onClick={handleLogout} className="px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors min-h-[36px] flex items-center">Logout</button>
                             )}
@@ -163,7 +168,14 @@ function MainLayout() {
                         <div className="md:hidden flex items-center gap-2">
                             {!isGuest && userMode === 'worker' && <AvailabilityToggle />}
                             <ModeToggle />
-                            {isGuest && <Link to="/login" className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 rounded-md">Login</Link>}
+                            {isGuest && (
+                                <Link
+                                    to="/login"
+                                    className="inline-flex items-center justify-center px-3 py-2 min-h-[36px] rounded-xl bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors active:scale-[0.98]"
+                                >
+                                    Login
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
