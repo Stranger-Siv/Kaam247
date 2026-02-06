@@ -519,6 +519,7 @@ function PostTask() {
                         if (fieldErrors.title || fieldErrors.description || fieldErrors.category) {
                           setFieldErrors(prev => ({ ...prev, title: null, description: null, category: null }))
                         }
+                        setTemplatesExpanded(false)
                       }}
                       className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600/50 text-gray-800 dark:text-gray-200 text-[11px] sm:text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-500/50 hover:border-gray-400 dark:hover:border-gray-400 transition-colors"
                     >
