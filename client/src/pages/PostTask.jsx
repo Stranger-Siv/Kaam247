@@ -476,20 +476,20 @@ function PostTask() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">What task do you need help with?</h2>
 
-            {/* Student task templates - collapsible to save space on small screens */}
-            <div className="mb-4 sm:mb-6">
+            {/* Student task templates - collapsible; bordered block so it stands out from the form */}
+            <div className="mb-4 sm:mb-6 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50/80 dark:bg-gray-700/40">
               <button
                 type="button"
                 onClick={() => setTemplatesExpanded(prev => !prev)}
-                className="flex items-center justify-between w-full py-2 pr-1 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors touch-manipulation"
+                className="flex items-center justify-between w-full px-4 py-3 sm:px-4 sm:py-3.5 text-left rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-600/30 transition-colors touch-manipulation"
                 aria-expanded={templatesExpanded}
                 aria-controls="post-task-templates-list"
               >
-                <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                <span className="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-100">
                   Quick start from template
                 </span>
                 <span
-                  className={`shrink-0 ml-2 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${templatesExpanded ? 'rotate-180' : ''}`}
+                  className={`shrink-0 ml-2 text-gray-600 dark:text-gray-300 transition-transform duration-200 ${templatesExpanded ? 'rotate-180' : ''}`}
                   aria-hidden
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -499,10 +499,10 @@ function PostTask() {
               </button>
               <div
                 id="post-task-templates-list"
-                className={`overflow-hidden transition-all duration-200 ease-out ${templatesExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+                className={`overflow-hidden transition-all duration-200 ease-out border-t border-gray-200 dark:border-gray-600 ${templatesExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
                 aria-hidden={!templatesExpanded}
               >
-                <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 p-3 sm:p-4">
                   {STUDENT_TASK_TEMPLATES.map((t) => (
                     <button
                       key={`${t.title}-${t.category}`}
@@ -520,7 +520,7 @@ function PostTask() {
                           setFieldErrors(prev => ({ ...prev, title: null, description: null, category: null }))
                         }
                       }}
-                      className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 text-[11px] sm:text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                      className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-600/50 text-gray-800 dark:text-gray-200 text-[11px] sm:text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-500/50 hover:border-gray-400 dark:hover:border-gray-400 transition-colors"
                     >
                       {t.title}
                     </button>
