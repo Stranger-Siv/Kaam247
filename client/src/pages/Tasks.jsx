@@ -44,6 +44,10 @@ function Tasks() {
   const [taskPage, setTaskPage] = useState(1)
   const [hasMoreTasks, setHasMoreTasks] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
+  // Location for browsing nearby tasks (used when not on duty or guest - workerLocation from context is only set when ON DUTY)
+  const [browseLocation, setBrowseLocation] = useState(null)
+  const [locationRequesting, setLocationRequesting] = useState(false)
+  const [browseLocationError, setBrowseLocationError] = useState(null)
   const preferencesAppliedRef = useRef(false)
   const sortOptionRef = useRef(sortOption)
   sortOptionRef.current = sortOption
@@ -124,15 +128,59 @@ function Tasks() {
       .catch(() => { })
   }, [userMode, user?.id])
 
-  // Fetch tasks when location or filters change
+  // In worker mode, use context location (when ON DUTY) or browse location (guest / off-duty)
+  const effectiveLocation = userMode === 'worker' ? (workerLocation || browseLocation) : null
+
+  // Request browser location for worker mode when we don't have context location (guest or off-duty)
+  const requestBrowseLocation = useCallback(() => {
+    if (userMode !== 'worker' || typeof navigator === 'undefined' || !navigator.geolocation) return
+    setBrowseLocationError(null)
+    setLocationRequesting(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setBrowseLocation({ lat: position.coords.latitude, lng: position.coords.longitude })
+        setBrowseLocationError(null)
+        setLocationRequesting(false)
+      },
+      (err) => {
+        setBrowseLocation(null)
+        setBrowseLocationError(err.code === 1 ? 'Location access denied. Enable location to see nearby tasks.' : 'Could not get location. Please try again.')
+        setLocationRequesting(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    )
+  }, [userMode])
+
+  useEffect(() => {
+    if (userMode !== 'worker' || workerLocation) return
+    if (browseLocation || browseLocationError) return
+    requestBrowseLocation()
+  }, [userMode, workerLocation, browseLocation, browseLocationError, requestBrowseLocation])
+
+  // Fetch tasks when location or filters change (worker mode only; use effectiveLocation so guests/off-duty can see nearby tasks)
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        // Worker OFF DUTY: do not fetch/render tasks
-        if (userMode === 'worker' && !isOnline) {
+        if (userMode !== 'worker') {
           setTasks([])
           setError(null)
           setLoading(false)
+          return
+        }
+
+        if (!effectiveLocation || !effectiveLocation.lat || !effectiveLocation.lng) {
+          if (locationRequesting) {
+            if (taskPage === 1) setLoading(true)
+            setError(null)
+          } else if (browseLocationError) {
+            setTasks([])
+            setError(browseLocationError)
+            setLoading(false)
+          } else {
+            setTasks([])
+            setError('Location access is required to view tasks. Please enable location access.')
+            setLoading(false)
+          }
           return
         }
 
@@ -143,18 +191,10 @@ function Tasks() {
         }
         setError(null)
 
-        // REQUIRE LOCATION: Don't fetch tasks if no location
-        if (!workerLocation || !workerLocation.lat || !workerLocation.lng) {
-          setTasks([])
-          setError('Location access is required to view tasks. Please enable location access.')
-          setLoading(false)
-          return
-        }
-
         const radiusKm = getRadiusKm()
         const { minBudget, maxBudget } = getBudgetRange()
         const limit = 20
-        let url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=${radiusKm}&page=${taskPage}&limit=${limit}`
+        let url = `${API_BASE_URL}/api/tasks?lat=${effectiveLocation.lat}&lng=${effectiveLocation.lng}&radius=${radiusKm}&page=${taskPage}&limit=${limit}`
         if (selectedCategory && selectedCategory !== 'All') url += `&category=${encodeURIComponent(selectedCategory)}`
         if (minBudget != null) url += `&minBudget=${minBudget}`
         if (maxBudget != null) url += `&maxBudget=${maxBudget}`
@@ -235,12 +275,12 @@ function Tasks() {
     }
 
     fetchTasks()
-  }, [workerLocation, isOnline, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, searchQuery, sortOption, refetchTrigger, workerPreferredCategories, showAllTasksOverride, taskPage])
+  }, [effectiveLocation, userMode, user?.id, selectedCategory, selectedDistance, selectedBudget, searchQuery, sortOption, refetchTrigger, workerPreferredCategories, showAllTasksOverride, taskPage, locationRequesting, browseLocationError])
 
   // Reset to page 1 when location changes so we show first page of new area
   useEffect(() => {
     setTaskPage(1)
-  }, [workerLocation?.lat, workerLocation?.lng])
+  }, [effectiveLocation?.lat, effectiveLocation?.lng])
 
   // Listen for new tasks via Socket.IO (only when online)
   useEffect(() => {
@@ -711,13 +751,16 @@ function Tasks() {
               <svg className="h-14 w-14 sm:h-16 sm:w-16 text-red-300 dark:text-red-600 mx-auto mb-4 sm:mb-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight">Error loading tasks</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3 leading-tight">
+                {browseLocationError || (error && error.includes('Location')) ? 'Location needed' : 'Error loading tasks'}
+              </h3>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 sm:mb-7 leading-relaxed">{error}</p>
               <button
-                onClick={() => window.location.reload()}
-                className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation"
+                onClick={() => (browseLocationError || (error && error.includes('Location')) ? requestBrowseLocation() : window.location.reload())}
+                disabled={locationRequesting}
+                className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] min-h-[44px] touch-manipulation disabled:opacity-50"
               >
-                Retry
+                {locationRequesting ? 'Getting location…' : (browseLocationError || (error && error.includes('Location')) ? 'Use my location' : 'Retry')}
               </button>
             </>
           ) : (

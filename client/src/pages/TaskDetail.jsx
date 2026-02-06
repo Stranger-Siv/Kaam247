@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useNavigate, useLocation, useParams } from 'react-router-dom'
+import { Link, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useUserMode } from '../context/UserModeContext'
 import { useSocket } from '../context/SocketContext'
 import { useAuth } from '../context/AuthContext'
@@ -17,6 +17,7 @@ import ExtendValidityModal from '../components/ExtendValidityModal'
 import RecurringModal from '../components/RecurringModal'
 import TaskChat from '../components/TaskChat'
 import LoginCTA from '../components/LoginCTA'
+import { RETURN_URL_PARAM } from '../utils/authIntents'
 
 function TaskDetail() {
   const navigate = useNavigate()
@@ -421,6 +422,13 @@ function TaskDetail() {
   // Handle accept task
   const handleAcceptTask = async () => {
     if (isAccepting || !taskId) {
+      return
+    }
+
+    // Guest: redirect to login so they can sign in and then accept
+    if (!user?.id) {
+      const returnUrl = location.pathname + (location.search || '')
+      navigate(`/login?${RETURN_URL_PARAM}=${encodeURIComponent(returnUrl)}&message=worker`)
       return
     }
 
@@ -1459,6 +1467,23 @@ function TaskDetail() {
     // 2) Worker actions next
     if (isWorkerForTask || (!isPosterForTask && userMode === 'worker')) {
       if (currentStatus === 'SEARCHING' || currentStatus === 'OPEN' || task.status === 'open') {
+        // Guest: show Login to Accept (redirects to login, then back here to accept)
+        const returnUrl = location.pathname + (location.search || '')
+        const loginToAcceptUrl = `/login?${RETURN_URL_PARAM}=${encodeURIComponent(returnUrl)}&message=worker`
+        if (!user?.id) {
+          return (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Log in to accept this task and get the poster&apos;s contact details.</p>
+              <Link
+                to={loginToAcceptUrl}
+                className="w-full px-6 py-4 bg-blue-600 dark:bg-blue-500 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                Login to Accept
+              </Link>
+            </div>
+          )
+        }
+
         // FRONTEND GUARDS: Calculate if Accept button should be disabled
         const isOwnTask = task?.postedBy?._id === user?.id || task?.postedBy === user?.id
         const isTaskOpen = currentStatus === 'SEARCHING' || currentStatus === 'OPEN' || task.status === 'open'
