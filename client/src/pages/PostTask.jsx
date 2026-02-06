@@ -41,6 +41,7 @@ function PostTask() {
   const [locationError, setLocationError] = useState(null)
   const [mapCenter, setMapCenter] = useState([12.9716, 77.5946]) // Bangalore default [lat, lng]
   const [platformCommissionPercent, setPlatformCommissionPercent] = useState(0)
+  const [templatesExpanded, setTemplatesExpanded] = useState(false)
 
   // Load template from URL query params
   useEffect(() => {
@@ -475,32 +476,56 @@ function PostTask() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 p-5 sm:p-6 lg:p-8 border border-gray-200 dark:border-gray-700">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6 sm:mb-8 leading-tight">What task do you need help with?</h2>
 
-            {/* Student task templates - quick start */}
-            <div className="mb-6 sm:mb-8">
-              <p className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 uppercase tracking-wide">Quick start from template</p>
-              <div className="flex flex-wrap gap-2">
-                {STUDENT_TASK_TEMPLATES.map((t) => (
-                  <button
-                    key={`${t.title}-${t.category}`}
-                    type="button"
-                    onClick={() => {
-                      setFormData(prev => ({
-                        ...prev,
-                        title: t.title,
-                        description: t.description,
-                        category: t.category,
-                        budget: t.budget?.toString() ?? prev.budget,
-                        hours: t.expectedDuration?.toString() ?? prev.hours
-                      }))
-                      if (fieldErrors.title || fieldErrors.description || fieldErrors.category) {
-                        setFieldErrors(prev => ({ ...prev, title: null, description: null, category: null }))
-                      }
-                    }}
-                    className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 text-xs sm:text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
-                  >
-                    {t.title}
-                  </button>
-                ))}
+            {/* Student task templates - collapsible to save space on small screens */}
+            <div className="mb-4 sm:mb-6">
+              <button
+                type="button"
+                onClick={() => setTemplatesExpanded(prev => !prev)}
+                className="flex items-center justify-between w-full py-2 pr-1 text-left rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors touch-manipulation"
+                aria-expanded={templatesExpanded}
+                aria-controls="post-task-templates-list"
+              >
+                <span className="text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                  Quick start from template
+                </span>
+                <span
+                  className={`shrink-0 ml-2 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${templatesExpanded ? 'rotate-180' : ''}`}
+                  aria-hidden
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </button>
+              <div
+                id="post-task-templates-list"
+                className={`overflow-hidden transition-all duration-200 ease-out ${templatesExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
+                aria-hidden={!templatesExpanded}
+              >
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
+                  {STUDENT_TASK_TEMPLATES.map((t) => (
+                    <button
+                      key={`${t.title}-${t.category}`}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          title: t.title,
+                          description: t.description,
+                          category: t.category,
+                          budget: t.budget?.toString() ?? prev.budget,
+                          hours: t.expectedDuration?.toString() ?? prev.hours
+                        }))
+                        if (fieldErrors.title || fieldErrors.description || fieldErrors.category) {
+                          setFieldErrors(prev => ({ ...prev, title: null, description: null, category: null }))
+                        }
+                      }}
+                      className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 text-[11px] sm:text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+                    >
+                      {t.title}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
