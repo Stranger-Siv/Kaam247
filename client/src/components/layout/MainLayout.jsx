@@ -117,7 +117,7 @@ function MainLayout() {
                             >
                                 Activity
                             </Link>
-                            {!(!user?.id) && userMode === 'worker' && (
+                            {userMode === 'worker' && (
                                 <Link
                                     to="/earnings"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/earnings'
@@ -128,7 +128,7 @@ function MainLayout() {
                                     Earnings
                                 </Link>
                             )}
-                            {!(!user?.id) && userMode === 'poster' && (
+                            {userMode === 'poster' && (
                                 <Link
                                     to="/transactions"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/transactions'
