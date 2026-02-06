@@ -62,33 +62,42 @@ function ModeToggle({ isMobile = false }) {
 
   return (
     <>
-      <div className="flex items-center shrink-0">
+      <div
+        className="inline-flex rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/80 p-0.5 shrink-0"
+        role="group"
+        aria-label="Switch between Work and Post mode"
+      >
         <button
-          onClick={handleToggleMode}
+          onClick={userMode === 'worker' ? undefined : handleToggleMode}
           disabled={checkingActiveTask}
           type="button"
-          aria-label={checkingActiveTask ? 'Checking…' : `Switch to ${userMode === 'worker' ? 'Post Tasks' : 'Perform Tasks'}`}
-          className={`relative inline-flex items-center min-h-[36px] w-[5.25rem] rounded-full border transition-all duration-200 ease-out
-            focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900
+          aria-pressed={userMode === 'worker'}
+          aria-label={userMode === 'worker' ? 'Find work (current)' : 'Switch to Find work'}
+          className={`inline-flex items-center justify-center min-h-[32px] min-w-[52px] rounded-md text-xs font-semibold transition-all duration-200 ease-out
+            focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1 focus:ring-offset-gray-50 dark:focus:ring-offset-gray-800
             disabled:opacity-50 disabled:cursor-not-allowed
             ${userMode === 'worker'
-              ? 'bg-blue-600 dark:bg-blue-500 border-blue-600 dark:border-blue-500'
-              : 'bg-transparent border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm border border-gray-200 dark:border-gray-600 cursor-default'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer'
             }`}
         >
-          <span
-            className={`absolute top-1/2 -translate-y-1/2 text-[9px] font-semibold uppercase tracking-wide transition-all duration-200 whitespace-nowrap
-              ${userMode === 'worker'
-                ? 'left-2 text-white'
-                : 'right-2 text-gray-700 dark:text-gray-300'
-              }`}
-          >
-            {checkingActiveTask ? '…' : (userMode === 'worker' ? 'Work' : 'Post')}
-          </span>
-          <span
-            className="absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white dark:bg-gray-100 shadow-sm border border-gray-200 dark:border-gray-600 transition-all duration-200"
-            style={userMode === 'worker' ? { right: '0.25rem' } : { left: '0.25rem' }}
-          />
+          {checkingActiveTask && userMode === 'poster' ? '…' : 'Work'}
+        </button>
+        <button
+          onClick={userMode === 'poster' ? undefined : handleToggleMode}
+          disabled={checkingActiveTask}
+          type="button"
+          aria-pressed={userMode === 'poster'}
+          aria-label={userMode === 'poster' ? 'Post tasks (current)' : 'Switch to Post tasks'}
+          className={`inline-flex items-center justify-center min-h-[32px] min-w-[52px] rounded-md text-xs font-semibold transition-all duration-200 ease-out
+            focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1 focus:ring-offset-gray-50 dark:focus:ring-offset-gray-800
+            disabled:opacity-50 disabled:cursor-not-allowed
+            ${userMode === 'poster'
+              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm border border-gray-200 dark:border-gray-600 cursor-default'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer'
+            }`}
+        >
+          {checkingActiveTask && userMode === 'worker' ? '…' : 'Post'}
         </button>
       </div>
       <ActiveTaskModal

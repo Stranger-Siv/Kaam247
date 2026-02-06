@@ -87,7 +87,7 @@ function MainLayout() {
                             >
                                 Dashboard
                             </Link>
-                            {(isGuest || userMode === 'worker') && (
+                            {userMode === 'worker' && (
                                 <Link
                                     to="/tasks"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/tasks'
@@ -98,7 +98,7 @@ function MainLayout() {
                                     Tasks
                                 </Link>
                             )}
-                            {(isGuest || userMode === 'poster') && (
+                            {userMode === 'poster' && (
                                 <Link
                                     to="/post-task"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/post-task'
