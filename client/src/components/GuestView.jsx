@@ -6,11 +6,11 @@ import LoginCTA from './LoginCTA'
  */
 function GuestView({ title, description, message, returnUrl }) {
   return (
-    <div className="guest-view-container max-w-2xl mx-auto w-full px-4 sm:px-6 py-8">
-      <h1 className="guest-view-title text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+    <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
         {title}
       </h1>
-      <p className="guest-view-description text-gray-600 dark:text-gray-400 mb-6">
+      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
         {description}
       </p>
       <LoginCTA message={message} returnUrl={returnUrl} />

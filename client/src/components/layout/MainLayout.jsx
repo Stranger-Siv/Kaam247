@@ -1,5 +1,21 @@
 import { useEffect, useRef } from 'react'
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
+
+// Redirect to mode-appropriate page when mode changes and current route doesn't match (e.g. guest on /post-task switches to worker)
+function useRedirectOnModeMismatch() {
+    const navigate = useNavigate()
+    const location = useLocation()
+    const { userMode } = useUserMode()
+
+    useEffect(() => {
+        const path = location.pathname
+        if (userMode === 'worker' && path === '/post-task') {
+            navigate('/tasks', { replace: true })
+        } else if (userMode === 'poster' && path === '/tasks') {
+            navigate('/post-task', { replace: true })
+        }
+    }, [userMode, location.pathname, navigate])
+}
 import { useAuth } from '../../context/AuthContext'
 import { useUserMode } from '../../context/UserModeContext'
 import { useOnboarding } from '../../context/OnboardingContext'
@@ -36,6 +52,8 @@ function MainLayout() {
         logout()
         navigate('/')
     }
+
+    useRedirectOnModeMismatch()
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-gray-950 flex flex-col">
@@ -134,7 +152,7 @@ function MainLayout() {
                             <div className="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-1"></div>
                             {!isGuest && userMode === 'worker' && <AvailabilityToggle />}
                             <ThemeToggle />
-                            {!isGuest && <ModeToggle />}
+                            <ModeToggle />
                             {isGuest ? (
                                 <Link to="/login" className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors min-h-[36px] flex items-center">Login</Link>
                             ) : (

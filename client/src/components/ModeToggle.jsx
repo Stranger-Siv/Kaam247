@@ -62,32 +62,32 @@ function ModeToggle({ isMobile = false }) {
 
   return (
     <>
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="flex items-center gap-2 md:gap-3 shrink-0">
         <button
           onClick={handleToggleMode}
           disabled={checkingActiveTask}
-          className={`relative inline-flex items-center h-8 w-24 rounded-full border-2 transition-all duration-300 ease-out
-            focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-1
-            disabled:opacity-50 disabled:cursor-not-allowed shrink-0
+          type="button"
+          aria-label={checkingActiveTask ? 'Checking…' : `Switch to ${userMode === 'worker' ? 'Post Tasks' : 'Perform Tasks'}`}
+          className={`relative inline-flex items-center min-h-[36px] w-[7rem] rounded-full border-2 transition-all duration-200 ease-out
+            focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900
+            disabled:opacity-50 disabled:cursor-not-allowed
             ${userMode === 'worker'
-              ? 'bg-blue-500 border-blue-500'
-              : 'bg-transparent border-blue-400 dark:border-blue-500'
+              ? 'bg-blue-600 dark:bg-blue-500 border-blue-600 dark:border-blue-500'
+              : 'bg-transparent border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
             }`}
         >
-          {/* Label switches side with mode */}
           <span
-            className={`absolute top-1/2 -translate-y-1/2 text-[10px] md:text-[11px] font-semibold tracking-wide transition-all duration-300 ease-out
+            className={`absolute top-1/2 -translate-y-1/2 text-[10px] font-semibold tracking-wide transition-all duration-200
               ${userMode === 'worker'
                 ? 'left-3 text-white'
-                : 'right-3 text-blue-600 dark:text-blue-300'
+                : 'right-3 text-gray-700 dark:text-gray-300'
               }`}
           >
-            {checkingActiveTask ? '...' : modeLabelShort.toUpperCase()}
+            {checkingActiveTask ? '…' : modeLabelShort}
           </span>
-          {/* Knob slides opposite to label with smooth easing */}
           <span
-            className="absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white shadow-md transition-all duration-300 ease-out"
-            style={userMode === 'worker' ? { right: '0.35rem' } : { left: '0.35rem' }}
+            className="absolute top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-white dark:bg-gray-100 shadow-sm border border-gray-200 dark:border-gray-600 transition-all duration-200"
+            style={userMode === 'worker' ? { right: '0.375rem' } : { left: '0.375rem' }}
           />
         </button>
       </div>
