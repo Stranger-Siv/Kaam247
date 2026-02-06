@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useUserMode } from '../context/UserModeContext'
 import StatusBadge from '../components/StatusBadge'
 import GuestView from '../components/GuestView'
+import LoginCTA from '../components/LoginCTA'
 import { API_BASE_URL } from '../config/env'
 
 function Activity() {
@@ -184,12 +185,65 @@ function Activity() {
 
   if (!user?.id) {
     return (
-      <GuestView
-        title="Activity"
-        description="View all your tasks and activities."
-        message="Login to see your activity history"
-        returnUrl="/activity"
-      />
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-5 sm:mb-6">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-gray-500 dark:bg-gray-300" />
+            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-gray-700 dark:text-gray-200">
+              Demo activity
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 dark:text-gray-100 leading-tight mb-1">
+            Activity history
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            You&apos;re viewing example tasks. Login to see your real accepted, posted, and completed tasks.
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700 mb-6 sm:mb-8">
+          <div className="px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">Room cleaning (demo)</p>
+              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                Completed • Today · 4:30 PM
+              </p>
+            </div>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+              Worker
+            </span>
+          </div>
+          <div className="px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">Assignment help (demo)</p>
+              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                Posted • Yesterday · 8:15 PM
+              </p>
+            </div>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+              Poster
+            </span>
+          </div>
+          <div className="px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">Food pickup (demo)</p>
+              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                Cancelled • 2 days ago
+              </p>
+            </div>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+              Cancelled
+            </span>
+          </div>
+        </div>
+
+        <div className="max-w-2xl">
+          <LoginCTA
+            message="Login to see your full activity history with real tasks, dates, and roles."
+            returnUrl="/activity"
+          />
+        </div>
+      </div>
     )
   }
 

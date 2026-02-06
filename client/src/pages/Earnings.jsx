@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
 import GuestView from '../components/GuestView'
+import LoginCTA from '../components/LoginCTA'
 
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -197,12 +198,65 @@ function Earnings() {
 
   if (!user?.id) {
     return (
-      <GuestView
-        title="Earnings"
-        description="View your earnings and completed tasks."
-        message="Login to see your earnings"
-        returnUrl="/earnings"
-      />
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-5 sm:mb-6">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-700 mb-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+              Demo earnings
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-1">
+            Earnings
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            You&apos;re viewing example earnings. Login to see your actual payouts from completed tasks.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+            <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Earnings this month (demo)
+            </p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              ₹2,450
+            </p>
+            <p className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400">
+              Across 9 completed tasks
+            </p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+            <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Best single task (demo)
+            </p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+              ₹600
+            </p>
+            <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+              Room shifting &amp; heavy lifting
+            </p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
+            <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+              Categories you earn from (demo)
+            </p>
+            <p className="text-sm sm:text-base text-gray-800 dark:text-gray-100 mb-1">
+              Cleaning · Delivery · Tech help
+            </p>
+            <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+              Login to see your real mix.
+            </p>
+          </div>
+        </div>
+
+        <div className="max-w-2xl">
+          <LoginCTA
+            message="Login to see your real earnings, daily breakdown, and per-task payouts."
+            returnUrl="/earnings"
+          />
+        </div>
+      </div>
     )
   }
 

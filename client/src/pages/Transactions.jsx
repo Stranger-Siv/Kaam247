@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../config/env'
 import GuestView from '../components/GuestView'
+import LoginCTA from '../components/LoginCTA'
 
 function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
@@ -177,12 +178,81 @@ function Transactions() {
 
   if (!user?.id) {
     return (
-      <GuestView
-        title="Transactions"
-        description="View payments made on completed tasks."
-        message="Login to see your transactions"
-        returnUrl="/transactions"
-      />
+      <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-5 sm:mb-6">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-100 dark:border-amber-700 mb-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
+            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+              Demo transactions
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight mb-1">
+            Transactions
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            You&apos;re viewing example payments. Login to see your real transaction history.
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/40 border border-gray-200 dark:border-gray-700 mb-6 sm:mb-8 overflow-hidden">
+          <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+              Recent payments (demo)
+            </p>
+            <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">
+              Last 7 days: <span className="text-emerald-600 dark:text-emerald-400">₹1,250</span>
+            </p>
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            <div className="px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">
+                  Room cleaning (demo)
+                </p>
+                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                  Today · UPI • Ref: DEMO1234
+                </p>
+              </div>
+              <p className="text-sm sm:text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                + ₹350
+              </p>
+            </div>
+            <div className="px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">
+                  Food pickup (demo)
+                </p>
+                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                  Yesterday · Cash • Ref: DEMO5678
+                </p>
+              </div>
+              <p className="text-sm sm:text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                + ₹150
+              </p>
+            </div>
+            <div className="px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-gray-100">
+                  Assignment help (demo)
+                </p>
+                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                  3 days ago · UPI • Ref: DEMO9012
+                </p>
+              </div>
+              <p className="text-sm sm:text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                + ₹750
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-2xl">
+          <LoginCTA
+            message="Login to see your real transactions, dates, methods, and references."
+            returnUrl="/transactions"
+          />
+        </div>
+      </div>
     )
   }
 
