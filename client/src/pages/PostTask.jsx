@@ -332,7 +332,7 @@ function PostTask() {
         const position = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             enableHighAccuracy: true,
-            timeout: 5000, // Shorter timeout for faster task creation
+            timeout: 10000, // Allow slower networks/devices; non-fatal fallback still applies
             maximumAge: 0 // Always get fresh location
           })
         })

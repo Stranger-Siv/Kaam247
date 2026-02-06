@@ -75,7 +75,8 @@ function ColdStartChecker({ children }) {
         const checkBackendHealth = async () => {
             const maxRetries = 15 // Increased for better UX
             const retryDelay = 2000 // 2 seconds between retries
-            const initialTimeout = 4000 // 4 seconds for initial check
+            // Slow networks / cold starts can take 20-60s; don't fail fast.
+            const initialTimeout = 15000 // 15 seconds for initial check
 
             // Quick initial check - if backend responds, don't show waiting page at all
             let initialCheckPassed = false
@@ -124,7 +125,7 @@ function ColdStartChecker({ children }) {
                 // Check one more time before showing waiting page
                 try {
                     const quickController = new AbortController()
-                    const quickTimeout = setTimeout(() => quickController.abort(), 3000)
+                    const quickTimeout = setTimeout(() => quickController.abort(), 8000)
                     const quickCheck = await fetch(`${API_BASE_URL}/health`, {
                         method: 'GET',
                         signal: quickController.signal,
@@ -158,7 +159,7 @@ function ColdStartChecker({ children }) {
             for (let attempt = 0; attempt < maxRetries && isActiveRef.current; attempt++) {
                 try {
                     const controller = new AbortController()
-                    const timeoutId = setTimeout(() => controller.abort(), 5000)
+                    const timeoutId = setTimeout(() => controller.abort(), 15000)
 
                     const response = await fetch(`${API_BASE_URL}/health`, {
                         method: 'GET',
@@ -322,8 +323,8 @@ function ColdStartChecker({ children }) {
                             <div
                                 key={index}
                                 className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${index === currentFeatureIndex
-                                        ? 'bg-blue-500 dark:bg-blue-400 w-5 sm:w-6'
-                                        : 'bg-gray-300 dark:bg-gray-600 w-1.5 sm:w-2'
+                                    ? 'bg-blue-500 dark:bg-blue-400 w-5 sm:w-6'
+                                    : 'bg-gray-300 dark:bg-gray-600 w-1.5 sm:w-2'
                                     }`}
                             />
                         ))}
