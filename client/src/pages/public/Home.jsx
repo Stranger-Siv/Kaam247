@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useUserMode } from '../../context/UserModeContext'
 import { API_BASE_URL } from '../../config/env'
 
 const initialStats = {
@@ -10,6 +11,8 @@ const initialStats = {
 }
 
 function Home() {
+  const navigate = useNavigate()
+  const { setMode } = useUserMode()
   const [stats, setStats] = useState(initialStats)
   const [statsLoading, setStatsLoading] = useState(true)
 
@@ -69,21 +72,29 @@ function Home() {
               Post a task or earn money by helping people nearby. No agencies. No delays.
             </p>
 
-            {/* Buttons visible to all; clicking triggers route then intent-based login if needed */}
+            {/* Buttons: set mode then navigate so app shows the right flow (post-task = poster, tasks = worker) */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
-              <Link
-                to="/post-task"
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('poster')
+                  navigate('/post-task')
+                }}
                 className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 bg-blue-600 dark:bg-blue-500 text-white text-base sm:text-lg font-semibold rounded-xl shadow-md hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-lg transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center"
               >
                 Post a Task
-              </Link>
+              </button>
 
-              <Link
-                to="/tasks"
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('worker')
+                  navigate('/tasks')
+                }}
                 className="px-6 sm:px-8 lg:px-10 py-3.5 sm:py-4 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-base sm:text-lg font-semibold rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-[48px] sm:min-h-[52px] flex items-center justify-center"
               >
                 Find Work Nearby
-              </Link>
+              </button>
             </div>
 
             {/* small trust strip */}
@@ -231,18 +242,26 @@ function Home() {
                 </p>
               </div>
               <div className="flex gap-3">
-                <Link
-                  to="/post-task"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('poster')
+                    navigate('/post-task')
+                  }}
                   className="px-5 py-3 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                 >
                   Post a Task
-                </Link>
-                <Link
-                  to="/tasks"
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('worker')
+                    navigate('/tasks')
+                  }}
                   className="px-5 py-3 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 text-sm sm:text-base font-semibold rounded-xl border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md transition-all duration-200 active:scale-[0.98]"
                 >
                   Browse Tasks
-                </Link>
+                </button>
               </div>
             </div>
           </div>

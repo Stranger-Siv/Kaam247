@@ -62,13 +62,13 @@ function ModeToggle({ isMobile = false }) {
 
   return (
     <>
-      <div className="flex items-center gap-2 md:gap-3 shrink-0">
+      <div className="flex items-center shrink-0">
         <button
           onClick={handleToggleMode}
           disabled={checkingActiveTask}
           type="button"
           aria-label={checkingActiveTask ? 'Checking…' : `Switch to ${userMode === 'worker' ? 'Post Tasks' : 'Perform Tasks'}`}
-          className={`relative inline-flex items-center min-h-[36px] w-[7rem] rounded-full border-2 transition-all duration-200 ease-out
+          className={`relative inline-flex items-center min-h-[36px] w-[5.25rem] rounded-full border transition-all duration-200 ease-out
             focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900
             disabled:opacity-50 disabled:cursor-not-allowed
             ${userMode === 'worker'
@@ -77,17 +77,17 @@ function ModeToggle({ isMobile = false }) {
             }`}
         >
           <span
-            className={`absolute top-1/2 -translate-y-1/2 text-[10px] font-semibold tracking-wide transition-all duration-200
+            className={`absolute top-1/2 -translate-y-1/2 text-[9px] font-semibold uppercase tracking-wide transition-all duration-200 whitespace-nowrap
               ${userMode === 'worker'
-                ? 'left-3 text-white'
-                : 'right-3 text-gray-700 dark:text-gray-300'
+                ? 'left-2 text-white'
+                : 'right-2 text-gray-700 dark:text-gray-300'
               }`}
           >
-            {checkingActiveTask ? '…' : modeLabelShort}
+            {checkingActiveTask ? '…' : (userMode === 'worker' ? 'Work' : 'Post')}
           </span>
           <span
-            className="absolute top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-white dark:bg-gray-100 shadow-sm border border-gray-200 dark:border-gray-600 transition-all duration-200"
-            style={userMode === 'worker' ? { right: '0.375rem' } : { left: '0.375rem' }}
+            className="absolute top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-white dark:bg-gray-100 shadow-sm border border-gray-200 dark:border-gray-600 transition-all duration-200"
+            style={userMode === 'worker' ? { right: '0.25rem' } : { left: '0.25rem' }}
           />
         </button>
       </div>
