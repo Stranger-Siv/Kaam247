@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 
 // Redirect to mode-appropriate page when mode changes and current route doesn't match (e.g. guest on /post-task switches to worker)
@@ -36,13 +36,8 @@ function MainLayout() {
     const { logout, user } = useAuth()
     const { userMode } = useUserMode()
     const { hasCompletedOnboarding, onboardingLoaded } = useOnboarding()
-    const isGuest = !user?.id
     const { requestShow: requestPWAInstall } = usePWAInstall()
     const pwaPromptShownRef = useRef(false)
-    const [showGuestBanner, setShowGuestBanner] = useState(() => {
-        if (typeof window === 'undefined') return false
-        return !sessionStorage.getItem('kaam247_guest_banner_dismissed')
-    })
 
     // After login/signup: suggest PWA install once per session (when onboarding is done)
     useEffect(() => {
@@ -55,15 +50,6 @@ function MainLayout() {
     const handleLogout = () => {
         logout()
         navigate('/')
-    }
-
-    const handleDismissGuestBanner = () => {
-        setShowGuestBanner(false)
-        try {
-            sessionStorage.setItem('kaam247_guest_banner_dismissed', 'true')
-        } catch {
-            // ignore storage errors
-        }
     }
 
     useRedirectOnModeMismatch()
@@ -131,7 +117,7 @@ function MainLayout() {
                             >
                                 Activity
                             </Link>
-                            {!isGuest && userMode === 'worker' && (
+                            {!(!user?.id) && userMode === 'worker' && (
                                 <Link
                                     to="/earnings"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/earnings'
@@ -142,7 +128,7 @@ function MainLayout() {
                                     Earnings
                                 </Link>
                             )}
-                            {!isGuest && userMode === 'poster' && (
+                            {!(!user?.id) && userMode === 'poster' && (
                                 <Link
                                     to="/transactions"
                                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors min-h-[36px] flex items-center ${location.pathname === '/transactions'
@@ -163,10 +149,10 @@ function MainLayout() {
                                 Profile
                             </Link>
                             <div className="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-1"></div>
-                            {!isGuest && userMode === 'worker' && <AvailabilityToggle />}
+                            {!(!user?.id) && userMode === 'worker' && <AvailabilityToggle />}
                             <ThemeToggle />
                             <ModeToggle />
-                            {isGuest ? (
+                            {!user?.id ? (
                                 <Link
                                     to="/login"
                                     className="inline-flex items-center justify-center px-4 py-2.5 min-h-[36px] rounded-xl bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors active:scale-[0.98]"
@@ -179,9 +165,9 @@ function MainLayout() {
                         </nav>
 
                         <div className="md:hidden flex items-center gap-2">
-                            {!isGuest && userMode === 'worker' && <AvailabilityToggle />}
+                            {!(!user?.id) && userMode === 'worker' && <AvailabilityToggle />}
                             <ModeToggle />
-                            {isGuest && (
+                            {!user?.id && (
                                 <Link
                                     to="/login"
                                     className="inline-flex items-center justify-center px-3 py-2 min-h-[36px] rounded-xl bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors active:scale-[0.98]"
@@ -193,42 +179,6 @@ function MainLayout() {
                     </div>
                 </div>
             </header>
-
-            {/* Lightly-guided guest banner */}
-            {isGuest && showGuestBanner && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-start sm:items-center justify-between gap-2">
-                        <p className="text-xs sm:text-sm text-blue-900 dark:text-blue-50 leading-snug">
-                            You&apos;re browsing in guest mode.{' '}
-                            <span className="hidden sm:inline">
-                                Login to save your tasks, profile, and earnings.
-                            </span>
-                        </p>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            <Link
-                                to="/login"
-                                className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-blue-600 dark:bg-blue-500 text-white text-xs sm:text-sm font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors min-h-[32px]"
-                            >
-                                Login
-                            </Link>
-                            <button
-                                type="button"
-                                onClick={handleDismissGuestBanner}
-                                className="p-1 rounded-md text-blue-800 dark:text-blue-200 hover:bg-blue-100/80 dark:hover:bg-blue-800/40 transition-colors"
-                                aria-label="Dismiss guest mode message"
-                            >
-                                <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Main Content - No padding on mobile, padding on larger screens */}
             <main className="flex-1 max-w-7xl mx-auto sm:px-6 lg:px-8 py-4 sm:py-6 w-full pb-20 md:pb-6 overflow-x-hidden">
