@@ -69,7 +69,7 @@ function ModeToggle({ isMobile = false }) {
       >
         {/* Sliding pill indicator */}
         <span
-          className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] rounded-md bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 pointer-events-none transition-transform duration-300 ease-out"
+          className="absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-4px)] rounded-md bg-white dark:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-600 pointer-events-none transition-transform duration-300 ease-out"
           style={{ transform: userMode === 'worker' ? 'translateX(0)' : 'translateX(calc(100% + 4px))' }}
           aria-hidden
         />
