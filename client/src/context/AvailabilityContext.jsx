@@ -5,29 +5,39 @@ import { persistUserLocation } from '../utils/locationPersistence'
 
 const AvailabilityContext = createContext()
 
+function getInitialOnline() {
+  if (typeof window === 'undefined') return false
+  return localStorage.getItem('kaam247_isOnline') === 'true'
+}
+
+function getInitialWorkerLocation() {
+  if (typeof window === 'undefined') return null
+  try {
+    const saved = localStorage.getItem('kaam247_workerLocation')
+    if (saved) return JSON.parse(saved)
+  } catch {
+    // ignore
+  }
+  return null
+}
+
 export function AvailabilityProvider({ children }) {
-  const [isOnline, setIsOnline] = useState(false)
-  const [workerLocation, setWorkerLocation] = useState(null)
+  const [isOnline, setIsOnline] = useState(getInitialOnline)
+  const [workerLocation, setWorkerLocation] = useState(getInitialWorkerLocation)
   const [checkingActiveTask, setCheckingActiveTask] = useState(false)
 
-  // Load availability from localStorage on mount
+  // Sync offline when session is invalid (e.g. 401 on refresh) so UI matches cleared localStorage
   useEffect(() => {
-    const savedAvailability = localStorage.getItem('kaam247_isOnline')
-    if (savedAvailability === 'true') {
-      setIsOnline(true)
+    const handleUnauthorized = () => {
+      setIsOnline(false)
+      setWorkerLocation(null)
     }
-    
-    // Load saved location if available
-    const savedLocation = localStorage.getItem('kaam247_workerLocation')
-    if (savedLocation) {
-      try {
-        setWorkerLocation(JSON.parse(savedLocation))
-      } catch (e) {
-        // Invalid location data, ignore
-      }
-    }
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
+  }, [])
 
-    // Listen for location updates from other components
+  // Listen for location updates from other components
+  useEffect(() => {
     const handleLocationUpdate = (event) => {
       const location = event.detail
       if (location && location.lat && location.lng) {
