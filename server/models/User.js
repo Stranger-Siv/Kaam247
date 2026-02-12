@@ -141,6 +141,12 @@ const userSchema = new mongoose.Schema({
         max: 10,
         description: 'Maximum daily cancellations allowed (admin configurable, default: 2)'
     },
+    noShowCount: {
+        type: Number,
+        default: 0,
+        min: 0,
+        description: 'Number of times worker was marked as no-show by poster (college pilot accountability)'
+    },
     dailyTaskPostCount: {
         type: Number,
         default: 0,
@@ -162,6 +168,24 @@ const userSchema = new mongoose.Schema({
         type: Date,
         required: false,
         description: 'Date of last report (used to reset daily count)'
+    },
+    dailyWorkerCancelCount: {
+        type: Number,
+        default: 0,
+        min: 0,
+        description: 'Number of workers canceled/changed by poster today (for rate limiting abuse prevention)'
+    },
+    lastWorkerCancelDate: {
+        type: Date,
+        required: false,
+        description: 'Date of last worker cancellation by poster (used to reset daily count)'
+    },
+    maxWorkerCancelPerDay: {
+        type: Number,
+        default: 3,
+        min: 1,
+        max: 10,
+        description: 'Maximum workers poster can cancel per day (admin configurable, default: 3)'
     },
     lastActionTimestamps: {
         type: Map,

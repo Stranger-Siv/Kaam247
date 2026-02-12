@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { authenticate, optionalAuthenticate } = require('../middleware/auth')
-const { createTask, acceptTask, getAvailableTasks, getTaskById, getTasksByUser, cancelTask, startTask, markComplete, confirmComplete, rateTask, editTask, deleteTask, duplicateTask, bulkCancelTasks, bulkExtendValidity, bulkDeleteTasks, getPosterTaskAnalytics, setRecurringSchedule } = require('../controllers/taskController')
+const { createTask, acceptTask, getAvailableTasks, getTaskById, getTasksByUser, cancelTask, workerNoShow, cancelWorker, startTask, markComplete, confirmComplete, rateTask, editTask, deleteTask, duplicateTask, bulkCancelTasks, bulkExtendValidity, bulkDeleteTasks, getPosterTaskAnalytics, setRecurringSchedule } = require('../controllers/taskController')
 const { getMessages, sendMessage } = require('../controllers/chatController')
 const { getPublicStats } = require('../controllers/adminController')
 const { withCache } = require('../utils/cache')
@@ -45,6 +45,12 @@ router.get('/tasks', getAvailableTasks)
 
 // POST /api/tasks/:taskId/cancel - Cancel a task
 router.post('/tasks/:taskId/cancel', optionalAuthenticate, taskActionLimit, cancelTask)
+
+// POST /api/tasks/:taskId/worker-no-show - Poster marks worker didn't show; reopens task
+router.post('/tasks/:taskId/worker-no-show', authenticate, taskActionLimit, workerNoShow)
+
+// POST /api/tasks/:taskId/cancel-worker - Poster cancels/changes worker (like Uber/Ola cancel ride)
+router.post('/tasks/:taskId/cancel-worker', authenticate, taskActionLimit, cancelWorker)
 
 // POST /api/tasks/:taskId/start - Worker starts task (ACCEPTED → IN_PROGRESS)
 router.post('/tasks/:taskId/start', optionalAuthenticate, taskActionLimit, startTask)

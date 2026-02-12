@@ -15,6 +15,7 @@ import ConfirmationModal from '../components/ConfirmationModal'
 import IncreaseBudgetModal from '../components/IncreaseBudgetModal'
 import ExtendValidityModal from '../components/ExtendValidityModal'
 import RecurringModal from '../components/RecurringModal'
+import TaskReceiptModal from '../components/TaskReceiptModal'
 import TaskChat from '../components/TaskChat'
 import LoginCTA from '../components/LoginCTA'
 import { RETURN_URL_PARAM } from '../utils/authIntents'
@@ -40,6 +41,13 @@ function TaskDetail() {
   const [acceptSuccess, setAcceptSuccess] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
   const [cancelError, setCancelError] = useState(null)
+  const [isNoShowLoading, setIsNoShowLoading] = useState(false)
+  const [noShowError, setNoShowError] = useState(null)
+  const [showNoShowConfirm, setShowNoShowConfirm] = useState(false)
+  const [showReceiptModal, setShowReceiptModal] = useState(false)
+  const [isCancelWorkerLoading, setIsCancelWorkerLoading] = useState(false)
+  const [cancelWorkerError, setCancelWorkerError] = useState(null)
+  const [showCancelWorkerConfirm, setShowCancelWorkerConfirm] = useState(false)
   const [isStarting, setIsStarting] = useState(false)
   const [startError, setStartError] = useState(null)
   const [hasReachedLocation, setHasReachedLocation] = useState(false)
@@ -480,14 +488,19 @@ function TaskDetail() {
       }
 
       const workerId = user.id
+      const body = { workerId }
+      if (workerLocation?.lat != null && workerLocation?.lng != null) {
+        body.lat = workerLocation.lat
+        body.lng = workerLocation.lng
+      }
 
-      // Call accept API
+      // Call accept API (backend requires worker within X km of task when task has location)
       const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/accept`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ workerId })
+        body: JSON.stringify(body)
       })
 
       if (!response.ok) {
@@ -1106,6 +1119,80 @@ function TaskDetail() {
     }
   }
 
+  const handleWorkerNoShow = () => {
+    if (isNoShowLoading || !taskId) return
+    setNoShowError(null)
+    setShowNoShowConfirm(true)
+  }
+
+  const confirmWorkerNoShow = async () => {
+    setShowNoShowConfirm(false)
+    if (!taskId || !user?.id) return
+    const token = localStorage.getItem('kaam247_token')
+    if (!token) {
+      setNoShowError('You must be logged in')
+      return
+    }
+    try {
+      setIsNoShowLoading(true)
+      setNoShowError(null)
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/worker-no-show`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to mark worker as no-show')
+      }
+      if (fetchTaskRef.current) fetchTaskRef.current(true)
+      window.dispatchEvent(new CustomEvent('task_status_changed', { detail: { taskId, status: 'SEARCHING' } }))
+    } catch (err) {
+      setNoShowError(err.message || 'Something went wrong. Please try again.')
+    } finally {
+      setIsNoShowLoading(false)
+    }
+  }
+
+  const handleCancelWorker = () => {
+    if (isCancelWorkerLoading || !taskId) return
+    setCancelWorkerError(null)
+    setShowCancelWorkerConfirm(true)
+  }
+
+  const confirmCancelWorker = async () => {
+    setShowCancelWorkerConfirm(false)
+    if (!taskId || !user?.id) return
+    const token = localStorage.getItem('kaam247_token')
+    if (!token) {
+      setCancelWorkerError('You must be logged in')
+      return
+    }
+    try {
+      setIsCancelWorkerLoading(true)
+      setCancelWorkerError(null)
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/cancel-worker`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Failed to cancel worker')
+      }
+      if (fetchTaskRef.current) fetchTaskRef.current(true)
+      window.dispatchEvent(new CustomEvent('task_status_changed', { detail: { taskId, status: 'SEARCHING' } }))
+    } catch (err) {
+      setCancelWorkerError(err.message || 'Something went wrong. Please try again.')
+    } finally {
+      setIsCancelWorkerLoading(false)
+    }
+  }
+
   const getStatusBadge = (status) => {
     const badges = {
       open: { text: 'Open', className: 'bg-green-50 text-green-700' },
@@ -1273,7 +1360,7 @@ function TaskDetail() {
                         placeholder="Share your experience working with this worker..."
                       />
                     </div>
-                    <button
+                <button
                       onClick={handleRateTask}
                       disabled={isRating || rating === 0}
                       className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
@@ -1290,6 +1377,16 @@ function TaskDetail() {
                         'Submit Rating'
                       )}
                     </button>
+                <button
+                  type="button"
+                  onClick={() => setShowReceiptModal(true)}
+                  className="mt-3 w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm sm:text-base font-semibold rounded-xl text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[44px] sm:min-h-[48px] touch-manipulation"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6h6v6m-7 4h8a2 2 0 002-2v-9.586a1 1 0 00-.293-.707l-3.414-3.414A1 1 0 0013.586 4H8a2 2 0 00-2 2v13a2 2 0 002 2z" />
+                  </svg>
+                  View receipt / summary
+                </button>
                   </>
                 )}
               </div>
@@ -1297,10 +1394,22 @@ function TaskDetail() {
           )
         }
 
-        // Already rated: simple completed state
+        // Already rated: completed state with receipt
         return (
-          <div className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-base font-medium rounded-lg text-center">
-            Task completed
+          <div className="space-y-3">
+            <div className="w-full px-6 py-4 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-base font-medium rounded-lg text-center">
+              Task completed
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowReceiptModal(true)}
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm sm:text-base font-semibold rounded-xl text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6h6v6m-7 4h8a2 2 0 002-2v-9.586a1 1 0 00-.293-.707l-3.414-3.414A1 1 0 0013.586 4H8a2 2 0 00-2 2v13a2 2 0 002 2z" />
+              </svg>
+              View receipt / summary
+            </button>
           </div>
         )
       } else if (currentStatus === 'IN_PROGRESS' || task.status === 'in_progress') {
@@ -1397,6 +1506,34 @@ function TaskDetail() {
             </button>
             <div className="w-full px-6 py-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-base font-medium rounded-lg text-center">
               Worker assigned: {task.worker || 'Worker'}
+            </div>
+            {noShowError && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-400">{noShowError}</p>
+              </div>
+            )}
+            {cancelWorkerError && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-400">{cancelWorkerError}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={handleWorkerNoShow}
+                disabled={isNoShowLoading}
+                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isNoShowLoading ? 'Reopening...' : 'Worker didn\'t show'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelWorker}
+                disabled={isCancelWorkerLoading}
+                className="px-4 py-3 bg-orange-600 dark:bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCancelWorkerLoading ? 'Changing...' : 'Change worker'}
+              </button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -2518,6 +2655,16 @@ function TaskDetail() {
         />
       )}
 
+      {/* Task receipt / summary modal */}
+      {showReceiptModal && task && (
+        <TaskReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => setShowReceiptModal(false)}
+          task={task}
+          taskId={taskId}
+        />
+      )}
+
       {/* Duplicate confirmation */}
       <ConfirmationModal
         isOpen={showDuplicateConfirm}
@@ -2539,6 +2686,30 @@ function TaskDetail() {
         message="Are you sure you want to cancel this task? This action cannot be undone."
         confirmText="Yes, Cancel Task"
         cancelText="Keep Task"
+        confirmColor="red"
+      />
+
+      {/* Worker didn't show - reopen task */}
+      <ConfirmationModal
+        isOpen={showNoShowConfirm}
+        onConfirm={confirmWorkerNoShow}
+        onCancel={() => { setShowNoShowConfirm(false); setNoShowError(null) }}
+        title="Worker didn't show?"
+        message="Reopen this task so another worker can accept it. The current worker will be marked as no-show."
+        confirmText="Yes, reopen task"
+        cancelText="Cancel"
+        confirmColor="red"
+      />
+
+      {/* Cancel worker / Change worker */}
+      <ConfirmationModal
+        isOpen={showCancelWorkerConfirm}
+        onConfirm={confirmCancelWorker}
+        onCancel={() => { setShowCancelWorkerConfirm(false); setCancelWorkerError(null) }}
+        title="Change worker?"
+        message="Remove this worker and reopen the task for others? The current worker will be notified."
+        confirmText="Yes, change worker"
+        cancelText="Keep worker"
         confirmColor="red"
       />
 

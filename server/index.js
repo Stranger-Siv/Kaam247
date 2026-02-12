@@ -123,6 +123,15 @@ const startServer = async () => {
     // ignore if controller not loaded
   }
 
+  try {
+    const { runAutoReopenAccepted } = require('./jobs/autoReopenAccepted')
+    const AUTO_REOPEN_INTERVAL_MS = 15 * 60 * 1000 // 15 min
+    setInterval(() => runAutoReopenAccepted(), AUTO_REOPEN_INTERVAL_MS)
+    runAutoReopenAccepted()
+  } catch (e) {
+    // ignore if job not loaded
+  }
+
   server.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`)
   })

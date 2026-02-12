@@ -3,7 +3,7 @@ const User = require('../models/User')
 const Chat = require('../models/Chat')
 const mongoose = require('mongoose')
 const { broadcastNewTask, notifyTaskAccepted, notifyTaskRemoved, notifyTaskCompleted, notifyTaskStatusChanged, notifyTaskUpdated } = require('../socket/socketHandler')
-const { calculateDistance } = require('../utils/distance')
+const { calculateDistance, isWithinRadius } = require('../utils/distance')
 const { pingWorkersForNewTask } = require('../utils/pushNotifications')
 const socketManager = require('../socket/socketManager')
 const { parsePagination, paginationMeta } = require('../utils/pagination')
@@ -13,6 +13,8 @@ const { runAfterResponse } = require('../utils/background')
 // Geo query: radius required when lat/lng provided; cap to avoid expensive scans
 const GEO_RADIUS_DEFAULT_KM = 5
 const GEO_RADIUS_MAX_KM = 15
+// Worker must be within this radius (km) of task to accept
+const ACCEPT_RADIUS_KM = Number(process.env.ACCEPT_RADIUS_KM) || 5
 
 const createTask = async (req, res) => {
   try {
@@ -409,6 +411,35 @@ const acceptTask = async (req, res) => {
         error: 'Forbidden',
         message: 'You cannot accept your own task'
       })
+    }
+
+    // HARDENING CHECK 8: Worker must be within ACCEPT_RADIUS_KM of task
+    const taskCoords = task.location?.coordinates
+    if (taskCoords && Array.isArray(taskCoords) && taskCoords.length >= 2) {
+      const taskLon = taskCoords[0]
+      const taskLat = taskCoords[1]
+      let workerLat = req.body.lat != null && req.body.lat !== '' ? parseFloat(req.body.lat) : null
+      let workerLon = req.body.lng != null && req.body.lng !== '' ? parseFloat(req.body.lng) : null
+      if (workerLat == null || workerLon == null) {
+        const workerCoords = worker.location?.coordinates
+        if (workerCoords && Array.isArray(workerCoords) && workerCoords.length >= 2) {
+          workerLon = workerCoords[0]
+          workerLat = workerCoords[1]
+        }
+      }
+      if (workerLat != null && workerLon != null && !isNaN(workerLat) && !isNaN(workerLon)) {
+        if (!isWithinRadius(taskLat, taskLon, workerLat, workerLon, ACCEPT_RADIUS_KM)) {
+          return res.status(400).json({
+            error: 'Too far from task',
+            message: `You must be within ${ACCEPT_RADIUS_KM} km of the task location to accept it.`
+          })
+        }
+      } else {
+        return res.status(400).json({
+          error: 'Location required',
+          message: 'Your location is required to accept this task. Enable location and try again.'
+        })
+      }
     }
 
     // ATOMIC ACCEPT (race-condition safe):
@@ -1066,6 +1097,257 @@ const cancelTask = async (req, res) => {
     res.status(500).json({
       error: 'Server error',
       message: error.message || 'An error occurred while cancelling the task'
+    })
+  }
+}
+
+// POST /api/tasks/:taskId/worker-no-show - Poster marks worker didn't show; reopens task (college pilot)
+const workerNoShow = async (req, res) => {
+  try {
+    const { taskId } = req.params
+    const userId = req.user?.id || req.user?._id
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'You must be logged in' })
+    }
+    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+      return res.status(400).json({ error: 'Invalid taskId', message: 'taskId must be a valid ObjectId' })
+    }
+
+    const task = await Task.findById(taskId)
+      .populate('postedBy', '_id')
+      .populate('acceptedBy', '_id')
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found', message: 'Task not found' })
+    }
+    if (task.status !== 'ACCEPTED') {
+      return res.status(400).json({
+        error: 'Invalid status',
+        message: 'Only accepted tasks can be marked as worker no-show. Current status: ' + task.status
+      })
+    }
+    const posterId = task.postedBy?._id?.toString()
+    if (posterId !== userId.toString()) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the task poster can mark worker as no-show'
+      })
+    }
+
+    const workerId = task.acceptedBy?._id?.toString()
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      {
+        $set: {
+          status: 'SEARCHING',
+          acceptedBy: null,
+          acceptedAt: null
+        }
+      },
+      { new: true, runValidators: true }
+    )
+
+    if (workerId) {
+      await User.findByIdAndUpdate(workerId, { $inc: { noShowCount: 1 } })
+    }
+
+    runAfterResponse('workerNoShow:notify', () => {
+      invalidateStatsAndAdminDashboards()
+      try {
+        const { notifyTaskCancelled, notifyTaskStatusChanged } = require('../socket/socketHandler')
+        if (workerId) {
+          notifyTaskCancelled(workerId, taskId, 'poster_no_show')
+          notifyTaskStatusChanged(workerId, taskId, 'SEARCHING')
+        }
+        notifyTaskStatusChanged(posterId, taskId, 'SEARCHING')
+        notifyTaskRemoved(null, taskId)
+      } catch (e) { }
+    })
+
+    return res.status(200).json({
+      message: 'Task reopened. Worker was marked as no-show.',
+      task: updatedTask
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred'
+    })
+  }
+}
+
+// POST /api/tasks/:taskId/cancel-worker - Poster cancels/changes worker (like Uber/Ola cancel ride)
+const cancelWorker = async (req, res) => {
+  try {
+    const { taskId } = req.params
+    const userId = req.user?.id || req.user?._id
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'You must be logged in' })
+    }
+    if (!mongoose.Types.ObjectId.isValid(taskId)) {
+      return res.status(400).json({ error: 'Invalid taskId', message: 'taskId must be a valid ObjectId' })
+    }
+
+    const task = await Task.findById(taskId)
+      .populate('postedBy', '_id')
+      .populate('acceptedBy', '_id')
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found', message: 'Task not found' })
+    }
+
+    // RESTRICTION 1: Only poster can cancel worker
+    const posterId = task.postedBy?._id?.toString()
+    if (posterId !== userId.toString()) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the task poster can cancel/change worker'
+      })
+    }
+
+    // RESTRICTION 2: Task must have an accepted worker
+    if (!task.acceptedBy) {
+      return res.status(400).json({
+        error: 'No worker assigned',
+        message: 'This task has no assigned worker to cancel'
+      })
+    }
+
+    // RESTRICTION 3: Can't cancel if task is COMPLETED
+    if (task.status === 'COMPLETED') {
+      return res.status(400).json({
+        error: 'Task completed',
+        message: 'Cannot cancel worker for a completed task'
+      })
+    }
+
+    // RESTRICTION 4: Can't cancel if task is already CANCELLED
+    if (['CANCELLED', 'CANCELLED_BY_POSTER', 'CANCELLED_BY_WORKER', 'CANCELLED_BY_ADMIN'].includes(task.status)) {
+      return res.status(400).json({
+        error: 'Task cancelled',
+        message: 'Cannot cancel worker for a cancelled task'
+      })
+    }
+
+    // RESTRICTION 5: Can't cancel if worker already marked task as complete
+    if (task.workerCompleted) {
+      return res.status(400).json({
+        error: 'Worker completed',
+        message: 'Cannot cancel worker who has already marked the task as complete'
+      })
+    }
+
+    // RESTRICTION 6: Can't cancel if task is IN_PROGRESS (worker already started)
+    if (task.status === 'IN_PROGRESS') {
+      return res.status(400).json({
+        error: 'Task in progress',
+        message: 'Cannot cancel worker while task is in progress. Please cancel the entire task instead.'
+      })
+    }
+
+    // RESTRICTION 7: Task must be ACCEPTED (only valid status for canceling worker)
+    if (task.status !== 'ACCEPTED') {
+      return res.status(400).json({
+        error: 'Invalid status',
+        message: `Cannot cancel worker. Task status must be ACCEPTED. Current status: ${task.status}`
+      })
+    }
+
+    // RESTRICTION 8: Check poster's daily worker cancellation limit
+    const poster = await User.findById(posterId)
+    if (!poster) {
+      return res.status(404).json({ error: 'Poster not found', message: 'Poster not found' })
+    }
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const lastCancelDate = poster.lastWorkerCancelDate ? new Date(poster.lastWorkerCancelDate) : null
+    let lastCancelDay = null
+    if (lastCancelDate) {
+      lastCancelDay = new Date(lastCancelDate)
+      lastCancelDay.setHours(0, 0, 0, 0)
+    }
+
+    // Reset daily count if new day
+    if (!lastCancelDay || lastCancelDay.getTime() !== today.getTime()) {
+      if (poster.dailyWorkerCancelCount > 0) {
+        poster.dailyWorkerCancelCount = 0
+        poster.lastWorkerCancelDate = today
+        await poster.save()
+      }
+    }
+
+    const maxCancelLimit = poster.maxWorkerCancelPerDay ?? 3 // Default 3 per day
+    if (poster.dailyWorkerCancelCount >= maxCancelLimit) {
+      return res.status(403).json({
+        error: 'Daily limit reached',
+        message: `You have reached today's limit of canceling ${maxCancelLimit} worker(s). Please try again tomorrow.`
+      })
+    }
+
+    // RESTRICTION 9: Rate limiting - prevent rapid cancellations (same as accept task throttling)
+    const lastCancelTimestamp = poster.lastActionTimestamps?.get('cancelWorker')
+    if (lastCancelTimestamp) {
+      const timeSinceLastCancel = Date.now() - new Date(lastCancelTimestamp).getTime()
+      if (timeSinceLastCancel < 5000) { // 5 seconds cooldown
+        return res.status(429).json({
+          error: 'Too many requests',
+          message: 'Please wait a moment before canceling another worker.'
+        })
+      }
+    }
+
+    // All checks passed - proceed with canceling worker
+    const workerId = task.acceptedBy._id.toString()
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
+      {
+        $set: {
+          status: 'SEARCHING',
+          acceptedBy: null,
+          acceptedAt: null
+        }
+      },
+      { new: true, runValidators: true }
+    )
+
+    // Increment worker's cancellation count (they were removed by poster)
+    if (workerId) {
+      await User.findByIdAndUpdate(workerId, { $inc: { dailyCancelCount: 1 } })
+    }
+
+    // Update poster's daily worker cancel count and timestamp
+    if (!poster.lastActionTimestamps) {
+      poster.lastActionTimestamps = new Map()
+    }
+    poster.lastActionTimestamps.set('cancelWorker', new Date())
+    poster.dailyWorkerCancelCount += 1
+    poster.lastWorkerCancelDate = today
+    await poster.save()
+
+    runAfterResponse('cancelWorker:notify', () => {
+      invalidateStatsAndAdminDashboards()
+      try {
+        const { notifyTaskCancelled, notifyTaskStatusChanged } = require('../socket/socketHandler')
+        if (workerId) {
+          notifyTaskCancelled(workerId, taskId, 'poster_cancel_worker')
+          notifyTaskStatusChanged(workerId, taskId, 'SEARCHING')
+        }
+        notifyTaskStatusChanged(posterId, taskId, 'SEARCHING')
+        notifyTaskRemoved(null, taskId)
+      } catch (e) { }
+    })
+
+    return res.status(200).json({
+      message: 'Worker canceled. Task reopened for other workers.',
+      task: updatedTask
+    })
+  } catch (error) {
+    res.status(500).json({
+      error: 'Server error',
+      message: error.message || 'An error occurred'
     })
   }
 }
@@ -2160,6 +2442,8 @@ module.exports = {
   getTaskById,
   getTasksByUser,
   cancelTask,
+  workerNoShow,
+  cancelWorker,
   startTask,
   markComplete,
   confirmComplete,
