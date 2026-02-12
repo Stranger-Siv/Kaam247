@@ -43,6 +43,9 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
     <meta charset="utf-8" />
     <title>Kaam247 – Task receipt</title>
     <style>
+      @page {
+        margin: 15mm;
+      }
       body {
         margin: 0;
         padding: 24px;
@@ -52,12 +55,13 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
       }
       .page {
         max-width: 720px;
-        margin: 0 auto;
+        margin: 24px auto;
         background: #f9fafb;
         border: 1px solid #e5e7eb;
         padding: 24px 28px;
         box-sizing: border-box;
         border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
       }
       h1 {
         font-size: 20px;
@@ -110,12 +114,13 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
       @media print {
         body {
           background: #ffffff;
-          padding: 12mm;
+          padding: 0;
         }
         .page {
           border: 1px solid #d1d5db;
           box-shadow: none;
-          border-radius: 8px;
+          border-radius: 12px;
+          margin: 0 auto;
         }
       }
     </style>
