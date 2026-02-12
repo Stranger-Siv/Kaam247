@@ -7,6 +7,202 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
   const startedAt = task.startedAt ? new Date(task.startedAt) : null
   const postedTime = task.postedTime || null
 
+  const handlePrint = () => {
+    if (typeof window === 'undefined') return
+    const printWindow = window.open('', '_blank', 'width=900,height=1000')
+    if (!printWindow) return
+
+    const createdAtText = postedTime || '—'
+    const startedAtText = startedAt
+      ? startedAt.toLocaleString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      : 'Not recorded'
+    const completedAtText = completedAt
+      ? completedAt.toLocaleString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      : 'Not recorded'
+
+    const amountText = task.budget || `₹${task.budgetNum ?? 0}`
+    const locationText = task.fullAddress || task.location || 'Location not specified'
+    const cityText = task.city || ''
+
+    const html = `
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Kaam247 – Task receipt</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #f3f4f6;
+        color: #111827;
+      }
+      .page {
+        max-width: 720px;
+        margin: 0 auto;
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        padding: 24px 28px;
+        box-sizing: border-box;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0;
+        font-weight: 700;
+        color: #000000;
+      }
+      .subtitle {
+        font-size: 13px;
+        color: #4b5563;
+        margin-top: 4px;
+      }
+      .section {
+        margin-top: 18px;
+        padding-top: 12px;
+        border-top: 1px dashed #e5e7eb;
+      }
+      .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #111827;
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
+      .value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #000000;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+        font-size: 12px;
+        color: #111827;
+      }
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 32px;
+      }
+      .col {
+        flex: 1 1 200px;
+      }
+      .footer {
+        margin-top: 20px;
+        font-size: 11px;
+        color: #6b7280;
+        line-height: 1.4;
+      }
+      @media print {
+        body {
+          background: #ffffff;
+          padding: 12mm;
+        }
+        .page {
+          border: 1px solid #d1d5db;
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <h1>Task receipt / summary</h1>
+          <div class="subtitle">For reimbursement or record keeping</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="label">Status</div>
+          <div class="value" style="color:#059669;">Completed</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">Task ID</div>
+        <div class="mono">${taskId}</div>
+      </div>
+
+      <div class="section">
+        <div class="label">Task</div>
+        <div class="value">${task.title || ''}</div>
+        ${task.description ? `<div style="margin-top:4px;font-size:13px;color:#374151;white-space:pre-line;">${task.description}</div>` : ''}
+      </div>
+
+      <div class="section grid">
+        <div class="col">
+          <div class="label">Category</div>
+          <div class="value">${task.category || 'Not specified'}</div>
+        </div>
+        <div class="col">
+          <div class="label">Amount (agreed budget)</div>
+          <div class="value">${amountText}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">Location</div>
+        <div class="value">${locationText}</div>
+        ${cityText ? `<div style="font-size:13px;color:#4b5563;margin-top:2px;">${cityText}</div>` : ''}
+      </div>
+
+      <div class="section grid">
+        <div class="col">
+          <div class="label">Posted by</div>
+          <div class="value">${task.postedByName || 'Poster'}</div>
+        </div>
+        <div class="col">
+          <div class="label">Assigned worker</div>
+          <div class="value">${task.worker || 'Worker'}</div>
+        </div>
+      </div>
+
+      <div class="section grid">
+        <div class="col">
+          <div class="label">Created at</div>
+          <div class="value" style="font-size:13px;font-weight:500;">${createdAtText}</div>
+        </div>
+        <div class="col">
+          <div class="label">Started at</div>
+          <div class="value" style="font-size:13px;font-weight:500;">${startedAtText}</div>
+        </div>
+        <div class="col">
+          <div class="label">Completed at</div>
+          <div class="value" style="font-size:13px;font-weight:500;">${completedAtText}</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        Generated by Kaam247. This receipt is for information and reimbursement purposes only.
+        Payment is handled directly between poster and worker based on the agreed budget.
+      </div>
+    </div>
+    <script>
+      window.onload = function () {
+        window.print();
+      };
+    </script>
+  </body>
+</html>`
+
+    printWindow.document.open()
+    printWindow.document.write(html)
+    printWindow.document.close()
+  }
+
   return (
     <div
       className="fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4 print:static print:bg-white print:p-0 print:block"
@@ -184,7 +380,7 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
           </button>
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="flex-1 px-4 py-2.5 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium"
           >
             Print / Save as PDF
