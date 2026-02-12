@@ -53,20 +53,21 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
       .page {
         max-width: 720px;
         margin: 0 auto;
-        background: #ffffff;
-        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
         padding: 24px 28px;
         box-sizing: border-box;
+        border-radius: 12px;
       }
       h1 {
-        font-size: 22px;
+        font-size: 20px;
         margin: 0;
         font-weight: 700;
-        color: #000000;
+        color: #111827;
       }
       .subtitle {
-        font-size: 13px;
-        color: #4b5563;
+        font-size: 12px;
+        color: #6b7280;
         margin-top: 4px;
       }
       .section {
@@ -78,14 +79,14 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
         font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: #111827;
+        color: #6b7280;
         margin-bottom: 4px;
         font-weight: 600;
       }
       .value {
         font-size: 14px;
         font-weight: 600;
-        color: #000000;
+        color: #111827;
       }
       .mono {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
@@ -114,6 +115,7 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
         .page {
           border: 1px solid #d1d5db;
           box-shadow: none;
+          border-radius: 8px;
         }
       }
     </style>
