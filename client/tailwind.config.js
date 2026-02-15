@@ -36,9 +36,29 @@ export default {
           from: { opacity: '0', transform: 'scale(0.85) translateY(8px)' },
           to: { opacity: '1', transform: 'scale(1) translateY(0)' },
         },
+        'modal-backdrop-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'modal-panel-in': {
+          from: { opacity: '0', transform: 'scale(0.98) translateY(8px)' },
+          to: { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        'modal-sheet-in': {
+          from: { opacity: '0', transform: 'translateY(100%)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'drawer-left-in': {
+          from: { opacity: '0', transform: 'translateX(-100%)' },
+          to: { opacity: '1', transform: 'translateX(0)' },
+        },
       },
       animation: {
         'slide-up': 'slide-up 0.25s ease-out',
+        'modal-backdrop-in': 'modal-backdrop-in 0.2s ease-out forwards',
+        'modal-panel-in': 'modal-panel-in 0.25s ease-out forwards',
+        'modal-sheet-in': 'modal-sheet-in 0.3s ease-out forwards',
+        'drawer-left-in': 'drawer-left-in 0.25s ease-out forwards',
         'task-countdown': 'task-countdown 15s linear forwards',
         'onboarding-fade-in': 'onboarding-fade-in 0.7s ease-out forwards',
         'onboarding-float': 'onboarding-float 4.5s ease-in-out infinite',

@@ -263,14 +263,14 @@ function AdminChats() {
       {/* Modal: Chat messages */}
       {selectedTaskId && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-modal-backdrop-in"
           onClick={closeChatDetail}
           role="dialog"
           aria-modal="true"
           aria-label="Chat messages"
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[85vh] flex flex-col"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[85vh] flex flex-col animate-modal-panel-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">

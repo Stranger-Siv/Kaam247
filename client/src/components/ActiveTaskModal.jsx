@@ -25,8 +25,8 @@ function ActiveTaskModal({ isOpen, onClose, activeTaskId, activeTaskTitle, role,
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-50 dark:bg-black/80 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700" style={{ zIndex: 2001 }}>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-50 dark:bg-black/80 p-4 animate-modal-backdrop-in">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 animate-modal-panel-in" style={{ zIndex: 2001 }}>
         <div className="flex items-start gap-4 mb-4">
           <div className="flex-shrink-0">
             <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">

@@ -53,9 +53,9 @@ function RecurringModal({ task, isOpen, onClose, onSuccess }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4 animate-modal-backdrop-in" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 animate-modal-panel-in"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">Recurring schedule</h2>

@@ -15,8 +15,8 @@ function AdminConfirmModal({ isOpen, onClose, onConfirm, title, message, confirm
   const canConfirm = !requireType || typedText === requireType
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" style={{ zIndex: 2001 }}>
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-50 p-4 animate-modal-backdrop-in">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-modal-panel-in" style={{ zIndex: 2001 }}>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
         <p className="text-sm text-gray-600 mb-4">{message}</p>
         

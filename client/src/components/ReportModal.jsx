@@ -80,12 +80,12 @@ function ReportModal({ isOpen, onClose, taskId, reportedUserId, taskTitle }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 dark:bg-black/70"
+        className="fixed inset-0 bg-black/50 dark:bg-black/70 animate-modal-backdrop-in"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl dark:shadow-gray-900/50 dark:border dark:border-gray-700 max-w-md w-full max-h-[90vh] overflow-y-auto z-50">
+      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl dark:shadow-gray-900/50 dark:border dark:border-gray-700 max-w-md w-full max-h-[90vh] overflow-y-auto z-50 animate-modal-panel-in">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">

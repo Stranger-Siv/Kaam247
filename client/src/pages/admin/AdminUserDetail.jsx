@@ -716,8 +716,8 @@ function AdminUserDetail() {
 
       {/* Edit Cancellation Limit Modal */}
       {showEditLimitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900/50 max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4 animate-modal-backdrop-in">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900/50 max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 animate-modal-panel-in">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Edit Cancellation Limit</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Set the maximum number of tasks this user can cancel per day. Current limit: <strong className="text-gray-900 dark:text-gray-100">{user?.totalCancelLimit ?? 2}</strong>

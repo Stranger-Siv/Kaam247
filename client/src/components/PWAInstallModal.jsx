@@ -19,8 +19,8 @@ function PWAInstallModal() {
 
   return (
     <div className="fixed inset-0 z-[1999] flex items-end sm:items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 dark:bg-black/60" onClick={dismiss} aria-hidden />
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full p-6 animate-onboarding-scale-in">
+      <div className="absolute inset-0 bg-black/50 dark:bg-black/60 animate-modal-backdrop-in" onClick={dismiss} aria-hidden />
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full p-6 animate-modal-panel-in">
         <div className="flex items-start justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">Install Kaam247</h2>
           <button

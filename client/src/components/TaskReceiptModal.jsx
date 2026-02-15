@@ -215,11 +215,11 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
 
   return (
     <div
-      className="fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 print:static print:bg-white print:p-0 print:block"
+      className="fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 print:static print:bg-white print:p-0 print:block animate-modal-backdrop-in"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col border-0 sm:border border-gray-200 dark:border-gray-700 print:shadow-none print:rounded-none print:max-w-none print:w-full print:max-h-none print:border print:border-gray-300"
+        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col border-0 sm:border border-gray-200 dark:border-gray-700 print:shadow-none print:rounded-none print:max-w-none print:w-full print:max-h-none print:border print:border-gray-300 animate-modal-sheet-in sm:animate-modal-panel-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

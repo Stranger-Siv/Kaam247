@@ -218,9 +218,9 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[2500] bg-black/60 dark:bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[2500] bg-black/60 dark:bg-black/80 flex items-center justify-center p-4 animate-modal-backdrop-in" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl h-[85vh] sm:h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700"
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl h-[85vh] sm:h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700 animate-modal-panel-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">

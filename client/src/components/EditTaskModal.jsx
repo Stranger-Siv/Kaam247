@@ -225,8 +225,8 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[2000] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4 animate-modal-backdrop-in" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 animate-modal-panel-in" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Edit Task</h2>
           <button

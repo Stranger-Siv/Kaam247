@@ -146,11 +146,11 @@ function AdminLayout() {
           {isSidebarOpen && (
             <>
               <div
-                className="fixed inset-0 bg-black/50 z-40"
+                className="fixed inset-0 bg-black/50 z-40 animate-modal-backdrop-in"
                 onClick={() => setIsSidebarOpen(false)}
                 aria-hidden="true"
               />
-              <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 z-50 flex flex-col shadow-xl">
+              <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 z-50 flex flex-col shadow-xl animate-drawer-left-in">
                 <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                   <span className="font-semibold text-gray-900 dark:text-gray-100">Menu</span>
                   <button

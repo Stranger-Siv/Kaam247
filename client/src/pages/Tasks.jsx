@@ -621,12 +621,12 @@ function Tasks() {
       {filterPanelOpen && (
         <>
           <div
-            className="sm:hidden fixed inset-0 z-[999] bg-black/50 transition-opacity"
+            className="sm:hidden fixed inset-0 z-[999] bg-black/50 animate-modal-backdrop-in"
             aria-hidden="true"
             onClick={() => setFilterPanelOpen(false)}
           />
           <div
-            className="sm:hidden fixed left-0 right-0 bottom-0 z-[1000] bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[85vh] overflow-y-auto animate-slide-up"
+            className="sm:hidden fixed left-0 right-0 bottom-0 z-[1000] bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[85vh] overflow-y-auto animate-modal-sheet-in"
             role="dialog"
             aria-modal="true"
             aria-label="Filters"
