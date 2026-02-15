@@ -56,17 +56,27 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // Exclude large PWA icon from precache (Workbox default limit is 2 MiB)
-        globIgnores: ['**/kaam247_pwa.png'],
+        // Don't precache index.html so we can serve fresh HTML when online (splash, meta, etc.)
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
+        globIgnores: ['**/kaam247_pwa.png', '**/index.html'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB for other assets
-        // Exclude API routes from precaching
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         runtimeCaching: [
+          // Document (index.html): NetworkFirst so PWA gets fresh splash/shell when online
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate' || request.destination === 'document',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'document-cache',
+              networkTimeoutSeconds: 5,
+              cacheableResponse: { statuses: [0, 200] },
+              expiration: { maxEntries: 1, maxAgeSeconds: 60 * 60 * 24 }
+            }
+          },
           // DO NOT cache API routes - use NetworkOnly (no timeout option)
           {
             urlPattern: /^https?:\/\/.*\/api\/.*/,
