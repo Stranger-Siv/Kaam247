@@ -219,8 +219,6 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
 
   if (!isOpen) return null
 
-  const { isExiting, requestClose } = useCloseTransition(onClose, 200)
-
   return (
     <div className={`fixed inset-0 z-[2500] bg-black/60 dark:bg-black/80 flex items-center justify-center p-4 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`} onClick={requestClose}>
       <div
