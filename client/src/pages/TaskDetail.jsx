@@ -74,6 +74,8 @@ function TaskDetail() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
   const [showChatModal, setShowChatModal] = useState(false)
+  const [posterMoreMenuOpen, setPosterMoreMenuOpen] = useState(false)
+  const posterMoreMenuRef = useRef(null)
   const fetchInFlightRef = useRef(false)
   const lastFetchAtRef = useRef(0)
   const fetchTaskRef = useRef(null)
@@ -85,6 +87,18 @@ function TaskDetail() {
   userModeRef.current = userMode
   userIdRef.current = user?.id
   checkActiveTaskRef.current = checkActiveTask
+
+  // Close poster "More" menu on outside click
+  useEffect(() => {
+    if (!posterMoreMenuOpen) return
+    const handleClickOutside = (e) => {
+      if (posterMoreMenuRef.current && !posterMoreMenuRef.current.contains(e.target)) {
+        setPosterMoreMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [posterMoreMenuOpen])
 
   // Reset reached-location state when viewing a different task
   useEffect(() => {
@@ -1415,7 +1429,7 @@ function TaskDetail() {
       } else if (currentStatus === 'IN_PROGRESS' || task.status === 'in_progress') {
         // Poster view while task is IN_PROGRESS
         return (
-          <div className="space-y-3">
+          <div className="space-y-3" ref={posterMoreMenuRef}>
             <button
               type="button"
               onClick={() => setShowChatModal(true)}
@@ -1429,20 +1443,25 @@ function TaskDetail() {
             <div className="w-full px-6 py-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-base font-medium rounded-lg text-center">
               Task in progress
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={handleDuplicateTask}
-                disabled={isDuplicating}
-                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
-              </button>
-              <button
-                onClick={() => setShowRecurringModal(true)}
-                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
-              >
-                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
-              </button>
+            <div className="flex justify-end">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPosterMoreMenuOpen((o) => !o)}
+                  className="px-4 py-3 sm:py-3.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                  aria-expanded={posterMoreMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <span className="sr-only">More actions</span>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
+                </button>
+                {posterMoreMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-20 w-56 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+                    <button type="button" onClick={() => { setShowDuplicateConfirm(true); setPosterMoreMenuOpen(false); }} disabled={isDuplicating} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50">{isDuplicating ? 'Duplicating...' : 'Duplicate'}</button>
+                    <button type="button" onClick={() => { setShowRecurringModal(true); setPosterMoreMenuOpen(false); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">{task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}</button>
+                  </div>
+                )}
+              </div>
             </div>
             {task.workerCompleted ? (
               <>
@@ -1493,7 +1512,7 @@ function TaskDetail() {
         )
       } else if (currentStatus === 'ACCEPTED' || task.status === 'accepted') {
         return (
-          <div className="space-y-3">
+          <div className="space-y-3" ref={posterMoreMenuRef}>
             <button
               type="button"
               onClick={() => setShowChatModal(true)}
@@ -1517,38 +1536,54 @@ function TaskDetail() {
                 <p className="text-sm text-red-700 dark:text-red-400">{cancelWorkerError}</p>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={handleWorkerNoShow}
-                disabled={isNoShowLoading}
-                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isNoShowLoading ? 'Reopening...' : 'Worker didn\'t show'}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelWorker}
-                disabled={isCancelWorkerLoading}
-                className="px-4 py-3 bg-orange-600 dark:bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isCancelWorkerLoading ? 'Changing...' : 'Change worker'}
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={handleDuplicateTask}
-                disabled={isDuplicating}
-                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
-              </button>
-              <button
-                onClick={() => setShowRecurringModal(true)}
-                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
-              >
-                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
-              </button>
+            <div className="flex justify-end">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPosterMoreMenuOpen((o) => !o)}
+                  className="px-4 py-3 sm:py-3.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                  aria-expanded={posterMoreMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <span className="sr-only">More actions</span>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
+                </button>
+                {posterMoreMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-20 w-56 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => { handleWorkerNoShow(); setPosterMoreMenuOpen(false); }}
+                      disabled={isNoShowLoading}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isNoShowLoading ? 'Reopening...' : 'Worker didn\'t show'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { handleCancelWorker(); setPosterMoreMenuOpen(false); }}
+                      disabled={isCancelWorkerLoading}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isCancelWorkerLoading ? 'Changing...' : 'Change worker'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowDuplicateConfirm(true); setPosterMoreMenuOpen(false); }}
+                      disabled={isDuplicating}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowRecurringModal(true); setPosterMoreMenuOpen(false); }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                      {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             {cancelError && (
               <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
@@ -1565,9 +1600,9 @@ function TaskDetail() {
           </div>
         )
       } else if (currentStatus === 'SEARCHING' || currentStatus === 'OPEN' || task.status === 'open') {
-        // Poster can edit, delete, or cancel while searching/open
+        // Poster: primary actions + More menu
         return (
-          <div className="space-y-3">
+          <div className="space-y-3" ref={posterMoreMenuRef}>
             {cancelError && (
               <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
                 <p className="text-sm text-red-700 dark:text-red-400">{cancelError}</p>
@@ -1578,71 +1613,75 @@ function TaskDetail() {
                 <p className="text-sm text-red-700 dark:text-red-400">{deleteError}</p>
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <button
-                onClick={() => setShowIncreaseBudgetModal(true)}
-                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Increase Budget
-              </button>
-              <button
-                onClick={() => setShowExtendValidityModal(true)}
-                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-              >
-                Extend Validity
-              </button>
+            <div className="flex gap-2">
               <button
                 onClick={() => setShowEditModal(true)}
-                className="px-5 sm:px-6 py-3 sm:py-3.5 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                className="flex-1 px-5 sm:px-6 py-3 sm:py-3.5 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Edit
               </button>
-              <button
-                onClick={handleDeleteTask}
-                disabled={isDeleting}
-                className="px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 dark:bg-red-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 dark:hover:bg-red-600 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
-              >
-                {isDeleting ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPosterMoreMenuOpen((o) => !o)}
+                  className="px-4 py-3 sm:py-3.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                  aria-expanded={posterMoreMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <span className="sr-only">More actions</span>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
+                </button>
+                {posterMoreMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-20 w-56 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => { setShowIncreaseBudgetModal(true); setPosterMoreMenuOpen(false); }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      Increase Budget
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowExtendValidityModal(true); setPosterMoreMenuOpen(false); }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                      Extend Validity
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { handleDuplicateTask(); setPosterMoreMenuOpen(false); }}
+                      disabled={isDuplicating}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowRecurringModal(true); setPosterMoreMenuOpen(false); }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                      {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { handleDeleteTask(); setPosterMoreMenuOpen(false); }}
+                      disabled={isDeleting}
+                      className="w-full px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isDeleting ? 'Deleting...' : 'Delete task'}
+                    </button>
+                  </div>
                 )}
-              </button>
-              <button
-                onClick={handleDuplicateTask}
-                disabled={isDuplicating}
-                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
-              </button>
-              <button
-                onClick={() => setShowRecurringModal(true)}
-                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
-              >
-                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
-              </button>
+              </div>
             </div>
             <button
               onClick={handleCancelTask}
               disabled={isCancelling}
-              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
+              className="w-full px-5 sm:px-6 py-3 sm:py-3.5 bg-red-600 dark:bg-red-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-red-700 dark:hover:bg-red-600 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 min-h-[48px] sm:min-h-[52px] touch-manipulation"
             >
               {isCancelling ? 'Cancelling...' : 'Cancel Task'}
             </button>
@@ -2074,7 +2113,7 @@ function TaskDetail() {
         )
       } else if (currentStatus === 'ACCEPTED' || task.status === 'accepted') {
         return (
-          <div className="space-y-3">
+          <div className="space-y-3" ref={posterMoreMenuRef}>
             <button
               type="button"
               onClick={() => setShowChatModal(true)}
@@ -2088,20 +2127,25 @@ function TaskDetail() {
             <div className="w-full px-6 py-4 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-base font-medium rounded-lg text-center">
               Worker assigned: {task.worker || 'Worker'}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={handleDuplicateTask}
-                disabled={isDuplicating}
-                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
-              </button>
-              <button
-                onClick={() => setShowRecurringModal(true)}
-                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
-              >
-                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
-              </button>
+            <div className="flex justify-end">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPosterMoreMenuOpen((o) => !o)}
+                  className="px-4 py-3 sm:py-3.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                  aria-expanded={posterMoreMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <span className="sr-only">More actions</span>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
+                </button>
+                {posterMoreMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-20 w-56 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+                    <button type="button" onClick={() => { setShowDuplicateConfirm(true); setPosterMoreMenuOpen(false); }} disabled={isDuplicating} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50">{isDuplicating ? 'Duplicating...' : 'Duplicate'}</button>
+                    <button type="button" onClick={() => { setShowRecurringModal(true); setPosterMoreMenuOpen(false); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">{task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}</button>
+                  </div>
+                )}
+              </div>
             </div>
             {cancelError && (
               <div className="p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
@@ -2119,7 +2163,7 @@ function TaskDetail() {
         )
       } else if (currentStatus === 'IN_PROGRESS' || task.status === 'in_progress') {
         return (
-          <div className="space-y-3">
+          <div className="space-y-3" ref={posterMoreMenuRef}>
             <button
               type="button"
               onClick={() => setShowChatModal(true)}
@@ -2133,20 +2177,25 @@ function TaskDetail() {
             <div className="w-full px-6 py-4 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-base font-medium rounded-lg text-center">
               Task in progress
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={handleDuplicateTask}
-                disabled={isDuplicating}
-                className="px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white text-sm font-medium rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isDuplicating ? 'Duplicating...' : 'Duplicate'}
-              </button>
-              <button
-                onClick={() => setShowRecurringModal(true)}
-                className="px-4 py-3 bg-purple-600 dark:bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
-              >
-                {task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}
-              </button>
+            <div className="flex justify-end">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPosterMoreMenuOpen((o) => !o)}
+                  className="px-4 py-3 sm:py-3.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors min-h-[48px] sm:min-h-[52px] touch-manipulation"
+                  aria-expanded={posterMoreMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <span className="sr-only">More actions</span>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
+                </button>
+                {posterMoreMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-20 w-56 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+                    <button type="button" onClick={() => { setShowDuplicateConfirm(true); setPosterMoreMenuOpen(false); }} disabled={isDuplicating} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50">{isDuplicating ? 'Duplicating...' : 'Duplicate'}</button>
+                    <button type="button" onClick={() => { setShowRecurringModal(true); setPosterMoreMenuOpen(false); }} className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">{task.recurringSchedule ? (task.recurringSchedule?.paused ? 'Recurring (paused)' : 'Recurring') : 'Make recurring'}</button>
+                  </div>
+                )}
+              </div>
             </div>
             {task.workerCompleted ? (
               <>
