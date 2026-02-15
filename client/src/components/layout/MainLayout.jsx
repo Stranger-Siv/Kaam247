@@ -60,7 +60,7 @@ function MainLayout() {
             {onboardingLoaded && !hasCompletedOnboarding && <OnboardingSlides />}
             <PWAInstallModal />
             {/* Header: fixed on small screens so it stays visible when scrolling; sticky on md+ */}
-            <header className="bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-900/50 fixed md:sticky top-0 left-0 right-0 z-[1000] border-b border-gray-200 dark:border-gray-800 pb-3 md:pb-0">
+            <header className="bg-white dark:bg-gray-900 shadow-sm dark:shadow-gray-900/50 fixed md:sticky top-0 left-0 right-0 z-[1000] border-b border-gray-200 dark:border-gray-800 md:mb-4">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo + Brand Name */}
@@ -180,7 +180,7 @@ function MainLayout() {
                 </div>
             </header>
 
-            {/* Main Content - pt-20 on mobile to clear fixed header (h-16 + pb-3); no extra pt on md+ */}
+            {/* Main Content - pt-16 on mobile to clear fixed header (h-16); no extra pt on md+ */}
             <main className="flex-1 max-w-7xl mx-auto sm:px-6 lg:px-8 pt-20 md:pt-0 py-4 sm:py-6 w-full pb-20 md:pb-6 overflow-x-hidden">
                 <div className="w-full max-w-full overflow-x-hidden">
                     <Outlet />
