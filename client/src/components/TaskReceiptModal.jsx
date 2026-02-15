@@ -385,7 +385,7 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
         </div>
 
         <div
-          className={`shrink-0 ${paddingX} pt-4 pb-4 sm:pb-6 flex flex-col sm:flex-row gap-3 print:hidden border-t border-gray-200 dark:border-gray-700`}
+          className={`shrink-0 ${paddingX} pt-6 pb-4 sm:pb-6 flex flex-col sm:flex-row gap-3 print:hidden border-t border-gray-200 dark:border-gray-700`}
           style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
         >
           <button
