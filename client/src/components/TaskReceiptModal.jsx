@@ -212,29 +212,31 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
 
   return (
     <div
-      className="fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4 print:static print:bg-white print:p-0 print:block"
+      className="fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 print:static print:bg-white print:p-0 print:block safe-area-pb"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0)' }}
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full p-6 sm:p-8 border border-gray-200 dark:border-gray-700 print:shadow-none print:rounded-none print:max-w-none print:w-full print:border-gray-300"
+        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col border border-gray-200 dark:border-gray-700 print:shadow-none print:rounded-none print:max-w-none print:w-full print:max-h-none print:border-gray-300"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-gray-700 pb-3">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+        {/* Header: sticky on small screens */}
+        <div className="flex items-start justify-between gap-2 shrink-0 p-4 sm:p-6 sm:pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
               Task receipt / summary
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               For reimbursement or record keeping
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 print:hidden"
+            className="shrink-0 p-2 -m-2 touch-manipulation text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 print:hidden"
+            aria-label="Close"
           >
-            <span className="sr-only">Close</span>
-            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 20 20" fill="currentColor">
               <path
                 fillRule="evenodd"
                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -244,41 +246,43 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
           </button>
         </div>
 
-        <div className="space-y-4 text-sm sm:text-base text-gray-800 dark:text-gray-100 bg-gray-50/80 dark:bg-gray-900/40 rounded-lg p-4 sm:p-5 mt-2 print:bg-white print:p-4">
-          <div className="flex items-center justify-between border-b border-dashed border-gray-300 dark:border-gray-700 pb-3">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {/* Scrollable body */}
+        <div className="overflow-y-auto overscroll-contain flex-1 min-h-0">
+          <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-gray-800 dark:text-gray-100 bg-gray-50/80 dark:bg-gray-900/40 rounded-none sm:rounded-lg p-4 sm:p-5 sm:mx-4 sm:mt-2 sm:mb-2 print:bg-white print:p-4 print:mx-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-dashed border-gray-300 dark:border-gray-700 pb-3">
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Task ID
               </p>
-              <p className="font-mono text-xs sm:text-sm text-gray-900 dark:text-gray-100">
+              <p className="font-mono text-xs sm:text-sm text-gray-900 dark:text-gray-100 break-all">
                 {taskId}
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <div className="text-left sm:text-right shrink-0">
+              <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Status
               </p>
-              <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+              <p className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm">
                 Completed
               </p>
             </div>
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+            <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
               Task
             </p>
-            <p className="font-semibold text-gray-900 dark:text-gray-100">
+            <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base break-words">
               {task.title}
             </p>
             {task.description && (
-              <p className="mt-1 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+              <p className="mt-1 text-xs sm:text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line break-words">
                 {task.description}
               </p>
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3">
             <div>
               <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
                 Category
@@ -296,14 +300,14 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+            <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
               Location
             </p>
-            <p className="font-medium">
+            <p className="font-medium text-sm sm:text-base break-words">
               {task.fullAddress || task.location || 'Location not specified'}
             </p>
             {task.city && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">{task.city}</p>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{task.city}</p>
             )}
           </div>
 
@@ -328,18 +332,18 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+              <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
                 Created at
               </p>
-              <p className="text-sm">
+              <p className="text-xs sm:text-sm break-words">
                 {postedTime || '—'}
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+              <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
                 Started at
               </p>
-              <p className="text-sm">
+              <p className="text-xs sm:text-sm break-words">
                 {startedAt
                   ? startedAt.toLocaleString('en-IN', {
                       day: 'numeric',
@@ -352,10 +356,10 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+              <p className="text-[11px] sm:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
                 Completed at
               </p>
-              <p className="text-sm">
+              <p className="text-xs sm:text-sm break-words">
                 {completedAt
                   ? completedAt.toLocaleString('en-IN', {
                       day: 'numeric',
@@ -369,26 +373,30 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
             </div>
           </div>
 
-          <div className="mt-4 border-t border-dashed border-gray-300 dark:border-gray-700 pt-3">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="mt-3 sm:mt-4 border-t border-dashed border-gray-300 dark:border-gray-700 pt-3">
+            <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
               This summary is generated by Kaam247 for reimbursement or personal records.
               Payment is handled directly between poster and worker based on the agreed budget.
             </p>
           </div>
         </div>
+        </div>
 
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 print:hidden">
+        <div
+          className="shrink-0 p-4 sm:p-6 pt-0 sm:pt-0 flex flex-col sm:flex-row gap-3 print:hidden border-t border-gray-200 dark:border-gray-700 sm:border-0"
+          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+        >
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
+            className="w-full sm:flex-1 px-4 py-3 sm:py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl sm:rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium touch-manipulation min-h-[44px]"
           >
             Close
           </button>
           <button
             type="button"
             onClick={handlePrint}
-            className="flex-1 px-4 py-2.5 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium"
+            className="w-full sm:flex-1 px-4 py-3 sm:py-2.5 bg-blue-600 dark:bg-blue-500 text-white rounded-xl sm:rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-medium touch-manipulation min-h-[44px]"
           >
             Print / Save as PDF
           </button>
