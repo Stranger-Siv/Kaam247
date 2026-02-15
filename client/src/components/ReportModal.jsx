@@ -79,16 +79,16 @@ function ReportModal({ isOpen, onClose, taskId, reportedUserId, taskTitle }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-4 pb-0 sm:pb-4">
       {/* Backdrop */}
       <div
         className={`fixed inset-0 bg-black/50 dark:bg-black/70 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`}
         onClick={requestClose}
       />
 
-      {/* Modal */}
-      <div className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-xl dark:shadow-gray-900/50 dark:border dark:border-gray-700 max-w-md w-full max-h-[90vh] overflow-y-auto z-50 ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`}>
-        <div className="p-6">
+      {/* Modal: on small screens sit above bottom nav with safe area; on sm+ center as before */}
+      <div className={`relative bg-white dark:bg-gray-800 rounded-t-xl sm:rounded-xl shadow-xl dark:shadow-gray-900/50 dark:border dark:border-gray-700 max-w-md w-full max-h-[85vh] sm:max-h-[90vh] overflow-y-auto z-[1000] ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`}>
+        <div className="p-6 pb-24 sm:pb-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Report an issue</h2>
