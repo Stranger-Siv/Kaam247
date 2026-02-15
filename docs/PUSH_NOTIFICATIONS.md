@@ -40,8 +40,14 @@ When a new task is sent, **all** registered devices get the push. So:
 ### Requirements
 
 - **Server**: Firebase Admin SDK configured (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` in `server/.env`).
-- **Client**: VAPID key for Web Push in `client/.env` (`VITE_VAPID_KEY`), and `firebase-messaging-sw.js` in place.
+- **Client**: VAPID key for Web Push in `client/.env` (`VITE_VAPID_KEY`), and Firebase config in `client/.env` (`VITE_FIREBASE_*`). The file `firebase-messaging-sw.js` is **generated at build** from `firebase-messaging-sw.template.js` using those env vars – do not commit a copy with real API keys.
 - **User**: Enable push notifications at least on the **phone** (and optionally on Chrome) from Profile → Notifications.
+
+### Security (Firebase API key)
+
+- **Never commit** a Firebase API key or other secrets to the repo. The Firebase Cloud Messaging service worker is generated at build time from `client/firebase-messaging-sw.template.js` and `VITE_FIREBASE_*` env vars. The generated file `public/firebase-messaging-sw.js` is in `.gitignore`.
+- If a key was ever exposed (e.g. in Git history): **regenerate it** in [Google Cloud Console](https://console.cloud.google.com/apis/credentials) (Credentials → select the key → Regenerate key), then set the new value in your deployment env (e.g. Netlify, Vercel) and in local `client/.env`.
+- In Google Cloud Console, add **API key restrictions** (e.g. restrict to your Firebase APIs and/or HTTP referrer to your domain) to limit abuse.
 
 ### Sound / “ringing bell”
 

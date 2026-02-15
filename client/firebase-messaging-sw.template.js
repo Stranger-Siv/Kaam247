@@ -1,16 +1,16 @@
 // Firebase Cloud Messaging service worker – receives push when app is in background.
-// Replace the config below with your values from client/.env (VITE_FIREBASE_*).
-// Must be served from same origin as your app (e.g. https://yoursite.com/firebase-messaging-sw.js).
+// This file is generated at build time from firebase-messaging-sw.template.js using VITE_FIREBASE_* env vars.
+// Do not commit firebase-messaging-sw.js with real keys. See client/.env.example and docs.
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js')
 
 firebase.initializeApp({
-  apiKey: 'AIzaSyAU579I7JLAWkFpTp4ShmvSuSaILfejqC4',
-  authDomain: 'kaam247-98b09.firebaseapp.com',
-  projectId: 'kaam247-98b09',
-  storageBucket: 'kaam247-98b09.firebasestorage.app',
-  messagingSenderId: '108028437426',
-  appId: '1:108028437426:web:a4e4bc89f1e08e164d3aab'
+  apiKey: '__VITE_FIREBASE_API_KEY__',
+  authDomain: '__VITE_FIREBASE_AUTH_DOMAIN__',
+  projectId: '__VITE_FIREBASE_PROJECT_ID__',
+  storageBucket: '__VITE_FIREBASE_STORAGE_BUCKET__',
+  messagingSenderId: '__VITE_FIREBASE_MESSAGING_SENDER_ID__',
+  appId: '__VITE_FIREBASE_APP_ID__'
 })
 
 const messaging = firebase.messaging()

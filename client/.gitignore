@@ -26,3 +26,6 @@ dist-ssr
 
 # Environment variables
 .env
+
+# Generated at build/dev from template; contains Firebase config from env – do not commit
+public/firebase-messaging-sw.js

@@ -1,10 +1,54 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { readFileSync, writeFileSync } from 'fs'
+import { join, dirname, resolve } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+const FIREBASE_ENV_KEYS = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_STORAGE_BUCKET',
+  'VITE_FIREBASE_MESSAGING_SENDER_ID',
+  'VITE_FIREBASE_APP_ID'
+]
+
+function generateFirebaseSw(contentFromTemplate) {
+  let content = contentFromTemplate
+  FIREBASE_ENV_KEYS.forEach((key) => {
+    const placeholder = `__${key}__`
+    const value = typeof process.env[key] === 'string' ? process.env[key] : ''
+    content = content.split(placeholder).join(value)
+  })
+  return content
+}
+
+/** Generate firebase-messaging-sw.js from template so API keys are never committed. */
+function firebaseSwPlugin() {
+  const templatePath = join(__dirname, 'firebase-messaging-sw.template.js')
+  return {
+    name: 'firebase-messaging-sw',
+    configureServer() {
+      const template = readFileSync(templatePath, 'utf-8')
+      const outPath = join(__dirname, 'public', 'firebase-messaging-sw.js')
+      writeFileSync(outPath, generateFirebaseSw(template), 'utf-8')
+    },
+    writeBundle(options) {
+      const outDir = resolve(__dirname, options.dir || 'dist')
+      const template = readFileSync(templatePath, 'utf-8')
+      const outPath = join(outDir, 'firebase-messaging-sw.js')
+      writeFileSync(outPath, generateFirebaseSw(template), 'utf-8')
+    }
+  }
+}
 
 export default defineConfig({
   plugins: [
     react(),
+    firebaseSwPlugin(),
     VitePWA({
       // Do NOT auto-register service worker in production to avoid unexpected reload loops.
       // Manifest/icons are still generated, but SW is only registered if you manually do it.
