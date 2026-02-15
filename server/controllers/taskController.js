@@ -1313,10 +1313,8 @@ const cancelWorker = async (req, res) => {
       { new: true, runValidators: true }
     )
 
-    // Increment worker's cancellation count (they were removed by poster)
-    if (workerId) {
-      await User.findByIdAndUpdate(workerId, { $inc: { dailyCancelCount: 1 } })
-    }
+    // Do NOT increment worker's dailyCancelCount – the poster removed them, the worker did not cancel.
+    // Only the poster's daily worker-cancel count is updated below.
 
     // Update poster's daily worker cancel count and timestamp
     if (!poster.lastActionTimestamps) {

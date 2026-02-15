@@ -70,6 +70,7 @@ function TaskDetail() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(null)
   const [showChatModal, setShowChatModal] = useState(false)
+  const [showRemovedByPosterBanner, setShowRemovedByPosterBanner] = useState(false)
   const fetchInFlightRef = useRef(false)
   const lastFetchAtRef = useRef(0)
   const fetchTaskRef = useRef(null)
@@ -86,7 +87,15 @@ function TaskDetail() {
   useEffect(() => {
     setHasReachedLocation(false)
     setReachedLocationError(null)
+    setShowRemovedByPosterBanner(false)
   }, [taskId])
+
+  // Auto-hide "removed by poster" banner after 8 seconds
+  useEffect(() => {
+    if (!showRemovedByPosterBanner) return
+    const t = setTimeout(() => setShowRemovedByPosterBanner(false), 8000)
+    return () => clearTimeout(t)
+  }, [showRemovedByPosterBanner])
 
   // Fetch task: silent = true for background refetches (socket/visibility) - no loading spinner
   const fetchTask = useCallback(async (silent = false) => {
@@ -313,13 +322,16 @@ function TaskDetail() {
     }
 
     const handleTaskCancelled = (data) => {
-      if (String(data.taskId) === String(taskId)) {
-        fetchTaskRef.current(true)
-        if (userMode === 'worker' && checkActiveTask) {
-          checkActiveTask().then(activeTaskData => {
-            setHasActiveTask(activeTaskData?.hasActiveTask || false)
-          })
-        }
+      if (String(data.taskId) !== String(taskId)) return
+      if (userMode === 'worker') {
+        setShowRemovedByPosterBanner(true)
+        if (refreshStatus) refreshStatus()
+      }
+      fetchTaskRef.current(true)
+      if (userMode === 'worker' && checkActiveTask) {
+        checkActiveTask().then(activeTaskData => {
+          setHasActiveTask(activeTaskData?.hasActiveTask || false)
+        })
       }
     }
 
@@ -2557,6 +2569,17 @@ function TaskDetail() {
         {/* Primary Action Section */}
         <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-6 sm:p-8">
           <div className="max-w-md mx-auto space-y-4">
+            {showRemovedByPosterBanner && userMode === 'worker' && (
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-xl flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">Task no longer assigned to you</p>
+                  <p className="text-sm text-amber-800 dark:text-amber-300">The poster has removed you from this task. You can accept other tasks; this does not count toward your cancellation limit.</p>
+                </div>
+              </div>
+            )}
             {renderPrimaryAction()}
 
             {/* Report Button */}
