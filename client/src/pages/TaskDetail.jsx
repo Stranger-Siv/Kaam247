@@ -1750,10 +1750,20 @@ function TaskDetail() {
           </>
         )
       } else if (currentStatus === 'ACCEPTED' || task.status === 'accepted') {
-        // Worker must confirm "Reached location" (within 200m) before Start task is shown
+        // Worker must confirm "Reached location" (within 200m) before Start task is shown; chat is available as soon as accepted
         if (!hasReachedLocation) {
           return (
             <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setShowChatModal(true)}
+                className="w-full px-5 sm:px-6 py-3.5 sm:py-4 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 min-h-[48px]"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Chat with Poster
+              </button>
               <div className="w-full px-6 py-4 bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-base font-medium rounded-lg text-center border border-amber-200 dark:border-amber-700">
                 Go to the task location, then tap below when you've arrived.
               </div>
