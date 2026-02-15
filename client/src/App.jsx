@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
@@ -12,7 +13,8 @@ import { NotificationProvider } from './context/NotificationContext'
 import { CancellationProvider } from './context/CancellationContext'
 import { OnboardingProvider } from './context/OnboardingContext'
 import { PWAInstallProvider } from './context/PWAInstallContext'
-import ColdStartChecker from './components/ColdStartChecker'
+import ColdStartLoading from './components/ColdStartLoading'
+import { API_BASE_URL } from './config/env'
 import ErrorBoundary from './components/ErrorBoundary'
 import PublicLayout from './components/layout/PublicLayout'
 import AppLayout from './components/layout/AppLayout'
@@ -234,18 +236,59 @@ const AppContent = () => (
 )
 
 function App() {
+  // Cold start flow (McFleet-style): one quick check after 500ms; only if it fails show loading and poll
+  const [showColdStart, setShowColdStart] = useState(true)
+  const [isBackendReady, setIsBackendReady] = useState(false)
+
+  useEffect(() => {
+    if (import.meta.env.DEV || localStorage.getItem('skipColdStartCheck') === 'true') {
+      setShowColdStart(false)
+      setIsBackendReady(true)
+      return
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/health`, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          credentials: 'omit'
+        })
+        if (res.ok) {
+          setShowColdStart(false)
+          setIsBackendReady(true)
+        }
+      } catch {
+        // Leave showColdStart true, isBackendReady false → ColdStartLoading will show and poll
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const handleBackendReady = () => {
+    setTimeout(() => {
+      setShowColdStart(false)
+      setIsBackendReady(true)
+    }, 500)
+  }
+
+  if (showColdStart && !isBackendReady) {
+    return (
+      <ThemeProvider>
+        <ColdStartLoading onReady={handleBackendReady} />
+      </ThemeProvider>
+    )
+  }
+
   const content = (
     <ThemeProvider>
       <ErrorBoundary>
-        <ColdStartChecker>
-          {GOOGLE_CLIENT_ID ? (
-            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-              <AppContent />
-            </GoogleOAuthProvider>
-          ) : (
+        {GOOGLE_CLIENT_ID ? (
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
             <AppContent />
-          )}
-        </ColdStartChecker>
+          </GoogleOAuthProvider>
+        ) : (
+          <AppContent />
+        )}
       </ErrorBoundary>
     </ThemeProvider>
   )
