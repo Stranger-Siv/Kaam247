@@ -10,7 +10,7 @@ export default defineConfig({
       // Manifest/icons are still generated, but SW is only registered if you manually do it.
       injectRegister: null,
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo.svg', 'icons/kaam247-pwa.jpeg', 'icons/icon-192.png', 'icons/icon-512.png'],
+      includeAssets: ['favicon.ico', 'logo.svg', 'icons/icon.jpeg', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifestFilename: 'manifest.json',
       // Disable PWA service worker in development for cleaner console
       // PWA will still work in production builds
@@ -30,13 +30,13 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: '/icons/kaam247-pwa.jpeg',
+            src: '/icons/icon.jpeg',
             sizes: '192x192',
             type: 'image/jpeg',
             purpose: 'any maskable'
           },
           {
-            src: '/icons/kaam247-pwa.jpeg',
+            src: '/icons/icon.jpeg',
             sizes: '512x512',
             type: 'image/jpeg',
             purpose: 'any maskable'
@@ -58,7 +58,7 @@ export default defineConfig({
       workbox: {
         // Don't precache index.html so we can serve fresh HTML when online (splash, meta, etc.)
         globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
-        globIgnores: ['**/kaam247_pwa.png', '**/index.html'],
+        globIgnores: ['**/icon.jpeg', '**/index.html'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB for other assets
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
