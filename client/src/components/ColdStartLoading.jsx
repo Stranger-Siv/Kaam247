@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config/env'
+import { useTheme } from '../context/ThemeContext'
 
 const POLL_INTERVAL_MS = 3000
 const POLL_INTERVAL_AFTER_100_MS = 5000
@@ -17,8 +18,10 @@ const MICRO_COPY = [
  * When backend responds, calls onReady(); App.jsx then hides this after 500ms and shows the app.
  */
 function ColdStartLoading({ onReady }) {
+  const { theme } = useTheme()
   const [attempt, setAttempt] = useState(0)
   const [microCopyIndex, setMicroCopyIndex] = useState(0)
+  const isDark = theme === 'dark'
 
   useEffect(() => {
     let cancelled = false
@@ -68,7 +71,7 @@ function ColdStartLoading({ onReady }) {
 
   return (
     <div
-      className="min-h-[100dvh] bg-[#0f172a] flex items-center justify-center p-3 sm:p-6 py-6"
+      className={`min-h-[100dvh] flex items-center justify-center p-3 sm:p-6 py-6 ${isDark ? 'bg-[#0f172a]' : 'bg-slate-100'}`}
       style={{
         paddingLeft: 'max(12px, env(safe-area-inset-left))',
         paddingRight: 'max(12px, env(safe-area-inset-right))',
@@ -77,33 +80,33 @@ function ColdStartLoading({ onReady }) {
       }}
     >
       <div className="max-w-md w-full max-h-[100dvh] overflow-y-auto">
-        <div className="bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 text-center border border-gray-700">
+        <div className={`rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 text-center border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="mb-4 sm:mb-6 flex justify-center">
             <img
               src="/icons/kaam247_pwa.jpeg"
               alt=""
-              className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl object-contain bg-gray-700/50 p-1 sm:p-1.5"
+              className={`w-14 h-14 sm:w-20 sm:h-20 rounded-xl object-contain p-1 sm:p-1.5 ${isDark ? 'bg-gray-700/50' : 'bg-gray-100'}`}
             />
           </div>
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2 sm:mb-3 leading-tight">
+          <h1 className={`text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Waking up Kaam247
           </h1>
-          <p className="text-xs sm:text-sm text-gray-300 mb-2 sm:mb-3 leading-relaxed">
+          <p className={`text-xs sm:text-sm mb-2 sm:mb-3 leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             Our servers pause when inactive to keep the platform fast and affordable.
           </p>
-          <p className="text-xs sm:text-sm text-gray-300 mb-3 sm:mb-4">
+          <p className={`text-xs sm:text-sm mb-3 sm:mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             This usually takes 20–40 seconds.
           </p>
-          <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6 min-h-[2.25rem] sm:min-h-[2.5rem]">
+          <p className={`text-xs sm:text-sm mb-4 sm:mb-6 min-h-[2.25rem] sm:min-h-[2.5rem] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
             {MICRO_COPY[microCopyIndex]}
           </p>
-          <div className="w-full bg-gray-700 rounded-full h-1.5 sm:h-2 mb-2 overflow-hidden">
+          <div className={`w-full rounded-full h-1.5 sm:h-2 mb-2 overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
             <div
               className="h-full bg-amber-400 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-[10px] sm:text-xs text-gray-500 mt-4 sm:mt-6">
+          <p className={`text-[10px] sm:text-xs mt-4 sm:mt-6 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
             All requests are served directly from Kaam247.
           </p>
         </div>
