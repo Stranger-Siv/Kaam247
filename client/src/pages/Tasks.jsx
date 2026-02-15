@@ -202,7 +202,10 @@ function Tasks() {
         if (maxBudget != null) url += `&maxBudget=${maxBudget}`
         if (sortOption) url += `&sort=${encodeURIComponent(sortOption)}`
 
-        const response = await fetch(url)
+        const token = localStorage.getItem('kaam247_token')
+        const response = await fetch(url, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        })
 
         if (!response.ok) {
           throw new Error(`Failed to fetch tasks: ${response.statusText}`)

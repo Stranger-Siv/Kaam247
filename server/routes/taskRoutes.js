@@ -40,8 +40,8 @@ router.get('/tasks/:taskId', getTaskById)
 router.get('/tasks/:taskId/chat', authenticate, getMessages)
 router.post('/tasks/:taskId/chat', authenticate, chatLimit, sendMessage)
 
-// GET /api/tasks - Fetch available tasks
-router.get('/tasks', getAvailableTasks)
+// GET /api/tasks - Fetch available tasks (optional auth: when logged in, exclude poster's own tasks)
+router.get('/tasks', optionalAuthenticate, getAvailableTasks)
 
 // POST /api/tasks/:taskId/cancel - Cancel a task
 router.post('/tasks/:taskId/cancel', optionalAuthenticate, taskActionLimit, cancelTask)

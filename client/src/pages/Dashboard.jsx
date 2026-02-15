@@ -943,9 +943,12 @@ function Dashboard() {
         fetchingRef.current.availableTasks = true
         setAvailableTasksLoading(true)
         try {
-            // Fetch tasks with location filter (5km radius)
+            // Fetch tasks with location filter (5km radius); send token so server excludes our own posted tasks
             const url = `${API_BASE_URL}/api/tasks?lat=${workerLocation.lat}&lng=${workerLocation.lng}&radius=5`
-            const response = await fetch(url)
+            const token = localStorage.getItem('kaam247_token')
+            const response = await fetch(url, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            })
 
             if (response.ok) {
                 const data = await response.json()

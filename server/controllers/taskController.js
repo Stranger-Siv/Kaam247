@@ -590,6 +590,10 @@ const getAvailableTasks = async (req, res) => {
         { expiresAt: { $gt: now } }
       ]
     }
+    // When user is logged in (worker view), hide their own posted tasks so they don't see them
+    if (req.user?._id && mongoose.Types.ObjectId.isValid(req.user._id)) {
+      baseQuery.postedBy = { $ne: req.user._id }
+    }
     if (category) baseQuery.category = category
     if (minBudget != null && !isNaN(minBudget) || maxBudget != null && !isNaN(maxBudget)) {
       baseQuery.budget = {}
