@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useCloseTransition } from '../hooks/useCloseTransition'
 
 function ConfirmationModal({ isOpen, onConfirm, onCancel, title, message, confirmText = 'Confirm', cancelText = 'Cancel', confirmColor = 'red' }) {
@@ -35,7 +36,7 @@ function ConfirmationModal({ isOpen, onConfirm, onCancel, title, message, confir
     requestClose()
   }
 
-  return (
+  const content = (
     <div className={`fixed inset-0 z-[2500] bg-black/60 dark:bg-black/80 flex items-center justify-center p-4 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`} onClick={handleCancel}>
       <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700 ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`} onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
@@ -60,6 +61,8 @@ function ConfirmationModal({ isOpen, onConfirm, onCancel, title, message, confir
       </div>
     </div>
   )
+
+  return createPortal(content, document.body)
 }
 
 export default ConfirmationModal

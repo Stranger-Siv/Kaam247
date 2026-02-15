@@ -12,8 +12,6 @@ import TaskLocationMap from '../components/TaskLocationMap'
 import ReportModal from '../components/ReportModal'
 import EditTaskModal from '../components/EditTaskModal'
 import ConfirmationModal from '../components/ConfirmationModal'
-import IncreaseBudgetModal from '../components/IncreaseBudgetModal'
-import ExtendValidityModal from '../components/ExtendValidityModal'
 import RecurringModal from '../components/RecurringModal'
 import TaskReceiptModal from '../components/TaskReceiptModal'
 import TaskChat from '../components/TaskChat'
@@ -66,8 +64,6 @@ function TaskDetail() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
-  const [showIncreaseBudgetModal, setShowIncreaseBudgetModal] = useState(false)
-  const [showExtendValidityModal, setShowExtendValidityModal] = useState(false)
   const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false)
   const [showRecurringModal, setShowRecurringModal] = useState(false)
   const [isDuplicating, setIsDuplicating] = useState(false)
@@ -1580,21 +1576,6 @@ function TaskDetail() {
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <button
-                onClick={() => setShowIncreaseBudgetModal(true)}
-                className="px-4 py-3 bg-emerald-600 dark:bg-emerald-500 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Increase Budget
-              </button>
-              <button
-                onClick={() => setShowExtendValidityModal(true)}
-                className="px-4 py-3 bg-amber-600 dark:bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-700 dark:hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-              >
-                Extend Validity
-              </button>
-              <button
                 onClick={() => setShowEditModal(true)}
                 className="px-5 sm:px-6 py-3 sm:py-3.5 bg-blue-600 dark:bg-blue-500 text-white text-sm sm:text-base font-semibold rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 min-h-[48px] sm:min-h-[52px] touch-manipulation"
               >
@@ -2621,26 +2602,6 @@ function TaskDetail() {
           task={task}
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
-          onSuccess={handleEditSuccess}
-        />
-      )}
-
-      {/* Increase Budget Modal */}
-      {showIncreaseBudgetModal && task && (
-        <IncreaseBudgetModal
-          task={{ ...task, budget: task.budgetNum ?? task.budget }}
-          isOpen={showIncreaseBudgetModal}
-          onClose={() => setShowIncreaseBudgetModal(false)}
-          onSuccess={handleEditSuccess}
-        />
-      )}
-
-      {/* Extend Validity Modal */}
-      {showExtendValidityModal && task && (
-        <ExtendValidityModal
-          task={task}
-          isOpen={showExtendValidityModal}
-          onClose={() => setShowExtendValidityModal(false)}
           onSuccess={handleEditSuccess}
         />
       )}
