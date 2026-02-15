@@ -12,6 +12,7 @@ import TaskLocationMap from '../components/TaskLocationMap'
 import ReportModal from '../components/ReportModal'
 import EditTaskModal from '../components/EditTaskModal'
 import ConfirmationModal from '../components/ConfirmationModal'
+import TaskCancelledOverlay from '../components/TaskCancelledOverlay'
 import RecurringModal from '../components/RecurringModal'
 import TaskReceiptModal from '../components/TaskReceiptModal'
 import TaskChat from '../components/TaskChat'
@@ -71,6 +72,9 @@ function TaskDetail() {
   const [deleteError, setDeleteError] = useState(null)
   const [showChatModal, setShowChatModal] = useState(false)
   const [showRemovedByPosterBanner, setShowRemovedByPosterBanner] = useState(false)
+  const [showCancelledOverlay, setShowCancelledOverlay] = useState(false)
+  const [cancelledOverlayMessage, setCancelledOverlayMessage] = useState('')
+  const [cancelledOverlayNavigateTo, setCancelledOverlayNavigateTo] = useState(null)
   const fetchInFlightRef = useRef(false)
   const lastFetchAtRef = useRef(0)
   const fetchTaskRef = useRef(null)
@@ -326,7 +330,12 @@ function TaskDetail() {
       if (userMode === 'worker') {
         setShowRemovedByPosterBanner(true)
         if (refreshStatus) refreshStatus()
+        setCancelledOverlayMessage('The poster has removed you from this task. You can accept other tasks.')
+      } else {
+        setCancelledOverlayMessage('This task was cancelled.')
       }
+      setCancelledOverlayNavigateTo(null)
+      setShowCancelledOverlay(true)
       fetchTaskRef.current(true)
       if (userMode === 'worker' && checkActiveTask) {
         checkActiveTask().then(activeTaskData => {
@@ -1114,12 +1123,10 @@ function TaskDetail() {
         setHasActiveTask(activeTaskData?.hasActiveTask || false)
       }
 
-      // Redirect based on mode
-      if (userMode === 'worker') {
-        navigate('/tasks')
-      } else {
-        navigate('/dashboard')
-      }
+      // Show full-screen cancelled overlay; navigate when user dismisses it
+      setCancelledOverlayMessage(userMode === 'worker' ? 'You have cancelled this task.' : 'Your task has been cancelled.')
+      setCancelledOverlayNavigateTo(userMode === 'worker' ? '/tasks' : '/dashboard')
+      setShowCancelledOverlay(true)
     } catch (err) {
       setCancelError(err.message || 'Failed to cancel task. Please try again.')
     } finally {
@@ -2717,6 +2724,20 @@ function TaskDetail() {
         confirmText="Yes, Delete"
         cancelText="Keep Task"
         confirmColor="red"
+      />
+
+      {/* Task cancelled overlay – large popup with smooth in/out */}
+      <TaskCancelledOverlay
+        isOpen={showCancelledOverlay}
+        message={cancelledOverlayMessage}
+        onClose={() => {
+          setShowCancelledOverlay(false)
+          setCancelledOverlayMessage('')
+          if (cancelledOverlayNavigateTo) {
+            navigate(cancelledOverlayNavigateTo)
+            setCancelledOverlayNavigateTo(null)
+          }
+        }}
       />
     </div>
   )
