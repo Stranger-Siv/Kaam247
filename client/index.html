@@ -3,10 +3,10 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description"
     content="Kaam247 (also written as Kaam 247) is a hyperlocal task marketplace. Post tasks and get help nearby, or earn money by completing tasks in your area." />
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#030712" />
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <link rel="manifest" href="/manifest.json" />
   <title>Kaam247 – Local Tasks & Nearby Work</title>
@@ -35,10 +35,78 @@
     /* Fallback so body is never white before script runs */
     body {
       background-color: #030712;
+      margin: 0;
+      min-height: 100vh;
     }
 
     html:not(.dark) body {
-      background-color: #f9fafb;
+      background-color: #f8fafc;
+    }
+
+    /* PWA starting splash – shown until React mounts */
+    #pwa-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #030712;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+
+    html:not(.dark) #pwa-splash {
+      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+
+    #pwa-splash .splash-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      object-fit: contain;
+    }
+
+    #pwa-splash .splash-name {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px 0;
+    }
+
+    html:not(.dark) #pwa-splash .splash-name {
+      color: #0f172a;
+    }
+
+    #pwa-splash .splash-tagline {
+      font-size: 0.875rem;
+      color: #94a3b8;
+      margin: 0 0 32px 0;
+    }
+
+    html:not(.dark) #pwa-splash .splash-tagline {
+      color: #64748b;
+    }
+
+    #pwa-splash .splash-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #334155;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: pwa-splash-spin 0.8s linear infinite;
+    }
+
+    html:not(.dark) #pwa-splash .splash-spinner {
+      border-color: #cbd5e1;
+      border-top-color: #3b82f6;
+    }
+
+    @keyframes pwa-splash-spin {
+      to { transform: rotate(360deg); }
     }
   </style>
   <!-- Basic organization structured data for Kaam247 -->
@@ -67,6 +135,13 @@
 </head>
 
 <body>
+  <!-- PWA starting splash – removed by main.jsx when app mounts -->
+  <div id="pwa-splash" aria-hidden="true">
+    <img src="/logo.svg" alt="" class="splash-logo" width="80" height="80" />
+    <h1 class="splash-name">Kaam247</h1>
+    <p class="splash-tagline">Local tasks &amp; nearby work</p>
+    <div class="splash-spinner" role="status" aria-label="Loading"></div>
+  </div>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

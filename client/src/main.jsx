@@ -167,7 +167,21 @@ window.addEventListener('unhandledrejection', (event) => {
   return true
 }, true) // Use capture phase to catch errors early
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <App />
-)
+const root = document.getElementById('root')
+ReactDOM.createRoot(root).render(<App />)
+
+// Remove PWA splash once React has painted so the first screen is our app, not the static splash
+function removePwaSplash() {
+  const splash = document.getElementById('pwa-splash')
+  if (splash && splash.parentNode) {
+    splash.style.opacity = '0'
+    splash.style.transition = 'opacity 0.2s ease-out'
+    setTimeout(() => {
+      if (splash.parentNode) splash.remove()
+    }, 200)
+  }
+}
+requestAnimationFrame(() => {
+  requestAnimationFrame(removePwaSplash)
+})
 
