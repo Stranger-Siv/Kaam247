@@ -58,7 +58,7 @@ export default defineConfig({
       workbox: {
         // Don't precache index.html so we can serve fresh HTML when online (splash, meta, etc.)
         globPatterns: ['**/*.{js,css,ico,png,svg,woff2}'],
-        globIgnores: ['**/icon.jpeg', '**/index.html'],
+        globIgnores: ['**/icon.jpeg', '**/index.html', '**/kaam247_pwa_1.png'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB for other assets
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
