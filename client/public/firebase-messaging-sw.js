@@ -37,7 +37,7 @@ messaging.onBackgroundMessage(function (payload) {
 
   const options = {
     body: body,
-    icon: '/icons/kaam247_pwa.jpeg',
+    icon: '/icons/kaam247_pwa_new.png',
     data: Object.assign({}, data, taskId ? { url: '/tasks/' + taskId } : {}),
     tag: tag,
     requireInteraction: isNewTask,

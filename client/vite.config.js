@@ -10,7 +10,7 @@ export default defineConfig({
       // Manifest/icons are still generated, but SW is only registered if you manually do it.
       injectRegister: null,
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo.svg', 'icons/kaam247_pwa.jpeg', 'icons/icon-192.png', 'icons/icon-512.png'],
+      includeAssets: ['favicon.ico', 'logo.svg', 'icons/kaam247_pwa_new.png', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifestFilename: 'manifest.json',
       // Disable PWA service worker in development for cleaner console
       // PWA will still work in production builds
@@ -30,15 +30,15 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: '/icons/kaam247_pwa.jpeg',
+            src: '/icons/kaam247_pwa_new.png',
             sizes: '192x192',
-            type: 'image/jpeg',
+            type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/icons/kaam247_pwa.jpeg',
+            src: '/icons/kaam247_pwa_new.png',
             sizes: '512x512',
-            type: 'image/jpeg',
+            type: 'image/png',
             purpose: 'any maskable'
           },
           {
