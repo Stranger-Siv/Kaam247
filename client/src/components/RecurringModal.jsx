@@ -61,10 +61,13 @@ function RecurringModal({ task, isOpen, onClose, onSuccess }) {
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">Recurring schedule</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
           {task.isRecurringTemplate
             ? 'Update how often a new task is created from this template.'
             : 'Create a new task from this one automatically on a schedule.'}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">
+          Daily = about every 24 hours (exact time depends on server checks, roughly when you enabled it). Weekly = every 7 days. Monthly = same date each month.
         </p>
         {error && (
           <div className="mb-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 py-2 rounded-lg text-sm">

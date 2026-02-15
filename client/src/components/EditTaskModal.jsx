@@ -14,7 +14,8 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
     category: '',
     budget: '',
     hours: '',
-    fullAddress: ''
+    fullAddress: '',
+    validForDays: '7'
   })
   const [locationData, setLocationData] = useState({
     coordinates: null,
@@ -48,13 +49,23 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   // Initialize form data when task changes
   useEffect(() => {
     if (task && isOpen) {
+      let validForDays = 7
+      if (task.expiresAt) {
+        const exp = new Date(task.expiresAt)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        exp.setHours(0, 0, 0, 0)
+        const days = Math.ceil((exp - today) / (24 * 60 * 60 * 1000))
+        if (days >= 1 && days <= 14) validForDays = days
+      }
       setFormData({
         title: task.title || '',
         description: task.description || '',
         category: task.category || '',
         budget: task.budget?.toString() || '',
         hours: task.expectedDuration?.toString() || '',
-        fullAddress: task.fullAddress || task.location?.fullAddress || ''
+        fullAddress: task.fullAddress || task.location?.fullAddress || '',
+        validForDays: String(validForDays)
       })
       setLocationData({
         coordinates: task.location?.coordinates || null,
@@ -139,11 +150,12 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
 
   const validateForm = () => {
     const errors = {}
-
+    const days = Number(formData.validForDays)
     if (!formData.title.trim()) errors.title = 'Title is required'
     if (!formData.description.trim()) errors.description = 'Description is required'
     if (!formData.category) errors.category = 'Category is required'
     if (!formData.budget || Number(formData.budget) <= 0) errors.budget = 'Budget must be greater than 0'
+    if (isNaN(days) || days < 1 || days > 14) errors.validForDays = 'Enter 1–14 days'
     if (!locationData.coordinates) errors.location = 'Location is required'
 
     setFieldErrors(errors)
@@ -176,6 +188,7 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
         throw new Error('User ID not found')
       }
 
+      const validForDaysNum = Math.min(14, Math.max(1, Math.floor(Number(formData.validForDays) || 7)))
       const updateData = {
         posterId: user.id,
         title: formData.title.trim(),
@@ -189,6 +202,7 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
           fullAddress: formData.fullAddress?.trim() || null
         },
         expectedDuration: formData.hours ? Number(formData.hours) : null,
+        validForDays: validForDaysNum,
         shouldReAlert: shouldReAlert
       }
 
@@ -319,6 +333,30 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
             {fieldErrors.budget && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.budget}</p>
             )}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              You can change budget and how long the task stays listed here. Separate “Increase Budget” and “Extend Validity” buttons are quick shortcuts for only those changes.
+            </p>
+          </div>
+
+          {/* List for how many days (validity) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              List for (days) *
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={14}
+              value={formData.validForDays}
+              onChange={(e) => handleInputChange('validForDays', e.target.value)}
+              className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 ${fieldErrors.validForDays ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'}`}
+            />
+            {fieldErrors.validForDays && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{fieldErrors.validForDays}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              How many days from today this task should stay open (1–14). You can also use “Extend Validity” for a quick extension.
+            </p>
           </div>
 
           {/* Location */}
