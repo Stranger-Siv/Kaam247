@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import ThemeToggle from '../ThemeToggle'
@@ -144,26 +145,31 @@ function AdminLayout() {
             </div>
           </div>
 
-          {/* Mobile & medium: Sidebar drawer (all 11 items scrollable) */}
-          {(isSidebarOpen || drawerCloseTransition.isExiting) && (
+          {/* Mobile & medium: Sidebar drawer – rendered in portal so it sits on top and links are clickable */}
+          {(isSidebarOpen || drawerCloseTransition.isExiting) && createPortal(
             <>
               <div
-                className={`fixed inset-0 bg-black/50 z-40 ${drawerCloseTransition.isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`}
+                className={`fixed inset-0 bg-black/50 z-[9998] ${drawerCloseTransition.isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`}
                 onClick={drawerCloseTransition.requestClose}
                 aria-hidden="true"
               />
-              <div className={`fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 z-50 flex flex-col shadow-xl ${drawerCloseTransition.isExiting ? 'animate-drawer-left-out' : 'animate-drawer-left-in'}`}>
+              <div
+                className={`fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 z-[9999] flex flex-col shadow-xl ${drawerCloseTransition.isExiting ? 'animate-drawer-left-out' : 'animate-drawer-left-in'}`}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Admin menu"
+              >
                 <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                   <span className="font-semibold text-gray-900 dark:text-gray-100">Menu</span>
                   <button
                     onClick={drawerCloseTransition.requestClose}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 min-h-[44px] min-w-[44px] flex items-center justify-center"
                     aria-label="Close menu"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
-                <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1">
+                <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-3 py-4 space-y-1">
                   {menuItems.map((item) => (
                     <Link
                       key={item.path}
@@ -174,14 +180,14 @@ function AdminLayout() {
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                         }`}
                     >
-                      <span className="text-lg">{item.icon}</span>
-                      {item.label}
+                      <span className="text-lg flex-shrink-0" aria-hidden>{item.icon}</span>
+                      <span>{item.label}</span>
                     </Link>
                   ))}
                 </nav>
                 <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-blue-600 dark:text-blue-400 text-sm font-semibold">
                         {user?.name?.charAt(0)?.toUpperCase() || 'A'}
                       </span>
@@ -196,13 +202,14 @@ function AdminLayout() {
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors border border-red-200 dark:border-red-800"
+                    className="w-full px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors border border-red-200 dark:border-red-800 min-h-[44px]"
                   >
                     Logout
                   </button>
                 </div>
               </div>
-            </>
+            </>,
+            document.body
           )}
         </header>
 
