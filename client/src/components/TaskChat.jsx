@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { API_BASE_URL } from '../config/env'
+import { useCloseTransition } from '../hooks/useCloseTransition'
 
 /**
  * Task-based chat: one chat per task. Shown only when task is ACCEPTED or IN_PROGRESS (or read-only when COMPLETED).
@@ -8,6 +9,7 @@ import { API_BASE_URL } from '../config/env'
  * - Sends via REST + optimistic UI; socket broadcasts to other participant
  */
 function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSocket, otherLabel = 'Other', userMode = 'worker' }) {
+  const { isExiting, requestClose } = useCloseTransition(onClose, 200)
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState('')
   const [loading, setLoading] = useState(true)
@@ -217,17 +219,19 @@ function TaskChat({ isOpen, onClose, taskId, taskTitle, isReadOnly, user, getSoc
 
   if (!isOpen) return null
 
+  const { isExiting, requestClose } = useCloseTransition(onClose, 200)
+
   return (
-    <div className="fixed inset-0 z-[2500] bg-black/60 dark:bg-black/80 flex items-center justify-center p-4 animate-modal-backdrop-in" onClick={onClose}>
+    <div className={`fixed inset-0 z-[2500] bg-black/60 dark:bg-black/80 flex items-center justify-center p-4 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`} onClick={requestClose}>
       <div
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl h-[85vh] sm:h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700 animate-modal-panel-in"
+        className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl h-[85vh] sm:h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700 ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate pr-2">{taskTitle || 'Task Chat'}</h3>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
             aria-label="Close"
           >

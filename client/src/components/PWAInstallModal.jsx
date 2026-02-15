@@ -1,4 +1,5 @@
 import { usePWAInstall } from '../context/PWAInstallContext'
+import { useCloseTransition } from '../hooks/useCloseTransition'
 
 const BENEFITS = [
   'Faster access from home screen',
@@ -9,23 +10,24 @@ const BENEFITS = [
 
 function PWAInstallModal() {
   const { showPrompt, canInstall, dismiss, install } = usePWAInstall()
-
-  if (!showPrompt) return null
+  const { isExiting, requestClose } = useCloseTransition(dismiss, 200)
 
   const handleInstall = async () => {
     const ok = await install()
-    if (ok) dismiss()
+    if (ok) requestClose()
   }
+
+  if (!showPrompt && !isExiting) return null
 
   return (
     <div className="fixed inset-0 z-[1999] flex items-end sm:items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 dark:bg-black/60 animate-modal-backdrop-in" onClick={dismiss} aria-hidden />
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full p-6 animate-modal-panel-in">
+      <div className={`absolute inset-0 bg-black/50 dark:bg-black/60 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`} onClick={requestClose} aria-hidden />
+      <div className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full p-6 ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`}>
         <div className="flex items-start justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">Install Kaam247</h2>
           <button
             type="button"
-            onClick={dismiss}
+            onClick={requestClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-lg"
             aria-label="Close"
           >
@@ -52,7 +54,7 @@ function PWAInstallModal() {
             </button>
             <button
               type="button"
-              onClick={dismiss}
+              onClick={requestClose}
               className="px-4 py-3 text-gray-600 dark:text-gray-400 font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               Not now
@@ -67,7 +69,7 @@ function PWAInstallModal() {
             </div>
             <button
               type="button"
-              onClick={dismiss}
+              onClick={requestClose}
               className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               Got it

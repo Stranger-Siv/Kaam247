@@ -4,8 +4,10 @@ import { useCategories } from '../hooks/useCategories'
 import LocationPickerMap from './LocationPickerMap'
 import { reverseGeocode } from '../utils/geocoding'
 import ConfirmationModal from './ConfirmationModal'
+import { useCloseTransition } from '../hooks/useCloseTransition'
 
 function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
+  const { isExiting, requestClose } = useCloseTransition(onClose, 200)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -225,12 +227,12 @@ function EditTaskModal({ task, isOpen, onClose, onSuccess }) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4 animate-modal-backdrop-in" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 animate-modal-panel-in" onClick={(e) => e.stopPropagation()}>
+    <div className={`fixed inset-0 z-[2000] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`} onClick={requestClose}>
+      <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`} onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Edit Task</h2>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="w-8 h-8 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             aria-label="Close"
           >

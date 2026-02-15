@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { API_BASE_URL } from '../../config/env'
+import { useCloseTransition } from '../../hooks/useCloseTransition'
 
 function AdminChats() {
   const [chats, setChats] = useState([])
@@ -14,6 +15,10 @@ function AdminChats() {
   const [chatDetail, setChatDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 0 })
+  const chatModalClose = useCloseTransition(() => {
+    setSelectedTaskId(null)
+    setChatDetail(null)
+  }, 200)
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -79,10 +84,7 @@ function AdminChats() {
     }
   }
 
-  const closeChatDetail = () => {
-    setSelectedTaskId(null)
-    setChatDetail(null)
-  }
+  const closeChatDetail = chatModalClose.requestClose
 
   const messageCount = (c) => (c.messages && Array.isArray(c.messages) ? c.messages.length : 0)
   const formatDate = (d) => (d ? new Date(d).toLocaleString() : '—')
@@ -263,14 +265,14 @@ function AdminChats() {
       {/* Modal: Chat messages */}
       {selectedTaskId && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-modal-backdrop-in"
+          className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 ${chatModalClose.isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`}
           onClick={closeChatDetail}
           role="dialog"
           aria-modal="true"
           aria-label="Chat messages"
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[85vh] flex flex-col animate-modal-panel-in"
+            className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[85vh] flex flex-col ${chatModalClose.isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">

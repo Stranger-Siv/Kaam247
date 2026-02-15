@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import ThemeToggle from '../ThemeToggle'
+import { useCloseTransition } from '../../hooks/useCloseTransition'
 
 function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const drawerCloseTransition = useCloseTransition(() => setIsSidebarOpen(false), 200)
   const navigate = useNavigate()
   const location = useLocation()
   const { logout, user } = useAuth()
@@ -143,18 +145,18 @@ function AdminLayout() {
           </div>
 
           {/* Mobile & medium: Sidebar drawer (all 11 items scrollable) */}
-          {isSidebarOpen && (
+          {(isSidebarOpen || drawerCloseTransition.isExiting) && (
             <>
               <div
-                className="fixed inset-0 bg-black/50 z-40 animate-modal-backdrop-in"
-                onClick={() => setIsSidebarOpen(false)}
+                className={`fixed inset-0 bg-black/50 z-40 ${drawerCloseTransition.isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`}
+                onClick={drawerCloseTransition.requestClose}
                 aria-hidden="true"
               />
-              <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 z-50 flex flex-col shadow-xl animate-drawer-left-in">
+              <div className={`fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 z-50 flex flex-col shadow-xl ${drawerCloseTransition.isExiting ? 'animate-drawer-left-out' : 'animate-drawer-left-in'}`}>
                 <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                   <span className="font-semibold text-gray-900 dark:text-gray-100">Menu</span>
                   <button
-                    onClick={() => setIsSidebarOpen(false)}
+                    onClick={drawerCloseTransition.requestClose}
                     className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
                     aria-label="Close menu"
                   >

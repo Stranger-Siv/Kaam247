@@ -13,6 +13,7 @@ import { useSwipeGesture } from '../hooks/useSwipeGesture'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import SwipeableTaskCard from '../components/SwipeableTaskCard'
 import LoginCTA from '../components/LoginCTA'
+import { useCloseTransition } from '../hooks/useCloseTransition'
 
 // College pilot: default 2 km campus radius
 const DISTANCE_OPTIONS = [
@@ -41,6 +42,7 @@ function Tasks() {
   const [showOnlySaved, setShowOnlySaved] = useState(false)
   const [savedTaskIds, setSavedTaskIds] = useState(new Set())
   const [filterPanelOpen, setFilterPanelOpen] = useState(false)
+  const filterCloseTransition = useCloseTransition(() => setFilterPanelOpen(false), 250)
   const [taskPage, setTaskPage] = useState(1)
   const [hasMoreTasks, setHasMoreTasks] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -618,15 +620,15 @@ function Tasks() {
       </button>
 
       {/* Small screen: filter sheet (slides up from bottom) */}
-      {filterPanelOpen && (
+      {(filterPanelOpen || filterCloseTransition.isExiting) && (
         <>
           <div
-            className="sm:hidden fixed inset-0 z-[999] bg-black/50 animate-modal-backdrop-in"
+            className={`sm:hidden fixed inset-0 z-[999] bg-black/50 ${filterCloseTransition.isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`}
             aria-hidden="true"
-            onClick={() => setFilterPanelOpen(false)}
+            onClick={filterCloseTransition.requestClose}
           />
           <div
-            className="sm:hidden fixed left-0 right-0 bottom-0 z-[1000] bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[85vh] overflow-y-auto animate-modal-sheet-in"
+            className={`sm:hidden fixed left-0 right-0 bottom-0 z-[1000] bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[85vh] overflow-y-auto ${filterCloseTransition.isExiting ? 'animate-modal-sheet-out' : 'animate-modal-sheet-in'}`}
             role="dialog"
             aria-modal="true"
             aria-label="Filters"
@@ -635,7 +637,7 @@ function Tasks() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filters</h2>
               <button
                 type="button"
-                onClick={() => setFilterPanelOpen(false)}
+                onClick={filterCloseTransition.requestClose}
                 className="text-blue-600 dark:text-blue-400 font-medium text-sm"
               >
                 Done

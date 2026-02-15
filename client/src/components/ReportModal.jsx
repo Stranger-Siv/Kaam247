@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { API_BASE_URL } from '../config/env'
+import { useCloseTransition } from '../hooks/useCloseTransition'
 
 function ReportModal({ isOpen, onClose, taskId, reportedUserId, taskTitle }) {
+  const { isExiting, requestClose } = useCloseTransition(onClose, 200)
   const [reason, setReason] = useState('')
   const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -80,18 +82,18 @@ function ReportModal({ isOpen, onClose, taskId, reportedUserId, taskTitle }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 dark:bg-black/70 animate-modal-backdrop-in"
-        onClick={onClose}
+        className={`fixed inset-0 bg-black/50 dark:bg-black/70 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`}
+        onClick={requestClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl dark:shadow-gray-900/50 dark:border dark:border-gray-700 max-w-md w-full max-h-[90vh] overflow-y-auto z-50 animate-modal-panel-in">
+      <div className={`relative bg-white dark:bg-gray-800 rounded-xl shadow-xl dark:shadow-gray-900/50 dark:border dark:border-gray-700 max-w-md w-full max-h-[90vh] overflow-y-auto z-50 ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`}>
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Report an issue</h2>
             <button
-              onClick={onClose}
+              onClick={requestClose}
               className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
               disabled={isSubmitting}
             >

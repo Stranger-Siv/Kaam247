@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { useAvailability } from '../context/AvailabilityContext'
+import { useCloseTransition } from '../hooks/useCloseTransition'
 
 function ActiveTaskModal({ isOpen, onClose, activeTaskId, activeTaskTitle, role, type = 'mode', isOnline = false }) {
   const navigate = useNavigate()
   const { setOnline } = useAvailability()
+  const { isExiting, requestClose } = useCloseTransition(onClose, 200)
 
   if (!isOpen) return null
 
@@ -11,22 +13,21 @@ function ActiveTaskModal({ isOpen, onClose, activeTaskId, activeTaskTitle, role,
     if (activeTaskId) {
       navigate(`/tasks/${activeTaskId}`)
     }
-    onClose()
+    requestClose()
   }
 
   const handleStayOnline = () => {
-    onClose()
+    requestClose()
   }
 
   const handleGoOffline = async () => {
     await setOnline(false)
-    onClose()
-    // After going offline, user can switch modes
+    requestClose()
   }
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-50 dark:bg-black/80 p-4 animate-modal-backdrop-in">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 animate-modal-panel-in" style={{ zIndex: 2001 }}>
+    <div className={`fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-50 dark:bg-black/80 p-4 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`} onClick={requestClose}>
+      <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`} style={{ zIndex: 2001 }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start gap-4 mb-4">
           <div className="flex-shrink-0">
             <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
@@ -82,7 +83,7 @@ function ActiveTaskModal({ isOpen, onClose, activeTaskId, activeTaskTitle, role,
             </button>
           )}
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors min-h-[44px]"
           >
             Cancel

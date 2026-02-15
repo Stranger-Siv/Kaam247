@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { API_BASE_URL } from '../config/env'
 import ConfirmationModal from './ConfirmationModal'
+import { useCloseTransition } from '../hooks/useCloseTransition'
 
 function ExtendValidityModal({ task, isOpen, onClose, onSuccess }) {
+  const { isExiting, requestClose } = useCloseTransition(onClose, 200)
   const [validForDays, setValidForDays] = useState(7)
   const [error, setError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -69,9 +71,9 @@ function ExtendValidityModal({ task, isOpen, onClose, onSuccess }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4 animate-modal-backdrop-in" onClick={onClose}>
+    <div className={`fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-center justify-center p-4 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`} onClick={requestClose}>
       <div
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 animate-modal-panel-in"
+        className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">Extend Validity</h2>

@@ -13,6 +13,7 @@ import { API_BASE_URL } from '../config/env'
 import { performStateRecovery } from '../utils/stateRecovery'
 import { reverseGeocode } from '../utils/geocoding'
 import { usePullToRefresh } from '../hooks/usePullToRefresh'
+import { useCloseTransition } from '../hooks/useCloseTransition'
 import GuestView from '../components/GuestView'
 
 /** Format avg time-to-accept (ms) for poster analytics: "5m", "1.2h", "—" */
@@ -553,6 +554,7 @@ function Dashboard() {
     const [bulkActionLoading, setBulkActionLoading] = useState(false)
     const [posterAnalytics, setPosterAnalytics] = useState(null)
     const [posterFilterPanelOpen, setPosterFilterPanelOpen] = useState(false)
+    const posterFilterCloseTransition = useCloseTransition(() => setPosterFilterPanelOpen(false), 250)
 
     // DATA CONSISTENCY: Fetch posted tasks for poster mode - with filters
     const fetchPostedTasks = useCallback(async () => {
@@ -1781,15 +1783,15 @@ function Dashboard() {
                         </div>
 
                         {/* Small screen: filter sheet */}
-                        {posterFilterPanelOpen && (
+                        {(posterFilterPanelOpen || posterFilterCloseTransition.isExiting) && (
                             <>
                                 <div
-                                    className="sm:hidden fixed inset-0 z-[999] bg-black/50 animate-modal-backdrop-in"
+                                    className={`sm:hidden fixed inset-0 z-[999] bg-black/50 ${posterFilterCloseTransition.isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`}
                                     aria-hidden="true"
-                                    onClick={() => setPosterFilterPanelOpen(false)}
+                                    onClick={posterFilterCloseTransition.requestClose}
                                 />
                                 <div
-                                    className="sm:hidden fixed left-0 right-0 bottom-0 z-[1000] bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[85vh] overflow-y-auto animate-modal-sheet-in"
+                                    className={`sm:hidden fixed left-0 right-0 bottom-0 z-[1000] bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[85vh] overflow-y-auto ${posterFilterCloseTransition.isExiting ? 'animate-modal-sheet-out' : 'animate-modal-sheet-in'}`}
                                     role="dialog"
                                     aria-modal="true"
                                     aria-label="Filters"
@@ -1798,7 +1800,7 @@ function Dashboard() {
                                         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filters</h2>
                                         <button
                                             type="button"
-                                            onClick={() => setPosterFilterPanelOpen(false)}
+                                            onClick={posterFilterCloseTransition.requestClose}
                                             className="text-blue-600 dark:text-blue-400 font-medium text-sm"
                                         >
                                             Done

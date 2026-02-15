@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '../../config/env'
 import AdminConfirmModal from '../../components/admin/AdminConfirmModal'
 import AdminToast from '../../components/admin/AdminToast'
+import { useCloseTransition } from '../../hooks/useCloseTransition'
 
 function AdminUserDetail() {
   const { userId } = useParams()
@@ -15,6 +16,7 @@ function AdminUserDetail() {
   const [modalState, setModalState] = useState({ isOpen: false, type: null })
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'success' })
   const [showEditLimitModal, setShowEditLimitModal] = useState(false)
+  const editLimitModalClose = useCloseTransition(() => setShowEditLimitModal(false), 200)
   const [newCancelLimit, setNewCancelLimit] = useState(2)
   const [isUpdatingLimit, setIsUpdatingLimit] = useState(false)
   const [editUserForm, setEditUserForm] = useState({ name: '', phone: '' })
@@ -715,9 +717,9 @@ function AdminUserDetail() {
       />
 
       {/* Edit Cancellation Limit Modal */}
-      {showEditLimitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4 animate-modal-backdrop-in">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900/50 max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 animate-modal-panel-in">
+      {(showEditLimitModal || editLimitModalClose.isExiting) && (
+        <div className={`fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4 ${editLimitModalClose.isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`} onClick={editLimitModalClose.requestClose}>
+          <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900/50 max-w-md w-full p-6 border border-gray-200 dark:border-gray-700 ${editLimitModalClose.isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`} onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Edit Cancellation Limit</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Set the maximum number of tasks this user can cancel per day. Current limit: <strong className="text-gray-900 dark:text-gray-100">{user?.totalCancelLimit ?? 2}</strong>
@@ -746,7 +748,7 @@ function AdminUserDetail() {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => setShowEditLimitModal(false)}
+                onClick={editLimitModalClose.requestClose}
                 disabled={isUpdatingLimit}
                 className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >

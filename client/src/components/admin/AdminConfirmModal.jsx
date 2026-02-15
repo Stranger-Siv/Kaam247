@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useCloseTransition } from '../../hooks/useCloseTransition'
 
 function AdminConfirmModal({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', confirmColor = 'blue', requireType = null, loading = false }) {
   const [typedText, setTypedText] = useState('')
+  const { isExiting, requestClose } = useCloseTransition(onClose, 200)
 
   if (!isOpen) return null
 
@@ -10,13 +12,14 @@ function AdminConfirmModal({ isOpen, onClose, onConfirm, title, message, confirm
       return
     }
     onConfirm()
+    requestClose()
   }
 
   const canConfirm = !requireType || typedText === requireType
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-50 p-4 animate-modal-backdrop-in">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-modal-panel-in" style={{ zIndex: 2001 }}>
+    <div className={`fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-50 p-4 ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`} onClick={requestClose}>
+      <div className={`bg-white rounded-xl shadow-xl max-w-md w-full p-6 ${isExiting ? 'animate-modal-panel-out' : 'animate-modal-panel-in'}`} style={{ zIndex: 2001 }} onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
         <p className="text-sm text-gray-600 mb-4">{message}</p>
         
@@ -37,7 +40,7 @@ function AdminConfirmModal({ isOpen, onClose, onConfirm, title, message, confirm
 
         <div className="flex flex-col sm:flex-row gap-3 mt-6">
           <button
-            onClick={onClose}
+            onClick={requestClose}
             disabled={loading}
             className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
           >

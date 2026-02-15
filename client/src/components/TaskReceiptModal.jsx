@@ -1,6 +1,9 @@
 import React from 'react'
+import { useCloseTransition } from '../hooks/useCloseTransition'
 
 function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
+  const { isExiting, requestClose } = useCloseTransition(onClose, 220)
+
   if (!isOpen || !task) return null
 
   const completedAt = task.completedAt ? new Date(task.completedAt) : null
@@ -215,11 +218,11 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
 
   return (
     <div
-      className="fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 print:static print:bg-white print:p-0 print:block animate-modal-backdrop-in"
-      onClick={onClose}
+      className={`fixed inset-0 z-[2100] bg-black/50 dark:bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 print:static print:bg-white print:p-0 print:block ${isExiting ? 'animate-modal-backdrop-out' : 'animate-modal-backdrop-in'}`}
+      onClick={requestClose}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col border-0 sm:border border-gray-200 dark:border-gray-700 print:shadow-none print:rounded-none print:max-w-none print:w-full print:max-h-none print:border print:border-gray-300 animate-modal-sheet-in sm:animate-modal-panel-in"
+        className={`bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col border-0 sm:border border-gray-200 dark:border-gray-700 print:shadow-none print:rounded-none print:max-w-none print:w-full print:max-h-none print:border print:border-gray-300 ${isExiting ? 'animate-modal-sheet-out sm:animate-modal-panel-out' : 'animate-modal-sheet-in sm:animate-modal-panel-in'}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -234,7 +237,7 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             className="shrink-0 p-2 -m-2 touch-manipulation text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 print:hidden"
             aria-label="Close"
           >
@@ -390,7 +393,7 @@ function TaskReceiptModal({ isOpen, onClose, task, taskId }) {
         >
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             className="w-full sm:flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium touch-manipulation min-h-[44px]"
           >
             Close
